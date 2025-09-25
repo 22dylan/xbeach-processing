@@ -11,16 +11,20 @@ import seaborn as sns
 import xarray as xr
 import multiprocessing
 
+from helpers.helpers import HelperFuncs
 
-class MakeAnimation():
+
+class MakeAnimation(HelperFuncs):
     """docstring for xb_plotting_large"""
-    def __init__(self, path_to_model, path_to_forcing, var="H", tstart=None, 
+    def __init__(self, var="H", tstart=None, 
                 tstop=None, domain_size="estero", xbeach_duration=12, vmax=1, 
                 vmin=0, make_all_figs=True, dpi=300):
+        super().__init__()
+
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
-        self.path_to_model = path_to_model
-        self.xboutput_filename = self.get_output_filename()
-        self.model_runname = self.path_to_model.split(os.sep)[-1]
+        # self.path_to_model = path_to_model
+        # self.xboutput_filename = self.get_output_filename()
+        # self.model_runname = self.path_to_model.split(os.sep)[-1]
 
         self.var = var
         self.tstart = tstart
@@ -34,13 +38,13 @@ class MakeAnimation():
 
     def plot_timestep_micro(self, t_hr=None, fname=None, t_start=None, t_stop=None):
         if t_hr!=None:
-            t = hf.read_time_xarray()
+            t = self.read_time_xarray()
             t_idx = np.argmin(np.abs(t-t_hr*3600))
         else:
             t_idx = -1
         
-        xgr, ygr, _ = hf.read_grid()                                     # reading grid data
-        data_plot = hf.read_2d_data_xarray_timestep(var=self.var, t=t_idx)        # reading xbeach output
+        xgr, ygr, _ = self.read_grid()                                     # reading grid data
+        data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)        # reading xbeach output
         mask = (data_plot < -99999)
         masked_array = np.ma.array(data_plot, mask=mask)
 
@@ -53,7 +57,7 @@ class MakeAnimation():
         fig, (ax0, ax1) = plt.subplots(2,1, figsize=figsize, height_ratios=[8,1])
 
         # -- drawing first plot
-        bldgs = hf.read_buildings()
+        bldgs = self.read_buildings()
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=self.vmin, vmax=self.vmax, cmap=cmap)
         plt.colorbar(pcm, ax=ax0, extend="both", label=cbar_s, aspect=40)
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)
@@ -62,7 +66,7 @@ class MakeAnimation():
         self.draw_time_series(ax1, t_hr, t_start, t_stop)
 
         # --- saving figure
-        hf.save_fig(fig, 
+        self.save_fig(fig, 
                     fname, 
                     transparent=False, 
                     dpi=self.dpi,
@@ -74,13 +78,13 @@ class MakeAnimation():
         """ function to plot single timestep
         """
 
-        t = hf.read_time_xarray()
+        t = self.read_time_xarray()
         t_idx = np.argmin(np.abs(t-t_hr*3600))
         t_hr = t[t_idx]/3600
 
 
-        data_plot = hf.read_2d_data_xarray_timestep(var=self.var, t=t_idx)
-        xgr, ygr, _ = hf.read_grid()
+        data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)
+        xgr, ygr, _ = self.read_grid()
 
         figsize = (16,9)
         fig = plt.figure(figsize=figsize)
@@ -100,7 +104,7 @@ class MakeAnimation():
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=self.vmin, vmax=self.vmax, cmap=cmap)
         plt.colorbar(pcm, ax=ax1, extend="max", label=cbar_s)
 
-        bldgs = hf.read_buildings()
+        bldgs = self.read_buildings()
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)
         ax0.set_title(s)
 
@@ -112,8 +116,8 @@ class MakeAnimation():
         # continuing with zommed in plot
         box_upper_right = (box_lower_left[0]+dx, box_lower_left[1]+dy)
 
-        id_ll = hf.xy_to_grid_index(xgr, ygr, box_lower_left)
-        id_ur = hf.xy_to_grid_index(xgr, ygr, box_upper_right)
+        id_ll = self.xy_to_grid_index(xgr, ygr, box_lower_left)
+        id_ur = self.xy_to_grid_index(xgr, ygr, box_upper_right)
         
         xgr2 = xgr[id_ll[1]:id_ur[1], id_ll[0]:id_ur[0]]
         ygr2 = ygr[id_ll[1]:id_ur[1], id_ll[0]:id_ur[0]]
@@ -134,7 +138,7 @@ class MakeAnimation():
 
 
         # -- (optionally) saving file
-        hf.save_fig( fig, 
+        self.save_fig( fig, 
                     fname, 
                     transparent=True, 
                     dpi=self.dpi, 
@@ -143,7 +147,7 @@ class MakeAnimation():
 
     def draw_time_series(self, ax, t_hr, t_start, t_stop):
         # # -- now plotting time series
-        forcing = hf.frcing_to_dataframe()
+        forcing = self.frcing_to_dataframe()
         x,y = forcing["t_hr"], forcing["el"]
         ax.plot(x,y, lw=0.75, ls="-.", color='k', zorder=0, label="ADCIRC/SWAN")
         
@@ -209,14 +213,14 @@ class MakeAnimation():
             return 65.25, 67.25
 
     def make_animation(self, parallel=True, num_proc=None):
-        t = hf.read_time_xarray()
+        t = self.read_time_xarray()
         if self.tstart == None:
             self.tstart = t[0]
         if self.tstop == None:
             self.tstop = t[-1]/3600
         tstart_idx = np.argmin(np.abs(t-self.tstart*3600))
         tstop_idx = np.argmin(np.abs(t-self.tstop*3600))
-        
+
         t_start_xbeach, t_stop_xbeach = self.xbeach_duration_to_start_stop()
         print("creating video with tstart = {:.2f} hr and tstop = {:.2f} hr" .format(self.tstart, self.tstop))
         print("  found nearest time steps as: tstart = {:.2f} hr and tstop = {:.2f}hr" .format(t[tstart_idx]/3600, t[tstop_idx]/3600))
@@ -226,8 +230,7 @@ class MakeAnimation():
         if self.make_all_figs:
             if os.path.isdir(temp_dir):
                 shutil.rmtree(temp_dir)
-            hf.make_directory(temp_dir)
-
+            self.make_directory(temp_dir)
             if parallel:
                 my_list = []
                 for t_ in range(tstart_idx, tstop_idx):
@@ -259,7 +262,7 @@ class MakeAnimation():
         plt.close()
 
     def plot_frame(self, t_hr):
-        t = hf.read_time_xarray()
+        t = self.read_time_xarray()
         t_idx = np.argmin(np.abs(t-t_hr*3600))
         t_hr_plot = (t[t_idx])/3600
         t_start_xbeach, t_stop_xbeach = self.xbeach_duration_to_start_stop()
@@ -276,6 +279,7 @@ class MakeAnimation():
 
     def matplotlib_writer(self, tstart_idx, tstop_idx, temp_dir, figsize):
         video_name = '{}-{}.mp4'.format(self.model_runname, self.var)
+        video_name = os.path.join(self.path_to_save_plot, video_name)
         fig, ax = plt.subplots(figsize=figsize)
         writer = animation.FFMpegWriter(fps=10)
         with writer.saving(fig, video_name, dpi=self.dpi):
@@ -312,34 +316,4 @@ class MakeAnimation():
         return v2l[var], v2y[var], color
 
 
-if __name__ == "__main__":
-    file_dir = os.path.dirname(os.path.realpath(__file__))              # current file directory
 
-    model_runname = "test"
-    path_to_model = os.path.join(file_dir, "..", "..", "xbeach", "models", model_runname)
-
-    # forcing_pt_plot = "xbeach1-sw.dat"
-    forcing_pt_plot = "xbeach5-nearshore.dat"
-    path_to_forcing = os.path.join(file_dir, "..", "..", "data", "forcing", forcing_pt_plot)
-
-    xbpl = xb_plotting_large(
-                        path_to_model    = path_to_model,               # path to model
-                        path_to_forcing  = path_to_forcing,             # path to forcing; used to draw water level plot in animation
-                        var              = "H",                         # variable to plot (H=wave height; zs=water level)
-                        tstart           = None,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-                        tstop            = None,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-                        domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-                        xbeach_duration  = 2,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-                        vmin             = 0,                           # vmin for plotting
-                        vmax             = 1,                           # vmax for plotting
-                        make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
-                        dpi              = 200,                         # image resolution (dpi = dots per inch)
-                        )
-    # xbpl.make_animation(parallel=True, num_proc=2)
-    xbpl.plot_frame(t_hr=3)
-    plt.show()
-
-
-
-
-    

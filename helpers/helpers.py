@@ -1,5 +1,6 @@
 import os
 import numpy as np
+import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
 
@@ -13,9 +14,14 @@ class HelperFuncs():
     """
     def __init__(self):
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
-        self.project_dir = os.path.join(self.file_dir, "..")
+        self.project_dir = os.path.abspath(os.path.join(self.file_dir, ".."))
         self.read_paths()
         self.xboutput_filename = self.get_output_filename()
+        self.make_directory(self.path_to_save_plot)
+
+    def hello(self):
+        print("hello world")
+
 
     def read_paths(self):
         """
@@ -53,7 +59,7 @@ class HelperFuncs():
                         pth = os.path.join(*value)
                     setattr(self, key, pth)
                     print("  successfully set {}" .format(key, pth))
-        print(self.path_to_model)
+        self.model_runname = self.path_to_model.split(os.sep)[-1]
 
     def get_output_filename(self):
         """
@@ -224,6 +230,7 @@ class HelperFuncs():
             **kwargs: keyword args to pass to matplotlib savefig function. 
         """
         if fn != None:
+            fn = os.path.join(self.path_to_save_plot, fn)
             plt.savefig(fn,
                         **kwargs,
                         # transparent=True, 
@@ -261,7 +268,7 @@ class HelperFuncs():
         make directory if it doesn't exist
         """
         if not os.path.exists(path_out):
-            os.makedirs(path_out)
+            os.makedirs(path_out, exist_ok=True)
         return path_out
 
 

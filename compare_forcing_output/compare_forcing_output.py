@@ -6,7 +6,7 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
-class compare_forcing_output():
+class CompareForcingOutput():
     """docstring for xb_plotting_pt"""
     def __init__(self, model_runname, var="H", xb_locs=[1], domain="large", tstart=0):
         self.model_runname = model_runname
