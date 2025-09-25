@@ -1,0 +1,4 @@
+relative_path    = True
+path_to_model    = ../xbeach/models/run/run36-1p
+path_to_forcing  = ../data/forcing/xbeach5-nearshore.dat
+path_to_plots    = run36-1p/
