@@ -1,0 +1,15 @@
+*/temp/*/
+
+# 
+*.mp4
+*.png
+*.DS_Store
+*.pptx
+*.tiff
+*.tiff*
+*.xml
+*.pdf
+*.xlsx
+*.out
+*.tar.gz
+*.npy
