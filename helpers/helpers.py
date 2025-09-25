@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import xarray as xr
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 class HelperFuncs():
@@ -69,6 +70,53 @@ class HelperFuncs():
         files = os.listdir(self.path_to_model)
         fn  = [i for i in files if ".nc" in i][0]
         return fn
+
+    def read_max_xarray(self, var):
+        """
+        Reads the maximum value from the xarray dataset.
+        Inputs:
+            var: variable to read, e.g., zs1
+        Returns: 
+            data: 2D numpy array.
+        """
+        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        
+        max_vals = ds[var].max(dim="globaltime").values[:,:]
+        return max_vals
+    
+    def read_dims_xarray(self):
+        """
+        reads the dimensions of the xbeach output:
+        """
+        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        
+        nx = ds.sizes["nx"]
+        ny = ds.sizes["ny"]
+        return (ny, nx)
+
+    def read_transect_data_xarray(self, var, idy, t_idx):
+        """
+        reads a transect from the xarray output dataset
+        """
+        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        slice_data = ds[var][t_idx,idy,:]
+        return slice_data.values
+
+    def read_3d_data_xarray(self, var):
+        """
+        reads the full 3D array (x,y, time) from the netcdf output file
+        Inputs:
+            var: variable to read, e.g., zs1
+        Returns: 
+            data: 2D numpy array.
+        """
+        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        return ds[var][:,:,:].values
+
 
     def read_2d_data_xarray_timestep(self, var, t):        
         """
@@ -240,6 +288,33 @@ class HelperFuncs():
                         )
             plt.close()
 
+    def get_H(self, z, detrend=True):
+        if detrend:
+            z = z - np.mean(z)  # de-trend signal with mean
+        
+        # The sign of the (detrended) elevation at each point
+        signs = np.sign(z)
+        # Find where the sign changes.
+        zero_crossing_indices = np.where(np.diff(signs) != 0)[0]
+
+        up_crossings = zero_crossing_indices[np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]]
+        # Ensure we have pairs of up-crossings to define full waves
+        start_indices = up_crossings[:-1]
+        end_indices = up_crossings[1:]
+
+        # Use a list comprehension to get max and min values for each segment
+        crests = [np.max(z[start:end]) for start, end in zip(start_indices, end_indices)]
+        troughs = [np.min(z[start:end]) for start, end in zip(start_indices, end_indices)]
+
+        # Convert to NumPy arrays for vectorized subtraction
+        wave_heights = np.array(crests) - np.array(troughs)
+        return wave_heights
+
+    def compute_Hs(self, H):
+        H_one_third = np.quantile(H, q=2/3)
+        H = H[H>H_one_third]
+        Hs = np.mean(H)
+        return Hs
 
     def cartesian_to_nautical_angle(self, deg):
         """ converting from cartesian to nautical angles for xbeach input
@@ -270,6 +345,54 @@ class HelperFuncs():
         if not os.path.exists(path_out):
             os.makedirs(path_out, exist_ok=True)
         return path_out
+
+    def var2label(self, var):
+        v2l = { "el":"Water Elevation",
+                "hs": "Sig. Wave Height",
+                "Tp": "Peak Period",
+                "wavedir": "Wave Direction",
+                "zs": "Water Elevation",
+                "zs0": "Surge Level",
+                "zs1": "Water Elevation Above Surge",
+        }
+        v2y = { "el": "Water Elevation (m)",
+                "hs": "Sig. Wave Height (m)",
+                "Tp": "Peak Period (s)",
+                "wavedir": "Wave Direction",
+                "zs": "Water Elevation (m)",
+                "zs0": "Surge Level (m)",
+                "zs1": "Water Elevation Above Surge (m)",
+        }
+        
+        c = {"el": 0, "hs": 1, "Tp": 2, "wavedir": 3, "zs": 4, "zs0": 5, "zs1": 6}
+        colors = sns.color_palette("crest", n_colors=len(c.keys()))
+        color = colors[c[var]]
+
+        return v2l[var], v2y[var], color
+    
+
+    def xbeach_duration_to_start_stop(self, duration):
+        duration_to_start_stop = {
+                    0.5: {"start": 66.25, "stop":  66.75},
+                    1:   {"start": 66,    "stop":  67},
+                    2:   {"start": 65.25, "stop":  67.25},
+                    3:   {"start": 65,    "stop":  68},
+                    4:   {"start": 64,    "stop":  68},
+                    6:   {"start": 63,    "stop":  69},
+                    12:  {"start": 60,    "stop":  72}
+                                }
+        t_start = duration_to_start_stop[duration]["start"]
+        t_stop = duration_to_start_stop[duration]["stop"]
+        return t_start, t_stop
+
+
+    def remove_frame(self, ax):
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.get_xaxis().set_ticks([])
+        ax.get_yaxis().set_ticks([])
 
 
 if __name__ == '__main__':

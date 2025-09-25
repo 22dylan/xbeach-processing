@@ -8,7 +8,7 @@ import matplotlib as mpl
 
 class CompareForcingOutput():
     """docstring for xb_plotting_pt"""
-    def __init__(self, model_runname, var="H", xb_locs=[1], domain="large", tstart=0):
+    def __init__(self, var="H", xb_locs=[1], domain="large", tstart=0):
         self.model_runname = model_runname
         self.var = var
         self.xb_locs = xb_locs
@@ -316,8 +316,8 @@ class CompareForcingOutput():
         return xgr, ygr, zgr
 
 if __name__ == "__main__":
-    cfo = compare_forcing_output(
-            model_runname="frun1-30m-bldgs-12hr-tideloc4", 
+    cfo = CompareForcingOutput(
+            # model_runname="frun1-30m-bldgs-12hr-tideloc4", 
             var="zs0",    # zs, zs1, H
             xb_locs=[5],
             domain="medium",

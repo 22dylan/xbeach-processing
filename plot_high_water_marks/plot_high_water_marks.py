@@ -6,16 +6,16 @@ import scipy.stats as st
 import xarray as xr
 import matplotlib.pyplot as plt
 
-class plot_hwm():
-    """docstring for plot_wave_heights"""
-    def __init__(self, var="H"):
-        self.file_dir = os.path.dirname(os.path.realpath(__file__))
-        self.path_to_model = os.path.join(self.file_dir, "..", "..", "xbeach", "models")
-        self.var = var
+from helpers.helpers import HelperFuncs
 
-    def plot_scatter(self,model_runname, domain="regular", d_threshold=5, fname=None):
-        model_dir = os.path.join(self.path_to_model, model_runname)
-        max_zs = self.read_data_xarray_max(model_dir, var="zs")
+class PlotHighWaterMarks(HelperFuncs):
+    """docstring for plot_wave_heights"""
+    def __init__(self):
+        super().__init__()
+
+
+    def plot_scatter(self, domain="regular", d_threshold=5, fname=None):
+        max_zs = self.read_max_xarray(var="zs")
         gdf_zs = self.max_zs_to_gdf(domain, max_zs)
         gdf_hwm = self.read_hwm()
         gdf_hwm.to_crs(gdf_zs.crs, inplace=True)
@@ -68,15 +68,11 @@ class plot_hwm():
         ax.legend(loc="upper left")
         ax.set_title("Water Elevation")
 
-        if fname!=None:
-            plt.savefig(fname,
-                        transparent=False, 
+        self.save_fig(fig, fname,
+                        transparent=True, 
                         dpi=300,
-                        bbox_inches='tight',
-                        pad_inches=0.1,
-                        )
-            plt.close()
-
+                        bbox_inches="tight",
+                        pad_inches=0)
 
     def max_zs_to_gdf(self, domain, max_zs):
         domain_dir = os.path.join(self.file_dir, "..", "..", "data", "xbeach-domain")
@@ -166,18 +162,6 @@ class plot_hwm():
         del gdf["longitude"]
 
         return gdf
-
-    def read_data_xarray_max(self, model_dir, var, prnt_read=False):
-        fn = os.path.join(model_dir, "xboutput.nc")
-
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
-        if prnt_read:
-            print("Dataset object read:")
-            print(ds)
-            print("\n\n")
-        
-        max_vals = ds[var].max(dim="globaltime").values[:,:]
-        return max_vals
     
     def myround(self, x, base=5):
         return base * round(x/base)
@@ -193,12 +177,5 @@ class plot_hwm():
         theta_d = np.rad2deg(theta_r)
         return theta_r, theta_d
 
-
-if __name__ == "__main__":
-    phwm = plot_hwm(var="zs")
-    phwm.plot_scatter(model_runname="run6-5m-bldgs-3hr-tideloc4", domain="regular", fname="hwm.png")
-
-
-    plt.show()
 
 

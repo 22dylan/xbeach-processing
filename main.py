@@ -1,7 +1,15 @@
+import matplotlib.pyplot as plt
 from helpers.helpers import HelperFuncs
-from compare_forcing_output.compare_forcing_output import CompareForcingOutput
 from make_animation.make_animation import MakeAnimation
 
+
+# from compare_forcing_output.compare_forcing_output import CompareForcingOutput
+from plot_forcing.plot_forcing import PlotForcing
+from plot_grid.plot_grid import PlotGrid
+from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
+from plot_output_point.plot_output_point import PlotOutputPoint
+from plot_output_transect.plot_output_transect import PlotOutputTransect
+from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 
 if __name__ == "__main__":
@@ -21,5 +29,70 @@ if __name__ == "__main__":
     # ma.plot_frame(t_hr=1)
 
 
-    cfo = CompareForcingOutput()
-    cfo.compare_forcing2output()
+    # # -- compare forcing to output
+    # cfo = CompareForcingOutput(var="zs1", xb_locs=[5], domain="micro")
+    # cfo.compare_forcing2output()
+
+    # # -- plot forcing
+    # pf = PlotForcing()
+    # pf.plot(var="hs", savepoint=5, duration=2)
+
+    # # -- plot grid
+    # pg = PlotGrid()
+    # pg.plot_dep_across_y(x_trans=[10, 100, 200], lookonshore=True, drawdomain=True)
+
+    # # -- plot high water marks
+    # phwm = PlotHighWaterMarks()
+    # phwm.plot_scatter()
+
+    # # -- plot output point
+    # pop = PlotOutputPoint()
+    # pop.plot(var="zs1",
+    #         xys=[[4,0], [200,400], [360,400], [373,400], [600,400]], 
+    #         drawdomain=True,
+    #         fulldomain=False, 
+    #         savefig=True
+    #         )
+
+    # # -- plot transect
+    # pot = PlotOutputTransect()
+    # pot.plot_water_level_transect(var="zs1", y_trans=400,
+    #                              ts=[1],
+    #                              h_plus_zs=False,
+    #                              drawdomain=True, 
+    #                              fulldomain=False,
+    #                              savefig=True
+                                 # )
+    # pot.video_transect(var="zs1", 
+    #                   y_trans=400,
+    #                   t_start=1,
+    #                   t_stop=1.01,
+    #                   h_plus_zs=False,
+    #                   dpi=100,
+    #                   )
+
+    
+    # # -- plot wave heights
+    pwh = PlotWaveHeights()
+    pwh.
+
+
+
+
+    plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

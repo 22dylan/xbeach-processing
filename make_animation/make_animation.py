@@ -299,21 +299,4 @@ class MakeAnimation(HelperFuncs):
         if os.path.isdir(temp_dir):
             shutil.rmtree(temp_dir)
 
-    def var2label(self, var):
-        v2l = { "el":"Water Elevation",
-                "hs": "Significant Wave Height",
-                "Tp": "Peak Period"
-        }
-        v2y = { "el": "Water Elevation (m; ___)",
-                "hs": "Significant Wave Height (m)",
-                "Tp": "Peak Period (s)"
-        }
-        
-        c = {"el": 0, "hs": 1, "Tp": 2}
-        colors = sns.color_palette("crest", n_colors=len(c.keys()))
-        color = colors[c[var]]
-
-        return v2l[var], v2y[var], color
-
-
 
