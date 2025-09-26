@@ -43,12 +43,13 @@ class HelperFuncs():
         fn = os.path.join(self.project_dir, "paths.txt")
         with open(fn,'r') as f:
             for cnt, line in enumerate(f.readlines()):
-                
                 line = line.strip()
                 if "relative_path" in line:
                     exec(line, globals())
-                    relative_path = bool(line.split("=")[1])
-
+                    if line.split("=")[1].strip() == "False":
+                        relative_path = False
+                    elif line.split("=")[1].strip() == "True":
+                        relative_path = True
                 if line and '=' in line:
                     key, value = line.split('=', 1)
                     key = key.strip()
@@ -57,10 +58,12 @@ class HelperFuncs():
                     if relative_path==True:
                         pth = os.path.join(self.project_dir, *value)                
                     else:
+                        value.insert(0, "/")
                         pth = os.path.join(*value)
                     setattr(self, key, pth)
                     print("  successfully set {}" .format(key, pth))
         self.model_runname = self.path_to_model.split(os.sep)[-1]
+
 
     def get_output_filename(self):
         """
