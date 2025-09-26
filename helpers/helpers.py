@@ -4,6 +4,7 @@ import pandas as pd
 import xarray as xr
 import seaborn as sns
 import matplotlib.pyplot as plt
+import scipy.ndimage as ndi
 
 class HelperFuncs():
     """
@@ -22,7 +23,6 @@ class HelperFuncs():
 
     def hello(self):
         print("hello world")
-
 
     def read_paths(self):
         """
@@ -70,6 +70,16 @@ class HelperFuncs():
         files = os.listdir(self.path_to_model)
         fn  = [i for i in files if ".nc" in i][0]
         return fn
+
+    def get_figsize(self, domain_size):
+        """
+        Returns figure size based on the domain being considered. 
+        """
+        if domain_size=="micro":
+            figsize=(7,5)
+        else:
+            figsize=(3,8)
+        return figsize
 
     def read_max_xarray(self, var):
         """
@@ -148,6 +158,18 @@ class HelperFuncs():
         slice_data = ds[var][:,idy,idx]
         return slice_data.values
 
+    def read_npy(self, stat, run=None):
+        """
+        TODO: add docstring
+        """
+        if run == None:
+            fn = os.path.join(self.path_to_save_plot, "{}.npy" .format(stat))
+        else:
+            fn = os.path.join(self.path_to_save_plot, "..", run,  "{}.npy" .format(stat))
+        rmax = np.load(fn)
+            
+        return rmax
+
     def read_time_xarray(self):
         """
         Reads time from the xbeach output.
@@ -159,11 +181,14 @@ class HelperFuncs():
         time = ds["globaltime"].values
         return time
 
-    def read_buildings(self):
+    def read_buildings(self, run_w_bldgs=None):
         """
         TODO: add docstring
         """
-        fn_zgrid = os.path.join(self.path_to_model, "z.grd")
+        if run_w_bldgs == None:
+            fn_zgrid = os.path.join(self.path_to_model, "z.grd")
+        else:
+            fn_zgrid = os.path.join(self.path_to_model, "..", run_w_bldgs, "z.grd")
         zs = []
         with open(fn_zgrid,'r') as f:
             for cnt, line in enumerate(f.readlines()):
@@ -310,6 +335,31 @@ class HelperFuncs():
         wave_heights = np.array(crests) - np.array(troughs)
         return wave_heights
 
+    def assign_max_to_bldgs(self, data, bldgs):
+        max_H = np.empty(np.shape(data))
+        max_H[:] = np.nan
+        mask = np.ma.getmask(bldgs)
+        labeled_mask, num_features = ndi.label(~mask)
+        for i in range(num_features+1):
+            if i == 0:
+                continue
+            m_ = labeled_mask==i
+            m_ = ~m_
+            m_ = np.pad(m_, pad_width=1, mode="constant", constant_values=True)
+
+            shifted_up = m_[2:, 1:-1]
+            shifted_down = m_[:-2, 1:-1]
+            shifted_left = m_[1:-1, 2:]
+            shifted_right = m_[1:-1, :-2]
+            original_mask_trimmed = m_[1:-1, 1:-1]
+
+            offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
+            offset_mask = ~offset_mask
+
+            max_H[labeled_mask==i] = np.nanmax(data[offset_mask])
+
+        return max_H
+        
     def compute_Hs(self, H):
         H_one_third = np.quantile(H, q=2/3)
         H = H[H>H_one_third]
