@@ -16,6 +16,7 @@ class PlotWaveHeightHist(HelperFuncs):
             H = self.read_npy(stat, run)
             df[run] = H.flatten()
 
+        print(df.min())
 
         # --- plotting histogram - comparing max wave heights, same plot
         fig, ax = plt.subplots(1,1, figsize=(8,4.5))
@@ -37,7 +38,7 @@ class PlotWaveHeightHist(HelperFuncs):
 
         ax.grid(False)
         ax.legend(bbox_to_anchor=(0.9, 0.95), frameon=False, facecolor=None)
-        ax.set_xlabel("Max Wave Height (m)")
+        ax.set_xlabel("Sig. Wave Height (m)")
         ax.set_ylabel("Frequency")
         ax.set_xlim([0,2])
         # ---

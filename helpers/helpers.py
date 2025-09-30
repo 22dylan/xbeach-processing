@@ -61,8 +61,9 @@ class HelperFuncs():
                         value.insert(0, "/")
                         pth = os.path.join(*value)
                     setattr(self, key, pth)
-                    print("  successfully set {}" .format(key, pth))
+                    print("  successfully set {}" .format(key))
         self.model_runname = self.path_to_model.split(os.sep)[-1]
+        print("paths set for {}" .format(self.model_runname))
 
 
     def get_output_filename(self):
@@ -71,7 +72,11 @@ class HelperFuncs():
           directory.
         """
         files = os.listdir(self.path_to_model)
-        fn  = [i for i in files if ".nc" in i][0]
+        if ".nc" in files:
+            fn  = [i for i in files if ".nc" in i][0]
+        else:
+            fn = None
+
         return fn
 
     def get_figsize(self, domain_size):
@@ -170,7 +175,6 @@ class HelperFuncs():
         else:
             fn = os.path.join(self.path_to_save_plot, "..", run,  "{}.npy" .format(stat))
         rmax = np.load(fn)
-            
         return rmax
 
     def read_time_xarray(self):
@@ -308,11 +312,11 @@ class HelperFuncs():
         if fn != None:
             fn = os.path.join(self.path_to_save_plot, fn)
             plt.savefig(fn,
+                        pad_inches=0,
+                        bbox_inches='tight',
                         **kwargs,
                         # transparent=True, 
                         # dpi=self.dpi,
-                        # bbox_inches='tight',
-                        # pad_inches=0.1,
                         )
             plt.close()
 
