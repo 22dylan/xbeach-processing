@@ -7,14 +7,22 @@ class SaveWaveStats(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def save(self, var, stat):
+    def save(self, var, stat, store_in_mem=True):
         dims = self.read_dims_xarray()
         data_save = np.empty(dims)
-        data_all = self.read_3d_data_xarray(var)
+        if store_in_mem:
+            data_all = self.read_3d_data_xarray(var)
+        # else:
+            # xgr, ygr, zgr = self.read_grid()
         for y2_ in range(dims[0]):
             print("y2_ = {} out of {}" .format(y2_, dims[0]))
             for x2_ in range(dims[1]):
-                z = data_all[:,y2_,x2_]
+                if store_in_mem:
+                    z = data_all[:,y2_,x2_]
+                else:
+                    # idx, idy = self.xy_to_grid_index(xgr, ygr, (x2_, y2_))
+                    z = self.read_pt_data_xarray(var, x2_, y2_)
+
                 if np.sum(z) == 0:
                     data_ = 0
                 else:
