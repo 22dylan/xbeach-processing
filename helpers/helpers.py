@@ -301,6 +301,14 @@ class HelperFuncs():
         idy = np.argmin(np.abs(ygr[:,0] - xy[1]))        
         return (idx,idy)
 
+    def tstartstop_to_tindex(self, tstart, tstop, time):
+        """ 
+        returns the indicies nearest to the provided start and stop times
+        """
+        tstart_idx = np.argmin(np.abs(time-tstart*3600))
+        tstop_idx  = np.argmin(np.abs(time-tstop*3600))
+        return tstart_idx, tstop_idx
+
     def save_fig(self, fig, fn=None, **kwargs):
         """
         Saves figures

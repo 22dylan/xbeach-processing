@@ -9,7 +9,7 @@ class PlotOutputPoint(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def plot(self, var, xys, drawdomain=False, fulldomain=True, savefig=False):
+    def plot(self, var, xys, t_start=None, t_stop=None, drawdomain=False, fulldomain=True, savefig=False):
         xgr, ygr, zgr = self.read_grid()
 
         colors = sns.color_palette("husl")
@@ -33,6 +33,14 @@ class PlotOutputPoint(HelperFuncs):
         s, _, _ = self.var2label(var)
         ax.set_ylabel(s)
         ax.legend()
+
+        xlim = ax.get_xlim()
+        if t_start != None:
+            xlim[0] = t_start
+        if t_stop != None:
+            xlim[1] = t_stop
+        ax.set_xlim()
+
         if savefig:
             fn = "elevation-timeseries.png"
             self.save_fig(fig0, fn, transparent=True, dpi=300)
