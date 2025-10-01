@@ -83,15 +83,15 @@ if __name__ == "__main__":
     # sws.save("zs1", "Hs")
 
     # # -- plot wave height domain
-    # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="Hs",
-    #         vmin=0,
-    #         vmax=1,
-    #         single_frame=True, 
-    #         domain_size="micro",
-    #         plt_bldgs=True,
-    #         fname="Hs-domain.png"
-    #         )
+    pwhd = PlotWaveHeightDomain()
+    pwhd.plot(stat="Hs",
+            vmin=0,
+            vmax=1,
+            single_frame=True, 
+            domain_size="micro",
+            plt_bldgs=True,
+            # fname="Hs-domain.png"
+            )
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run44",
     #         domain_size="micro",
@@ -113,8 +113,8 @@ if __name__ == "__main__":
 
 
     # # # -- PlotWaveHeightScatter
-    pwhs = PlotWaveHeightScatter()
-    pwhs.scatter_bldg(stat="Hs", runs=["run42"],plot_hist=False, run_w_bldgs="run40", labels=["buildings-on-ground", "no-buildings"], fname="r40r42-scatter-bldg.png")
+    # pwhs = PlotWaveHeightScatter()
+    # pwhs.scatter_bldg(stat="Hs", runs=["run42"],plot_hist=False, run_w_bldgs="run40", labels=["buildings-on-ground", "no-buildings"], fname="r40r42-scatter-bldg.png")
     # pwhs.scatter_domain(stat="Hs", runs=["run43", "run44"], labels=["2 hr", "1 hr", "0.5 hr"], fname="r40r43r44-scatter-domain.png")
 
     # # -- PlotWaveHeightHist

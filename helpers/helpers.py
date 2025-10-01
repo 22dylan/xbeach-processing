@@ -71,14 +71,14 @@ class HelperFuncs():
         Returns the output file name that is located in the `path_to_model` 
           directory.
         """
-        files = os.listdir(self.path_to_model)
-        fn = [i for i in files if ".nc" in i][0]
-        
-        # if ".nc" in files:
-        #     fn  = [i for i in files if ".nc" in i][0]
-        # else:
-        #     fn = None
+        files = os.listdir(self.path_to_model)        
+        nc_files = [i for i in files if ".nc" in files]
+        if len(nc_files) > 0:
+            # fn  = [i for i in files if ".nc" in i][0]
+            fn = nc_files[0]
 
+        else:
+            fn = None
         return fn
 
     def get_figsize(self, domain_size):
@@ -137,6 +137,17 @@ class HelperFuncs():
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         return ds[var][:,:,:].values
 
+    def read_3d_data_xarray_nonmem(self, var):
+        """
+        reads the full 3D array (x,y, time) from the netcdf output file
+        Inputs:
+            var: variable to read, e.g., zs1
+        Returns: 
+            data: 2D numpy array.
+        """
+        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        return ds[var][:,:,:]
 
     def read_2d_data_xarray_timestep(self, var, t):        
         """
