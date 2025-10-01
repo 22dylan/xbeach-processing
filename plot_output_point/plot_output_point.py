@@ -35,11 +35,12 @@ class PlotOutputPoint(HelperFuncs):
         ax.legend()
 
         xlim = ax.get_xlim()
-        if t_start != None:
-            xlim[0] = t_start
-        if t_stop != None:
-            xlim[1] = t_stop
-        ax.set_xlim()
+        if t_start == None:
+            t_start = xlim[0]
+        if t_stop == None:
+            t_stop = xlim[1]
+        xlim = (t_start, t_stop)
+        ax.set_xlim(xlim)
 
         if savefig:
             fn = "elevation-timeseries.png"
