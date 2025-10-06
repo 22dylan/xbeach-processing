@@ -146,7 +146,7 @@ class HelperFuncs():
             data: 2D numpy array.
         """
         fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
         return ds[var][:,:,:]
 
     def read_2d_data_xarray_timestep(self, var, t):        
