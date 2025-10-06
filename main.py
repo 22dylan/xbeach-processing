@@ -19,6 +19,11 @@ from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 
 
 if __name__ == "__main__":
+    # # -- save wave stats
+    sws = SaveWaveStats()
+    # sws.save("zs1", "Hs")
+    sws.geolocate(var="Hs")
+
     # # -- animation plots
     # ma = MakeAnimation(
     #             var              = "zs1",                         # variable to plot (H=wave height; zs=water level)
@@ -78,25 +83,22 @@ if __name__ == "__main__":
     #                   )
 
     
-    # # -- save wave stats
-    # sws = SaveWaveStats()
-    # sws.save("zs1", "Hs")
 
-    # # -- plot wave height domain
-    pwhd = PlotWaveHeightDomain()
-    pwhd.plot(stat="Hs",
-            vmin=0,
-            vmax=1,
-            single_frame=True, 
-            domain_size="micro",
-            plt_bldgs=True,
-            # fname="Hs-domain.png"
-            )
+    # # # -- plot wave height domain
+    # pwhd = PlotWaveHeightDomain()
+    # pwhd.plot(stat="Hs",
+    #         vmin=0,
+    #         vmax=1,
+    #         single_frame=True, 
+    #         domain_size="micro",
+    #         plt_bldgs=True,
+    #         fname="Hs-domain.png"
+    #         )
     # pwhd.plot_diff(stat="Hs",
-    #         comparison_run="run44",
+    #         comparison_run="run36-2p",
     #         domain_size="micro",
     #         vmax=0.1,
-    #         fname="Hs-diff-r40r44"
+    #         # fname="Hs-diff-1p45p"
     #         )
 
 
@@ -114,8 +116,8 @@ if __name__ == "__main__":
 
     # # # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["run42"],plot_hist=False, run_w_bldgs="run40", labels=["buildings-on-ground", "no-buildings"], fname="r40r42-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run43", "run44"], labels=["2 hr", "1 hr", "0.5 hr"], fname="r40r43r44-scatter-domain.png")
+    # pwhs.scatter_bldg(stat="Hs", runs=["run43"], plot_hist=False, run_w_bldgs="run43", labels=["4 Hz", "1 Hz"], fname="r43r49-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run43"], plot_hist=False, labels=["4 Hz", "1 Hz"], fname="r43r49-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()

@@ -121,7 +121,8 @@ class PlotWaveHeightDomain(HelperFuncs):
         mask = (zgr<0)
         masked_array = np.ma.array(diff, mask=mask) # here mask tells numpy which cells to ignore.
         
-        cmap = mpl.cm.cividis
+        # cmap = mpl.cm.PiYG
+        cmap = mpl.cm.PuOr
         cmap.set_bad('bisque')
         vmin = -vmax
 

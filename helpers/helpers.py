@@ -72,7 +72,7 @@ class HelperFuncs():
           directory.
         """
         files = os.listdir(self.path_to_model)        
-        nc_files = [i for i in files if ".nc" in files]
+        nc_files = [i for i in files if ".nc" in i]
         if len(nc_files) > 0:
             # fn  = [i for i in files if ".nc" in i][0]
             fn = nc_files[0]
