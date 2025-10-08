@@ -99,10 +99,12 @@ class PlotWaveHeightDomain(HelperFuncs):
         # get difference in wave heights
         run1_max = self.read_npy(stat)
         run2_max = self.read_npy(stat, comparison_run)
+        run1_max, run2_max = self.check_domain_size_wave_stat(run1_max, run2_max)
 
         mask = np.isnan(run1_max) & np.isnan(run2_max)
         run1_max = np.ma.array(run1_max, mask=mask) # here mask tells numpy which cells to ignore.
         run2_max = np.ma.array(run2_max, mask=mask) # here mask tells numpy which cells to ignore.
+
 
         if norm == True:
             denom = (run1_max+run2_max)/2

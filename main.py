@@ -84,7 +84,7 @@ if __name__ == "__main__":
 
     
 
-    # # # -- plot wave height domain
+    # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
     # pwhd.plot(stat="Hs",
     #         vmin=0,
@@ -95,12 +95,11 @@ if __name__ == "__main__":
     #         fname="Hs-domain.png"
     #         )
     # pwhd.plot_diff(stat="Hs",
-    #         comparison_run="run36-2p",
+    #         comparison_run="run46",
     #         domain_size="micro",
-    #         vmax=0.1,
-    #         # fname="Hs-diff-1p45p"
+    #         vmax=2,
+    #         # fname="Hs-diff-1m2m"
     #         )
-
 
     # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
@@ -114,10 +113,10 @@ if __name__ == "__main__":
     #         )
 
 
-    # # # -- PlotWaveHeightScatter
-    # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["run43"], plot_hist=False, run_w_bldgs="run43", labels=["4 Hz", "1 Hz"], fname="r43r49-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run43"], plot_hist=False, labels=["4 Hz", "1 Hz"], fname="r43r49-scatter-domain.png")
+    # # -- PlotWaveHeightScatter
+    pwhs = PlotWaveHeightScatter()
+    # pwhs.scatter_bldg(stat="Hs", runs=["run46"], plot_hist=True, run_w_bldgs="run43", labels=["1 m", "2 m"]) #, fname="r43r46-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run46"], plot_hist=True, labels=["1 m", "2 m"]) #, fname="cpu-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()

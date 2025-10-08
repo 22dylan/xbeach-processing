@@ -463,7 +463,6 @@ class HelperFuncs():
         t_stop = duration_to_start_stop[duration]["stop"]
         return t_start, t_stop
 
-
     def remove_frame(self, ax):
         ax.spines['top'].set_visible(False)
         ax.spines['right'].set_visible(False)
@@ -472,6 +471,32 @@ class HelperFuncs():
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
+    def check_domain_size_wave_stat(self, run1_max, run2_max):
+        """
+        Checks that the domain size of the two runs being compared is identical.
+        If they are not the same, then resize one to match the other. 
+        This is used when comparing two runs at different resolutions. 
+        """
+        run1_shape = np.shape(run1_max)
+        run2_shape = np.shape(run2_max)
+        if run1_shape != run2_shape:
+            r1_to_r2 = np.divide(run1_shape,run2_shape)
+            r2_to_r1 = np.divide(run2_shape,run1_shape)
+            scale = np.maximum(r1_to_r2, r2_to_r1)
+            if scale[0]!= scale[1]:
+                raise ValueError("need domains to be same proportion.")
+
+            if (scale == r1_to_r2).all():
+                temp = np.repeat(run2_max, scale[0], axis=0)
+                run2_max = np.repeat(temp, scale[0], axis=1)
+
+            elif (scale == r2_to_r1).all():
+                temp = np.repeat(run1_max, scale[0], axis=0)
+                run1_max = np.repeat(temp, scale[0], axis=1)
+        return run1_max, run2_max
+
+    def rmse(self, predictions, targets):
+        return np.sqrt(((predictions - targets) ** 2).mean())
 
 if __name__ == '__main__':
     hf = HelperFuncs()
