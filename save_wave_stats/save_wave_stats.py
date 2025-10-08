@@ -31,7 +31,7 @@ class SaveWaveStats(HelperFuncs):
                     if var == "zs1":            # if zs1, have water elevation time series, need to get H
                         H = self.get_H(z)       #   getting wave heights from time series
                     elif var == "H":            # else, can just use H since this is wave height from group.
-                        H = data_
+                        H = z
                     if len(H) == 0:
                         data_ = 0
                     elif stat == "Hmax":
