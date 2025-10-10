@@ -87,6 +87,63 @@ class PlotOutputTransect(HelperFuncs):
                 fname = "domain-transect"
                 self.save_fig(fig1, fname, transparent=True, dpi=300)
 
+    def plot_transect_Hs(self, y_trans, plot_ground=True, 
+                    fulldomain=True, drawdomain=False, dpi=300, legend=True, 
+                    figsize=(10,4), fname=None):
+        Hs = self.read_npy("Hs")
+        xgr, ygr, zgr = self.read_grid()
+        colors = sns.color_palette("viridis")
+        cnt = 0
+
+        fig0, ax = plt.subplots(1,1,figsize=figsize)
+        for y_trans_ in y_trans:
+            _, idy = self.xy_to_grid_index(xgr, ygr, (0, y_trans_))
+
+            if plot_ground == True:
+                grnd = zgr[idy,:]
+
+            # get data for variable
+            data_ = Hs[idy,:]
+            data_[data_<-99999] = 0
+            c = colors[cnt]
+            ax.plot(data_, color=c, lw=2, label="{}" .format(y_trans_))
+            cnt += 1
+
+        if plot_ground:
+            ax.plot(grnd, 'k')
+
+        ax.set_xlabel("x")
+        # ax.set_ylabel(ylabel)
+        ylim = ax.get_ylim()
+        ax.set_ylim([ylim[0], 6])
+        ax.set_xlim([0,np.shape(data_)[0]])
+        ax.set_title("Hs")
+        if legend:
+            ax.legend()
+        if fname != None:
+            self.save_fig(fig0, fname, transparent=True, dpi=300)
+
+        if drawdomain:
+
+            if fulldomain:
+                figsize=(4,8)
+            else:
+                figsize=(8,6)
+
+            fig1, ax = plt.subplots(1,1, figsize=figsize)
+            # --- new
+            cmap = mpl.cm.BrBG_r
+            cmap.set_bad('bisque',1.)
+            ax.pcolormesh(xgr, ygr, zgr, vmin=-8.5, vmax=8.5, cmap=cmap)
+            cnt = 0
+
+            y = ygr[idy,0]
+            ax.axhline(y=y, xmin=0, xmax=np.shape(zgr)[1], color='k', lw=2)
+
+            if fname != None:
+                fname = "domain-transect"
+                self.save_fig(fig1, fname, transparent=True, dpi=300)
+
     def video_transect(self, var, y_trans, t_start=None, t_stop=None, h_plus_zs=True, dpi=300):
         xgr, ygr, zgr = self.read_grid()
         _, idy = self.xy_to_grid_index(xgr, ygr, (0, y_trans))

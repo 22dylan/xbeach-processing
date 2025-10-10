@@ -70,8 +70,6 @@ class MakeAnimation(HelperFuncs):
                     fname, 
                     transparent=False, 
                     dpi=self.dpi,
-                    bbox_inches='tight',
-                    pad_inches=0.1,
                     )
 
     def plot_timestep(self, t_hr, fname=None, prnt_read=False, t_start=None, t_stop=None):
@@ -142,8 +140,7 @@ class MakeAnimation(HelperFuncs):
                     fname, 
                     transparent=True, 
                     dpi=self.dpi, 
-                    bbox_inches="tight", 
-                    pad_inches=0.1)
+                    )
 
     def draw_time_series(self, ax, t_hr, t_start, t_stop):
         # # -- now plotting time series

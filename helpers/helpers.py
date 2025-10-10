@@ -497,6 +497,8 @@ class HelperFuncs():
 
     def rmse(self, predictions, targets):
         return np.sqrt(((predictions - targets) ** 2).mean())
+    def mae(self, predictions, targets):
+        return np.mean(np.abs(predictions - targets))
 
 if __name__ == '__main__':
     hf = HelperFuncs()

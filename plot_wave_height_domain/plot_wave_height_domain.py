@@ -52,7 +52,11 @@ class PlotWaveHeightDomain(HelperFuncs):
             ax_bar = ax0
         else:
             ax_bar = ax1
-        plt.colorbar(pcm, ax=ax_bar, extend="max", label="Sig. Wave Height (m)", aspect=40)
+        if stat == "Hs":
+            labl = "Sig. Wave Height (m)"
+        elif stat == "Hmax":
+            labl = "Max. Wave Height (m)"
+        plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:
             custom_color = 'springgreen'
             cmap_bldg = mpl.colors.ListedColormap([custom_color])
