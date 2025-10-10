@@ -25,19 +25,19 @@ if __name__ == "__main__":
     # sws.geolocate(var="Hs")
 
     # # -- animation plots
-    ma = MakeAnimation(
-                var              = "zs",                         # variable to plot (H=wave height; zs=water level)
-                tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-                tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-                domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-                xbeach_duration  = 2,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-                vmin             = 2,                           # vmin for plotting
-                vmax             = 4,                           # vmax for plotting
-                make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
-                dpi              = 200,                         # image resolution (dpi = dots per inch)
-                )
+    # ma = MakeAnimation(
+    #             var              = "zs",                         # variable to plot (H=wave height; zs=water level)
+    #             tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+    #             tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+    #             domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+    #             xbeach_duration  = 2,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+    #             vmin             = 2,                           # vmin for plotting
+    #             vmax             = 4,                           # vmax for plotting
+    #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
+    #             dpi              = 200,                         # image resolution (dpi = dots per inch)
+    #             )
     # ma.make_animation(parallel=True, num_proc=2)
-    ma.plot_frame(t_hr=1)
+    # ma.plot_frame(t_hr=1)
 
 
     # # -- compare forcing to output
@@ -45,8 +45,10 @@ if __name__ == "__main__":
     # cfo.compare_forcing2output()
 
     # # -- plot forcing
-    # pf = PlotForcing()
-    # pf.plot(var="hs", savepoint=5, duration=2)
+    pf = PlotForcing()
+    pf.plot(var="hs", savepoint=1, duration=2)
+    pf.plot(var="hs", savepoint=3, duration=2)
+    pf.plot(var="hs", savepoint=5, duration=2)
 
     # # -- plot grid
     # pg = PlotGrid()

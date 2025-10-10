@@ -84,9 +84,9 @@ class MakeAnimation(HelperFuncs):
         data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)
         xgr, ygr, _ = self.read_grid()
 
-        figsize = (16,9)
+        figsize = (14,9)
         fig = plt.figure(figsize=figsize)
-        gs = mpl.gridspec.GridSpec(2, 2, figure=fig, width_ratios=[1, 2.8], height_ratios=[4, 1])
+        gs = mpl.gridspec.GridSpec(2, 2, figure=fig, width_ratios=[1, 4], height_ratios=[4, 1])
         ax0 = fig.add_subplot(gs[0:, 0])
         ax1 = fig.add_subplot(gs[0, 1])
         ax2 = fig.add_subplot(gs[1, 1])
@@ -108,7 +108,7 @@ class MakeAnimation(HelperFuncs):
 
         # -- drawing second, zoomed in plot
         # full model domain
-        box_lower_left = (2600, 5000)       # in world units
+        box_lower_left = (1600, 5000)       # in world units
         dx, dy = 1000, 1000
 
         # continuing with zommed in plot
@@ -198,16 +198,6 @@ class MakeAnimation(HelperFuncs):
         cmap_bldg.set_bad(alpha=0)
 
         return cmap, cmap_bldg
-
-    def xbeach_duration_to_start_stop(self):
-        if self.xbeach_duration == 12:
-            return 60.25, 72.25
-        elif self.xbeach_duration == 6:
-            return 63.25, 69.25
-        elif self.xbeach_duration == 3:
-            return 64.5, 67.5
-        elif self.xbeach_duration == 2:
-            return 65.25, 67.25
 
     def make_animation(self, parallel=True, num_proc=None):
         t = self.read_time_xarray()
