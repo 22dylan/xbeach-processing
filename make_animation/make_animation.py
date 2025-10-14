@@ -18,7 +18,7 @@ class MakeAnimation(HelperFuncs):
     """docstring for xb_plotting_large"""
     def __init__(self, var="H", tstart=None, 
                 tstop=None, domain_size="estero", xbeach_duration=12, vmax=1, 
-                vmin=0, make_all_figs=True, dpi=300):
+                vmin=0, make_all_figs=True, dpi=300, detrend=False):
         super().__init__()
 
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -35,6 +35,9 @@ class MakeAnimation(HelperFuncs):
         self.vmin = vmin
         self.make_all_figs = make_all_figs
         self.dpi = dpi
+        self.detrend = detrend
+        self.detrend_map = self.get_detrend_map()
+
 
     def plot_timestep_micro(self, t_hr=None, fname=None, t_start=None, t_stop=None):
         if t_hr!=None:
@@ -45,6 +48,7 @@ class MakeAnimation(HelperFuncs):
         
         xgr, ygr, _ = self.read_grid()                                     # reading grid data
         data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)        # reading xbeach output
+        data_plot = data_plot - self.detrend_map
         mask = (data_plot < -99999)
         masked_array = np.ma.array(data_plot, mask=mask)
 
@@ -80,8 +84,8 @@ class MakeAnimation(HelperFuncs):
         t_idx = np.argmin(np.abs(t-t_hr*3600))
         t_hr = t[t_idx]/3600
 
-
         data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)
+        data_plot = data_plot - self.detrend_map
         xgr, ygr, _ = self.read_grid()
 
         figsize = (14,9)
@@ -133,7 +137,6 @@ class MakeAnimation(HelperFuncs):
         ax0.add_patch(rect)
         
         self.draw_time_series(ax2, t_hr, t_start, t_stop)
-
 
         # -- (optionally) saving file
         self.save_fig( fig, 
@@ -199,7 +202,23 @@ class MakeAnimation(HelperFuncs):
 
         return cmap, cmap_bldg
 
+    def get_detrend_map(self):
+        
+        dims = self.read_dims_xarray()
+        if self.detrend:
+            print("making detrend map...")
+            detrend_map = np.empty(dims)
+            data_all = self.read_3d_data_xarray_nonmem(self.var)
+            for y2_ in range(dims[0]):
+                z = data_all[:,y2_,:].values
+                detrend_map[y2_, :] = np.mean(z, axis=0)  # de-trend signal with mean
+            print("\tdone.")
+        else:
+            detrend_map = np.zeros(dims)
+        return detrend_map
+
     def make_animation(self, parallel=True, num_proc=None):
+        
         t = self.read_time_xarray()
         if self.tstart == None:
             self.tstart = t[0]
@@ -208,7 +227,7 @@ class MakeAnimation(HelperFuncs):
         tstart_idx = np.argmin(np.abs(t-self.tstart*3600))
         tstop_idx = np.argmin(np.abs(t-self.tstop*3600))
 
-        t_start_xbeach, t_stop_xbeach = self.xbeach_duration_to_start_stop()
+        t_start_xbeach, t_stop_xbeach = self.xbeach_duration_to_start_stop(self.xbeach_duration)
         print("creating video with tstart = {:.2f} hr and tstop = {:.2f} hr" .format(self.tstart, self.tstop))
         print("  found nearest time steps as: tstart = {:.2f} hr and tstop = {:.2f}hr" .format(t[tstart_idx]/3600, t[tstop_idx]/3600))
         print("  making video with time indices: tstart_idx = {} and tstop_idx = {}" .format(tstart_idx, tstop_idx))
@@ -252,7 +271,7 @@ class MakeAnimation(HelperFuncs):
         t = self.read_time_xarray()
         t_idx = np.argmin(np.abs(t-t_hr*3600))
         t_hr_plot = (t[t_idx])/3600
-        t_start_xbeach, t_stop_xbeach = self.xbeach_duration_to_start_stop()
+        t_start_xbeach, t_stop_xbeach = self.xbeach_duration_to_start_stop(self.xbeach_duration)
         print("creating frame at t_hr = {:.2f} hr" .format(t_hr_plot))
         print("  nearest time step to input <{:.2f}> hr is t_hr = {:.2f} hr" .format(t_hr, t_hr_plot))
         print("  this corresponds to time array index: t_idx={}" .format(t_idx))

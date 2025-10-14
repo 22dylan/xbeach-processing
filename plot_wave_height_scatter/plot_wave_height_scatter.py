@@ -111,7 +111,8 @@ class PlotWaveHeightScatter(HelperFuncs):
                     rmse = self.rmse(x_data, y_data)
                     mae  = self.mae(x_data, y_data)
                     s = "RMSE: {:0.3f}\nMAE:   {:0.3f}" .format(rmse, mae)
-                    ax[row, col].text(x=0.05,y=0.95,s=s, transform=ax[row,col].transAxes, fontsize=8, va="top", ha="left",
+                    ax[row, col].text(x=0.05,y=0.95,s=s, transform=ax[row,col].transAxes, 
+                                fontsize=8, va="top", ha="left",
                                 bbox={"boxstyle":'square', "facecolor":'white', "alpha":0.5})
         else:
             fig, ax = plt.subplots(1,1, figsize=(4,3.5))
