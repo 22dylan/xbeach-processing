@@ -100,7 +100,7 @@ class MakeAnimation(HelperFuncs):
 
         # -- drawing first plot
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=self.vmin, vmax=self.vmax, cmap=cmap)
-        plt.colorbar(pcm, ax=ax1, extend="max", label=cbar_s)
+        plt.colorbar(pcm, ax=ax1, extend="both", label=cbar_s)
 
         bldgs = self.read_buildings()
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)

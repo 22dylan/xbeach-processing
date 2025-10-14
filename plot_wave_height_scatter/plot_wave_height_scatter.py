@@ -53,8 +53,8 @@ class PlotWaveHeightScatter(HelperFuncs):
         print("number bldgs with {}<{}: {}" .format(labels[1], labels[0], len(df_run1_greater)))
 
         if plot_hist == True:
-            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))        
-            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))        
+            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))        
+            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))        
             runs_short = [i.split("max")[0] for i in runs]
             ticks = np.arange(0, lim+0.5, 0.5)
             for col in range(len(runs)-1,-1,-1):
@@ -111,7 +111,7 @@ class PlotWaveHeightScatter(HelperFuncs):
                     rmse = self.rmse(x_data, y_data)
                     mae  = self.mae(x_data, y_data)
                     s = "RMSE: {:0.3f}\nMAE:   {:0.3f}" .format(rmse, mae)
-                    ax[row, col].text(x=0.05,y=0.8,s=s, transform=ax[row,col].transAxes, fontsize=8,
+                    ax[row, col].text(x=0.05,y=0.95,s=s, transform=ax[row,col].transAxes, fontsize=8, va="top", ha="left",
                                 bbox={"boxstyle":'square', "facecolor":'white', "alpha":0.5})
         else:
             fig, ax = plt.subplots(1,1, figsize=(4,3.5))
@@ -173,8 +173,8 @@ class PlotWaveHeightScatter(HelperFuncs):
         
 
         if plot_hist == True:
-            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))
-            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))
+            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))
+            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))
             ticks = np.arange(0, lim+0.5, 0.5)
             for col in range(len(runs)-1,-1,-1):
                 for row in range(len(runs)-1,-1,-1):

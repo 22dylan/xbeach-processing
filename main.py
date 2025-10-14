@@ -1,3 +1,4 @@
+import os
 import matplotlib.pyplot as plt
 from helpers.helpers import HelperFuncs
 from make_animation.make_animation import MakeAnimation
@@ -20,9 +21,11 @@ from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 
 if __name__ == "__main__":
     # # -- save wave stats
-    # sws = SaveWaveStats()
+    sws = SaveWaveStats()
     # sws.save("zs1", "Hs")
-    # sws.geolocate(var="Hs")
+    sws.geolocate(stat="Hs")
+    # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
+    # sws.assign_to_bldgs(stat="Hs", path_to_bldgs=path_to_bldgs, runs=["run51"], col_names=["Hs_test", "Hs_test2"])
 
     # # -- animation plots
     # ma = MakeAnimation(
@@ -45,10 +48,10 @@ if __name__ == "__main__":
     # cfo.compare_forcing2output()
 
     # # -- plot forcing
-    pf = PlotForcing()
-    pf.plot(var="hs", savepoint=1, duration=2)
-    pf.plot(var="hs", savepoint=3, duration=2)
-    pf.plot(var="hs", savepoint=5, duration=2)
+    # pf = PlotForcing()
+    # pf.plot(var="hs", savepoint=1, duration=2)
+    # pf.plot(var="hs", savepoint=3, duration=2)
+    # pf.plot(var="hs", savepoint=5, duration=2)
 
     # # -- plot grid
     # pg = PlotGrid()
@@ -122,8 +125,8 @@ if __name__ == "__main__":
 
     # # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["run36-2p", "run36-5p", "run36-10p", "run36-25p", "run36-45p"], plot_hist=True, run_w_bldgs="run43", labels=["1 CPU", "2 CPU", "5 CPU", "10 CPU", "25 CPU", "45 CPU"], fname="cpu-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run36-2p", "run36-5p", "run36-10p", "run36-25p", "run36-45p"], plot_hist=True, labels=["1 CPU", "2 CPU", "5 CPU", "10 CPU", "25 CPU", "45 CPU"], fname="cpu-scatter-domain.png")
+    # # pwhs.scatter_bldg(stat="Hs", runs=["run46"], plot_hist=False, run_w_bldgs="run43", labels=["1 m", "2 m"], fname="r43r46-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run46"], plot_hist=False, labels=["1 m", "2 m"], fname="r43r46-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()
