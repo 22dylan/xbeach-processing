@@ -5,6 +5,8 @@ import xarray as xr
 import seaborn as sns
 import matplotlib.pyplot as plt
 import scipy.ndimage as ndi
+import rasterio
+from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 class HelperFuncs():
     """
@@ -200,6 +202,35 @@ class HelperFuncs():
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         time = ds["globaltime"].values
         return time
+
+    def reproject_raster(self, path_to_dem, epsg):
+        """
+        function to reproject raster from current epsg to local utm epsg.
+        Note that a temporary tiff file is written to "temp.tiff". This file is
+        later removed when it is no longer needed.
+        """
+        with rasterio.open(path_to_dem) as src:
+            transform, width, height = rasterio.warp.calculate_default_transform(
+                src.crs, epsg, src.width, src.height, *src.bounds)
+            kwargs = src.meta.copy()
+            kwargs.update({
+                "crs": epsg,
+                "transform": transform,
+                "width": width,
+                "height": height
+            })
+
+            with rasterio.open("temp.tiff", "w", **kwargs) as dst:
+                for i in range(1, src.count + 1):
+                    d = reproject(
+                        source=rasterio.band(src, i),
+                        destination=rasterio.band(dst, i),
+                        src_transform=src.transform,
+                        src_crs=src.crs,
+                        dst_transform=transform,
+                        dst_crs=epsg,
+                        resampling=Resampling.nearest)
+
 
     def read_buildings(self, run_w_bldgs=None):
         """

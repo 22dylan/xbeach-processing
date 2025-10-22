@@ -94,7 +94,7 @@ class PlotWaveHeightDomain(HelperFuncs):
             ax0.add_patch(rect)
 
         # --- saving file
-        self.save_fig(fig, fname, transparent=True, dpi=300)
+        self.save_fig(fig, fname, transparent=True, dpi=1000)
 
 
     def plot_diff(self, stat, comparison_run, vmax=1, norm=False, 
@@ -151,7 +151,7 @@ class PlotWaveHeightDomain(HelperFuncs):
         ax0.set_ylabel("y (m)")
 
         # --- saving file
-        self.save_fig(fig, fname, transparent=True, dpi=300)
+        self.save_fig(fig, fname, transparent=True, dpi=1000)
 
 
 

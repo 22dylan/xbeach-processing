@@ -269,52 +269,6 @@ class CompareForcingOutput():
         else:
             return slice_data.values
 
-    def read_grid(self):
-        fn = os.path.join(self.path_to_model, "x.grd")
-        if os.path.isfile(fn):
-            xgrid = os.path.join(self.path_to_model, "x.grd")
-            ygrid = os.path.join(self.path_to_model, "y.grd")
-            zgrid = os.path.join(self.path_to_model, "z.grd")
-            with open(xgrid,'r') as f:
-                for cnt, line in enumerate(f.readlines()):
-                    xs = [float(i.strip()) for i in line.split()]
-                    if cnt == 0:
-                        break
-            ys = []
-            with open(ygrid,'r') as f:
-                for cnt, line in enumerate(f.readlines()):
-                    y_ = [float(i.strip()) for i in line.split()][0]
-                    ys.append(y_)
-            
-            zgr = np.zeros((len(ys),len(xs)))
-            with open(zgrid,'r') as f:
-                for cnt, line in enumerate(f.readlines()):
-                    z_ = [float(i.strip()) for i in line.split()]
-                    zgr[cnt,:] = z_
-
-            xgr, ygr = np.meshgrid(xs, ys)
-
-
-        else:
-            fn_params = os.path.join(self.path_to_model, "params.txt")
-            with open(fn_params) as f:
-                for cnt, line in enumerate(f.readlines()):
-                    ls = [i.strip() for i in line.split()]
-                    if "dx" in ls:
-                        dx = float(ls[-1])
-                    elif "dy" in ls:
-                        dy = float(ls[-1])
-                    elif "nx" in ls:
-                        nx = float(ls[-1])
-                    elif "ny" in ls:
-                        ny = float(ls[-1])
-            
-            xs = np.arange(start=0, stop=nx*dx+dx, step=dx)
-            ys = np.arange(start=0, stop=ny*dy+dx, step=dy)
-            xgr, ygr = np.meshgrid(xs, ys)
-
-        return xgr, ygr, zgr
-
 if __name__ == "__main__":
     cfo = CompareForcingOutput(
             # model_runname="frun1-30m-bldgs-12hr-tideloc4", 

@@ -23,11 +23,15 @@ if __name__ == "__main__":
     # # -- save wave stats
     # sws = SaveWaveStats()
     # sws.save("zs1", "Hs")
-    # sws.geolocate(stat="Hs")
+    # sws.geolocate(stat="Hmax")
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
-    # sws.assign_to_bldgs(stat="Hs", path_to_bldgs=path_to_bldgs, runs=["run51"], col_names=["Hs_test", "Hs_test2"])
+    # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
+    #                     path_to_bldgs=path_to_bldgs, 
+    #                     runs=["run52", "run53"], 
+    #                     col_names=["Hs_no_bldgs", "Hs_bldgs_on_grnd", "Hs_remove_elevated", "Hmax_no_bldgs", "Hmax_bldgs_on_grnd", "Hmax_remove_elevated"]
+    #                     )
 
-    # # -- animation plots
+    # -- animation plots
     ma = MakeAnimation(
                 var              = "zs1",                       # variable to plot (H=wave height; zs=water level)
                 tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
@@ -38,10 +42,11 @@ if __name__ == "__main__":
                 vmax             = 1,                           # vmax for plotting
                 make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
                 dpi              = 200,                         # image resolution (dpi = dots per inch)
+                fps              = 10,
                 detrend          = True,                        # detrend the elevation data
                 )
-    # ma.make_animation(parallel=True, num_proc=2)
-    ma.plot_frame(t_hr=1)
+    ma.make_animation(parallel=True, num_proc=2)
+    # ma.plot_frame(t_hr=1)
 
 
     # # -- compare forcing to output
@@ -97,19 +102,19 @@ if __name__ == "__main__":
 
     # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="Hmax",
+    # pwhd.plot(stat="Hs",
     #         vmin=0,
     #         vmax=1,
-    #         single_frame=True, 
-    #         domain_size="micro",
+    #         single_frame=True,
+    #         domain_size="estero",
     #         plt_bldgs=True,
-    #         fname="Hmax-domain.png"
+    #         fname="Hs-domain.png"
     #         )
     # pwhd.plot_diff(stat="Hs",
-    #         comparison_run="run36-2p",
-    #         domain_size="micro",
-    #         vmax=0.5,
-    #         # fname="Hmax-diff-nhsb"
+    #         comparison_run="frun57-20p-v2",
+    #         domain_size="estero",
+    #         vmax=0.1,
+    #         fname="Hs-diff-20p20p"
     #         )
 
     # -- plot wave height building
@@ -126,8 +131,8 @@ if __name__ == "__main__":
 
     # # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
-    # # pwhs.scatter_bldg(stat="Hs", runs=["run46"], plot_hist=False, run_w_bldgs="run43", labels=["1 m", "2 m"], fname="r43r46-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run46"], plot_hist=False, labels=["1 m", "2 m"], fname="r43r46-scatter-domain.png")
+    # pwhs.scatter_bldg(stat="Hs", runs=["run49", "run46"], plot_hist=True, run_w_bldgs="run45", labels=["0.5 m", "1 m", "2 m"], fname="resolution-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run49", "run46"], plot_hist=True, labels=["0.5 m", "1 m", "2 m"], fname="resolution-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()

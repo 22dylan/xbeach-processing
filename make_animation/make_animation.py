@@ -18,7 +18,7 @@ class MakeAnimation(HelperFuncs):
     """docstring for xb_plotting_large"""
     def __init__(self, var="H", tstart=None, 
                 tstop=None, domain_size="estero", xbeach_duration=12, vmax=1, 
-                vmin=0, make_all_figs=True, dpi=300, detrend=False):
+                vmin=0, make_all_figs=True, dpi=300, fps=10, detrend=False):
         super().__init__()
 
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -35,6 +35,7 @@ class MakeAnimation(HelperFuncs):
         self.vmin = vmin
         self.make_all_figs = make_all_figs
         self.dpi = dpi
+        self.fps = fps
         self.detrend = detrend
         self.detrend_map = self.get_detrend_map()
 
@@ -287,7 +288,7 @@ class MakeAnimation(HelperFuncs):
         video_name = '{}-{}.mp4'.format(self.model_runname, self.var)
         video_name = os.path.join(self.path_to_save_plot, video_name)
         fig, ax = plt.subplots(figsize=figsize)
-        writer = animation.FFMpegWriter(fps=10)
+        writer = animation.FFMpegWriter(fps=self.fps)
         with writer.saving(fig, video_name, dpi=self.dpi):
           for step in range(tstart_idx, tstop_idx):
                 if step%100==0:

@@ -93,7 +93,7 @@ class PlotWaveHeightScatter(HelperFuncs):
                     y_data = df[runs[row]]
 
                     ax[row,col].scatter(x_data, y_data, s=10, facecolor="None", edgecolor='k')
-                    ax[row,col].plot([-1,6], [-1,6], ls="-.", lw=1.0, zorder=1, color='k')
+                    ax[row,col].plot([-1,6], [-1,6], ls="-.", lw=1.0, zorder=1, color='r')
                     ax[row,col].set_xlim([0,lim])
                     ax[row,col].set_ylim([0,lim])
 
@@ -122,7 +122,7 @@ class PlotWaveHeightScatter(HelperFuncs):
             y_data = df[runs[1]]
             
             ax.scatter(x_data, y_data, s=10, facecolor="None", edgecolor='k')
-            ax.plot([-1,6], [-1,6], ls="-.", lw=1.0, zorder=1, color='k')
+            ax.plot([-1,6], [-1,6], ls="-.", lw=1.0, zorder=1, color='r')
             ax.set_xlim([0,lim])
             ax.set_ylim([0,lim])
 
