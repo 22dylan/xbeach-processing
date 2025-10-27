@@ -7,16 +7,15 @@ from make_animation.make_animation import MakeAnimation
 # from compare_forcing_output.compare_forcing_output import CompareForcingOutput
 from plot_forcing.plot_forcing import PlotForcing
 from plot_grid.plot_grid import PlotGrid
-from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
+# from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
 from plot_output_point.plot_output_point import PlotOutputPoint
 from plot_output_transect.plot_output_transect import PlotOutputTransect
-from save_wave_stats.save_wave_stats import SaveWaveStats
+# from save_wave_stats.save_wave_stats import SaveWaveStats
 from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
 from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
 from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
 from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
-
-# from plot_wave_heights.plot_wave_heights import PlotWaveHeights
+from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 
 if __name__ == "__main__":
@@ -33,20 +32,20 @@ if __name__ == "__main__":
 
     # -- animation plots
     ma = MakeAnimation(
-                var              = "zs1",                       # variable to plot (H=wave height; zs=water level)
+                var              = "zs",                       # variable to plot (H=wave height; zs=water level)
                 tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
                 tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-                domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-                xbeach_duration  = 2,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-                vmin             = -1,                           # vmin for plotting
-                vmax             = 1,                           # vmax for plotting
+                domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+                xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+                vmin             = 2,                           # vmin for plotting
+                vmax             = 4,                           # vmax for plotting
                 make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
                 dpi              = 200,                         # image resolution (dpi = dots per inch)
                 fps              = 10,
-                detrend          = True,                        # detrend the elevation data
+                detrend          = False,                        # detrend the elevation data
                 )
-    ma.make_animation(parallel=True, num_proc=2)
-    # ma.plot_frame(t_hr=1)
+    # ma.make_animation(parallel=True, num_proc=2)
+    ma.plot_frame(t_hr=1)
 
 
     # # -- compare forcing to output
@@ -100,13 +99,13 @@ if __name__ == "__main__":
 
     
 
-    # # -- plot wave height domain
+    # # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
     # pwhd.plot(stat="Hs",
     #         vmin=0,
     #         vmax=1,
     #         single_frame=True,
-    #         domain_size="estero",
+    #         domain_size="micro",
     #         plt_bldgs=True,
     #         fname="Hs-domain.png"
     #         )

@@ -79,13 +79,14 @@ class SaveWaveStats(HelperFuncs):
 
     def assign_to_bldgs(self, stats, path_to_bldgs, runs=None, col_names=None):
         bldgs = gpd.read_file(path_to_bldgs)
+        
         if runs != None:
             runs.insert(0, self.model_runname)
         else:
             runs = [self.model_runname]
 
-        bldgs["geometry"] = bldgs["geometry"].centroid
-        coord_list = [(x, y) for x, y in zip(bldgs["geometry"].x, bldgs["geometry"].y)]
+        bldgs["centroid"] = bldgs["geometry"].centroid
+        coord_list = [(x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)]
         if col_names==None:
             col_names = []
             need_to_create_col_names = True
@@ -113,12 +114,17 @@ class SaveWaveStats(HelperFuncs):
             bldgs["dem_elev"] = [x[0] for x in r.sample(coord_list)]
             os.remove("temp.tiff")
     
+        # bldgs.to_crs("epsg:4326", inplace=True)
+        bldgs["centroid"] = bldgs["centroid"].to_crs("epsg:4326")
+        bldgs["lon"] = bldgs["centroid"].x
+        bldgs["lat"] = bldgs["centroid"].y
+
         max_surge = 3.740
         bldgs["water_depth_temp"] = max_surge-bldgs["dem_elev"]
 
-        keep_cols = ["TARGET_FID", "OBJECTID", "FolioID", "water_depth"] + col_names
+        keep_cols = ["VDA_id", "TARGET_FID", "OBJECTID", "FolioID", "lon", "lat", "water_depth_temp"] + col_names
         bldgs = bldgs[keep_cols]
-        fn_out = os.path.join(self.path_to_save_plot, "Hs_at_bldgs.csv")
+        fn_out = os.path.join(self.path_to_save_plot, "H_at_bldgs.csv")
         bldgs.to_csv(fn_out, index=False)
 
 
