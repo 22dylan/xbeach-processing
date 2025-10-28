@@ -11,7 +11,10 @@ class SaveWaveStats(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def save(self, var, stat, store_in_mem=True):
+    def save(self, var, stat, trim_beginning_seconds=0, store_in_mem=True):
+        t = self.read_time_xarray()
+        t_idx_start = np.argmin(np.abs(t-trim_beginning_seconds))
+
         dims = self.read_dims_xarray()
         data_save = np.empty(dims)
         if store_in_mem:
@@ -23,9 +26,9 @@ class SaveWaveStats(HelperFuncs):
             print("y2_ = {} out of {}" .format(y2_, dims[0]))
             for x2_ in range(dims[1]):
                 if store_in_mem:
-                    z = data_all[:,y2_,x2_]
+                    z = data_all[t_idx_start:,y2_,x2_]
                 else:
-                    z = data_all[:,y2_,x2_].values
+                    z = data_all[t_idx_start:,y2_,x2_].values
 
                 if np.sum(z) == 0:
                     data_ = 0

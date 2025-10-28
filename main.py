@@ -20,8 +20,8 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 if __name__ == "__main__":
     # # -- save wave stats
-    # sws = SaveWaveStats()
-    # sws.save("zs1", "Hs")
+    sws = SaveWaveStats()
+    sws.save(var="zs1", stat="Hs", trim_beginning_seconds=500)
     # sws.geolocate(stat="Hmax")
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     # cfo.compare_forcing2output()
 
     # # -- plot forcing
-    pf = PlotForcing()
-    pf.plot(var="el", savepoint=1, duration=0.5)
+    # pf = PlotForcing()
+    # pf.plot(var="el", savepoint=1, duration=0.5)
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
 
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     #         vmin=0,
     #         vmax=1,
     #         single_frame=True,
-    #         domain_size="micro",
+    #         domain_size="estero",
     #         plt_bldgs=True,
     #         fname="Hs-domain.png"
     #         )
@@ -122,7 +122,7 @@ if __name__ == "__main__":
     #         model_runname_w_bldgs=None, 
     #         vmax=1, 
     #         vmin=0, 
-    #         domain_size="micro", 
+    #         domain_size="estero", 
     #         grey_background=True, 
     #         fname="Hs-bldg.png"
     #         )
@@ -130,8 +130,8 @@ if __name__ == "__main__":
 
     # # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["run49", "run46"], plot_hist=True, run_w_bldgs="run45", labels=["0.5 m", "1 m", "2 m"], fname="resolution-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run49", "run46"], plot_hist=True, labels=["0.5 m", "1 m", "2 m"], fname="resolution-scatter-domain.png")
+    # pwhs.scatter_bldg(stat="Hs", runs=["run50", "run51"], plot_hist=True, run_w_bldgs="run49", labels=["bldg-on-ground", "remove-elevated", "no-bldgs"], fname="r49r50r51-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run50", "run51"], plot_hist=True, labels=["bldg-on-ground", "remove-elevated", "no-bldgs"], fname="r49r50r51-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()

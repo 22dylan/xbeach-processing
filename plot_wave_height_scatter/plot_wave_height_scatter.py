@@ -65,26 +65,29 @@ class PlotWaveHeightScatter(HelperFuncs):
                     if col==row:
                         df[runs[col]].hist(
                             ax=ax[row, col], 
-                            bins=20,
+                            bins=30,
                             range=(0,lim),
-                            density=True,
+                            density=False,
                             color="tan",
                             edgecolor='black',
                             linewidth=0.3,
                             alpha=0.7
                             )
-                        df[runs[col]].plot.kde(
-                            ax=ax[row,col],
-                            color='k',
-                            lw=1
-                            )
+                        # df[runs[col]].plot.kde(
+                        #     ax=ax[row,col],
+                        #     color='k',
+                        #     lw=1
+                        #     )
                         ax[row,col].set_xlabel(None)
                         ax[row,col].set_ylabel(None)
                         ax[row,col].grid(False)
                         ax[row,col].set_xlim([0,lim])
                         ax[row,col].text(s=labels[col], x=0.98,y=0.9, transform=ax[row,col].transAxes, ha="right")
                         
-                        ax[row,col].get_yaxis().set_ticks([])
+                        # ax[row,col].get_yaxis().set_ticks([])
+                        ax[row, col].set_ylabel("Frequency", fontsize=8)
+                        ax[row, col].set_xlabel("{} (m)" .format(stat), fontsize=8)
+                        ax[row,col].tick_params(axis='y', labelsize=8)
                         ax[row,col].tick_params(axis='x', labelsize=8)
                         continue
 
@@ -185,7 +188,7 @@ class PlotWaveHeightScatter(HelperFuncs):
                     if col==row:
                         df[runs[col]].hist(
                             ax=ax[row, col], 
-                            bins=20,
+                            bins=30,
                             range=(0,lim),
                             density=True,
                             color="tan",
@@ -193,19 +196,21 @@ class PlotWaveHeightScatter(HelperFuncs):
                             linewidth=0.3,
                             alpha=0.7
                             )
-                        df[runs[col]].plot.kde(
-                            ax=ax[row,col],
-                            color='k',
-                            lw=1
-                            )
+                        # df[runs[col]].plot.kde(
+                        #     ax=ax[row,col],
+                        #     color='k',
+                        #     lw=1
+                        #     )
                         ax[row,col].set_xlabel(None)
                         ax[row,col].set_ylabel(None)
                         ax[row,col].grid(False)
                         ax[row,col].set_xlim([0,lim])
                         ax[row,col].text(s=labels[col], x=0.98,y=0.9, transform=ax[row,col].transAxes, ha="right")
                         
-                        ax[row,col].get_yaxis().set_ticks([])
+                        ax[row, col].set_ylabel("Prob. Dens.", fontsize=8)
+                        ax[row, col].set_xlabel("{} (m)" .format(stat), fontsize=8)
                         ax[row,col].tick_params(axis='x', labelsize=8)
+                        ax[row,col].tick_params(axis='y', labelsize=8)
                         continue
 
                     # -- if get to this point, then making scatter plot
