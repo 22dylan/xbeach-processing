@@ -7,10 +7,10 @@ from make_animation.make_animation import MakeAnimation
 # from compare_forcing_output.compare_forcing_output import CompareForcingOutput
 from plot_forcing.plot_forcing import PlotForcing
 from plot_grid.plot_grid import PlotGrid
-# from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
+from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
 from plot_output_point.plot_output_point import PlotOutputPoint
 from plot_output_transect.plot_output_transect import PlotOutputTransect
-# from save_wave_stats.save_wave_stats import SaveWaveStats
+from save_wave_stats.save_wave_stats import SaveWaveStats
 from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
 from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
 from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
