@@ -11,7 +11,7 @@ class SaveWaveStats(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def save(self, var, stat, trim_beginning_seconds=0, store_in_mem=True):
+    def save(self, var, stat, trim_beginning_seconds=0, store_in_mem=False):
         t = self.read_time_xarray()
         t_idx_start = np.argmin(np.abs(t-trim_beginning_seconds))
 
