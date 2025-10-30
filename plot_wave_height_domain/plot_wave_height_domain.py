@@ -30,7 +30,7 @@ class PlotWaveHeightDomain(HelperFuncs):
             fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(16,9), gridspec_kw={'width_ratios': [1,2.8]})
 
         # setting up mask to ignore values less than 0
-        if plt_offshore:
+        if plt_offshore==False:
             mask = (zgr<=0)
         else:
             mask = (zgr<=-999999999)

@@ -37,6 +37,6 @@ class PlotWaveHeightBldg(HelperFuncs):
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
 
-        self.save_fig(fig, fname, transparent=True, dpi=300)
+        self.save_fig(fig, fname, transparent=True, dpi=1000)
 
 

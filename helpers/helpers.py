@@ -502,6 +502,7 @@ class HelperFuncs():
                     3:   {"start": 65,    "stop":  68},
                     4:   {"start": 64,    "stop":  68},
                     6:   {"start": 63,    "stop":  69},
+                    8:   {"start": 61,    "stop":  71},
                     12:  {"start": 60,    "stop":  72}
                                 }
         t_start = duration_to_start_stop[duration]["start"]

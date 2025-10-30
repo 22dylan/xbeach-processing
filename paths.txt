@@ -1,5 +1,5 @@
 relative_path     = True
-path_to_model     = ../xbeach/models/run59
+path_to_model     = ../xbeach/models/s4
 path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
 
-path_to_save_plot = ../processed-results/run59/
+path_to_save_plot = ../processed-results/s4/

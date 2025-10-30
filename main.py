@@ -13,6 +13,7 @@ from plot_output_transect.plot_output_transect import PlotOutputTransect
 from save_wave_stats.save_wave_stats import SaveWaveStats
 from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
 from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
+from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
 from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
 from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
@@ -53,7 +54,7 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, duration=0.5)
+    # pf.plot(var="el", savepoint=1, duration=8)
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
 
@@ -98,15 +99,16 @@ if __name__ == "__main__":
 
     
 
-    # # # -- plot wave height domain
+    # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="Hs",
-    #         vmin=0,
-    #         vmax=1,
+    # pwhd.plot(stat="Tm",
+    #         vmin=5,
+    #         vmax=20,
     #         single_frame=True,
     #         domain_size="estero",
     #         plt_bldgs=True,
-    #         fname="Hs-domain.png"
+    #         plt_offshore=True,
+    #         fname="Tm-domain.png"
     #         )
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="frun57-20p-v2",
@@ -115,7 +117,7 @@ if __name__ == "__main__":
     #         fname="Hs-diff-20p20p"
     #         )
 
-    # -- plot wave height building
+    # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
     # pwhb.plot(stat="Hs",
     #         model_runname_w_bldgs=None, 
@@ -128,9 +130,12 @@ if __name__ == "__main__":
 
 
     # -- PlotWaveHeightScatter
-    pwhs = PlotWaveHeightScatter()
-    pwhs.scatter_bldg(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, run_w_bldgs="run59", labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-bldg.png")
-    pwhs.scatter_domain(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-domain.png")
+    # pwhs = PlotWaveHeightScatter()
+    # pwhs.scatter_bldg(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, run_w_bldgs="run59", labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-domain.png")
+
+    pwhe = PlotWaveHeightError()
+    pwhe.error_domain(stat="Hs", runs=["s16", "s8"], labels=["s16", "s8"], fname="temp-error.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()
