@@ -17,11 +17,10 @@ from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScat
 from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
-
 if __name__ == "__main__":
     # # -- save wave stats
-    sws = SaveWaveStats()
-    sws.save(var="zs1", stat="Hs", trim_beginning_seconds=500)
+    # sws = SaveWaveStats()
+    # sws.save(var="zs1", stat="Hs", trim_beginning_seconds=500)
     # sws.geolocate(stat="Hmax")
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
@@ -123,15 +122,15 @@ if __name__ == "__main__":
     #         vmax=1, 
     #         vmin=0, 
     #         domain_size="estero", 
-    #         grey_background=True, 
+    #         grey_background=False, 
     #         fname="Hs-bldg.png"
     #         )
 
 
-    # # -- PlotWaveHeightScatter
-    # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["run50", "run51"], plot_hist=True, run_w_bldgs="run49", labels=["bldg-on-ground", "remove-elevated", "no-bldgs"], fname="r49r50r51-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run50", "run51"], plot_hist=True, labels=["bldg-on-ground", "remove-elevated", "no-bldgs"], fname="r49r50r51-scatter-domain.png")
+    # -- PlotWaveHeightScatter
+    pwhs = PlotWaveHeightScatter()
+    pwhs.scatter_bldg(stat="Hs", runs=["run59-cp"], plot_hist=False, run_w_bldgs="run59", labels=["v1", "v2"], fname="r59v1v2-scatter-bldg.png")
+    pwhs.scatter_domain(stat="Hs", runs=["run59-cp"], plot_hist=False, labels=["v1", "v2"], fname="r59v1v2-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()

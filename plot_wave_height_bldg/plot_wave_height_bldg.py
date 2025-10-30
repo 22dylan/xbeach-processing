@@ -27,7 +27,7 @@ class PlotWaveHeightBldg(HelperFuncs):
         if grey_background:
             cmap.set_bad("grey")
         else:
-            cmap.set_bad(alpha=0)
+            cmap.set_bad(alpha=0.5)
 
         figsize = self.get_figsize(domain_size)        
         fig, ax = plt.subplots(1,1, figsize=figsize)
