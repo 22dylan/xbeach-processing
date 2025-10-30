@@ -129,8 +129,8 @@ if __name__ == "__main__":
 
     # -- PlotWaveHeightScatter
     pwhs = PlotWaveHeightScatter()
-    pwhs.scatter_bldg(stat="Hs", runs=["run59-cp"], plot_hist=False, run_w_bldgs="run59", labels=["v1", "v2"], fname="r59v1v2-scatter-bldg.png")
-    pwhs.scatter_domain(stat="Hs", runs=["run59-cp"], plot_hist=False, labels=["v1", "v2"], fname="r59v1v2-scatter-domain.png")
+    pwhs.scatter_bldg(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, run_w_bldgs="run59", labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-bldg.png")
+    pwhs.scatter_domain(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-domain.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()
