@@ -135,7 +135,7 @@ if __name__ == "__main__":
     # pwhs.scatter_domain(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-domain.png")
 
     pwhe = PlotWaveHeightError()
-    pwhe.error_domain(stat="Hs", runs=["s16", "s8"], labels=["s4", "s16", "s8"], fname="temp-error.png")
+    pwhe.plot_error(stat="Hs", runs=["s16", "s8"], labels=["s4", "s16", "s8"], fname="temp-error.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()
