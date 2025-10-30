@@ -12,7 +12,7 @@ class PlotWaveHeightDomain(HelperFuncs):
         super().__init__()
 
     def plot(self, stat, vmax=None, vmin=None, fname=None, prnt_read=False, 
-            single_frame=False, domain_size="estero", plt_bldgs=True):
+            single_frame=False, domain_size="estero", plt_bldgs=True, plt_offshore=False):
         
         # read wave heights
         H = self.read_npy(stat)
@@ -30,7 +30,10 @@ class PlotWaveHeightDomain(HelperFuncs):
             fig, (ax0, ax1) = plt.subplots(1, 2, figsize=(16,9), gridspec_kw={'width_ratios': [1,2.8]})
 
         # setting up mask to ignore values less than 0
-        mask = (zgr<=0)
+        if plt_offshore:
+            mask = (zgr<=0)
+        else:
+            mask = (zgr<=-999999999)
         masked_array = np.ma.array(H, mask=mask)
 
         # setting up colormap for water
@@ -56,6 +59,8 @@ class PlotWaveHeightDomain(HelperFuncs):
             labl = "Sig. Wave Height (m)"
         elif stat == "Hmax":
             labl = "Max. Wave Height (m)"
+        elif stat == "Tm":
+            labl = "Mean Period (s)"
         plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:
             custom_color = 'springgreen'

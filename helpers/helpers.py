@@ -394,6 +394,20 @@ class HelperFuncs():
         wave_heights = np.array(crests) - np.array(troughs)
         return wave_heights
 
+    def get_T(self, z, t, detrend=True):
+        if detrend:
+            z = z - np.mean(z)  # de-trend signal with mean
+        
+        # The sign of the (detrended) elevation at each point
+        signs = np.sign(z)
+        # Find where the sign changes.
+        zero_crossing_indices = np.where(np.diff(signs) != 0)[0]
+
+        up_crossings = zero_crossing_indices[np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]]
+        t_ = t[up_crossings] # get time of upcrossings
+        T = np.diff(t_) # now get difference from each upcrossing time
+        return T
+
     def assign_max_to_bldgs(self, data, bldgs):
         max_H = np.empty(np.shape(data))
         max_H[:] = np.nan

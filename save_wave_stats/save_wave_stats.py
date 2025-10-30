@@ -11,7 +11,7 @@ class SaveWaveStats(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def save(self, var, stat, trim_beginning_seconds=0, sample_freq=1, store_in_mem=False):
+    def save(self, var, stat, trim_beginning_seconds=0, store_in_mem=True):
         t = self.read_time_xarray()
         t_idx_start = np.argmin(np.abs(t-trim_beginning_seconds))
 
@@ -26,31 +26,34 @@ class SaveWaveStats(HelperFuncs):
             print("y2_ = {} out of {}" .format(y2_, dims[0]))
             for x2_ in range(dims[1]):
                 if store_in_mem:
-                    z = data_all[t_idx_start::sample_freq,y2_,x2_]
+                    z = data_all[t_idx_start:,y2_,x2_]
                 else:
-                    z = data_all[t_idx_start:::sample_freq,y2_,x2_].values
+                    z = data_all[t_idx_start:,y2_,x2_].values
 
-                if np.sum(z) == 0:
+                if np.sum(z) == 0:  # if no data
                     data_ = 0
                 else:
-                    if (var == "zs1") or (var=="zs"): # if zs1 or zs, have water elevation time series, need to get H
-                        H = self.get_H(z)       #   getting wave heights from time series
-                    elif var == "H":            # else, can just use H since this is wave height from group.
-                        H = z
-                    if len(H) == 0:
-                        data_ = 0
-                    elif stat == "Hmax":
-                        data_ = np.max(H)
+                    if stat == "Tm":
+                        T = self.get_T(z, t)
+                        data_ = np.mean(T)
                     elif stat == "Hs":
+                        if (var == "zs1") or (var=="zs"): # if zs1 or zs, have water elevation time series, need to get H
+                            H = self.get_H(z)       #   getting wave heights from time series
+                        elif var == "H":            # else, can just use H since this is wave height from group.
+                            H = z
                         data_ = self.compute_Hs(H)
+                    elif stat == "Hmax":
+                        if (var == "zs1") or (var=="zs"): # if zs1 or zs, have water elevation time series, need to get H
+                            H = self.get_H(z)       #   getting wave heights from time series
+                        elif var == "H":            # else, can just use H since this is wave height from group.
+                            H = z
+                        data_ = np.max(H)
+
                 data_save[y2_, x2_] = data_
 
         fn_out = os.path.join(self.path_to_save_plot, stat)
-        if sample_freq != 1:
-            fn_out = os.path.join(self.path_to_save_plot, "{}-{}" .format(stat, sample_freq))
         np.save(fn_out, data_save)
-        print("max wave height saved as: {}.npy" .format(fn_out))
-
+        print("{} saved as: {}.npy" .format(stat, fn_out))
 
     def geolocate(self, stat="Hs"):
         fn_params = os.path.join(self.path_to_model, "params.txt")
