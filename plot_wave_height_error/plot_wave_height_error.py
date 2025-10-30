@@ -46,8 +46,13 @@ class PlotWaveHeightError(HelperFuncs):
 
         fig, ax = plt.subplots(1,1)
         x = range(len(runs)-1)
-        ax.plot(x,RMSEs, label="RMSE")
-        ax.plot(x,MAEs, label="MAE")
+        ax.scatter(x,RMSEs, label="RMSE", color=colors[0])
+        ax.plot(x, RMSEs, color=colors[0], ls="-.")
+        ax.scatter(x,MAEs, label="MAE", color=colors[1])
+        ax.plot(x, MAEs, color=colors[1], ls="-.")
+        ax.set_ylabel("Error from {} (m)" .format(labels[0]))
+        ax.set_xtick_labels(labels[1:])
+
         self.save_fig(fig, fname, transparent=True, dpi=300)
         
         # if plot_hist == True:
