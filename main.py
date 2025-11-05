@@ -67,13 +67,21 @@ if __name__ == "__main__":
     # phwm.plot_scatter()
 
     # # -- plot output point
-    # pop = PlotOutputPoint()
-    # pop.plot(var="zs1",
-    #         xys=[[4,0], [200,400], [360,400], [373,400], [600,400]], 
+    pop = PlotOutputPoint()
+    # pop.plot_timeseries(var="zs",
+    #         xys=[[100,400]], 
     #         drawdomain=True,
     #         fulldomain=False, 
-    #         savefig=True
+    #         savefig=False
     #         )
+    pop.plot_Hs(var="zs",
+            xys=[[100,400]], 
+            time_chunks_min=15,
+            drawdomain=False,
+            fulldomain=False, 
+            savefig=False
+            )
+
 
     # # -- plot transect
     # pot = PlotOutputTransect()
@@ -100,7 +108,7 @@ if __name__ == "__main__":
     
 
     # # -- plot wave height domain
-    pwhd = PlotWaveHeightDomain()
+    # pwhd = PlotWaveHeightDomain()
     # pwhd.plot(stat="Hs",
     #         vmin=0,
     #         vmax=1,
@@ -110,12 +118,12 @@ if __name__ == "__main__":
     #         plt_offshore=True,
     #         fname="Hs-domain.png"
     #         )
-    pwhd.plot_diff(stat="Hs",
-            comparison_run="run64-nowind",
-            domain_size="estero",
-            vmax=0.5,
-            fname="Hs-diff-windnowind"
-            )
+    # pwhd.plot_diff(stat="Hs",
+    #         comparison_run="run64-nowind",
+    #         domain_size="estero",
+    #         vmax=0.5,
+    #         fname="Hs-diff-windnowind"
+    #         )
 
     # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()

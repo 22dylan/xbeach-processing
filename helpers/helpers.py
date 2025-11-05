@@ -352,6 +352,11 @@ class HelperFuncs():
         tstart_idx = np.argmin(np.abs(time-tstart*3600))
         tstop_idx  = np.argmin(np.abs(time-tstop*3600))
         return tstart_idx, tstop_idx
+    
+    def time_to_tindex(self, time_wanted, time):
+        t_idx = np.argmin(np.abs(time-time_wanted))
+        return t_idx.item()
+
 
     def save_fig(self, fig, fn=None, **kwargs):
         """
