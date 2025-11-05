@@ -21,7 +21,7 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 if __name__ == "__main__":
     # # -- save wave stats
     # sws = SaveWaveStats()
-    # sws.save(var="zs1", stat="Hs", trim_beginning_seconds=500)
+    # sws.save(var="zs1", stat="Hs", trim_beginning_seconds=500, store_in_mem=True)
     # sws.geolocate(stat="Hmax")
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
@@ -32,21 +32,20 @@ if __name__ == "__main__":
 
     # -- animation plots
     # ma = MakeAnimation(
-    #             var              = "zs",                       # variable to plot (H=wave height; zs=water level)
+    #             var              = "zs1",                       # variable to plot (H=wave height; zs=water level)
     #             tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
     #             tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
     #             domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
     #             xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-    #             vmin             = 2,                           # vmin for plotting
-    #             vmax             = 4,                           # vmax for plotting
+    #             vmin             = -1,                           # vmin for plotting
+    #             vmax             = 1,                           # vmax for plotting
     #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
     #             dpi              = 200,                         # image resolution (dpi = dots per inch)
     #             fps              = 10,
     #             detrend          = False,                        # detrend the elevation data
     #             )
-    # ma.make_animation(parallel=True, num_proc=2)
+    # ma.make_animation(parallel=True, num_proc=10)
     # ma.plot_frame(t_hr=1)
-
 
     # # -- compare forcing to output
     # cfo = CompareForcingOutput(var="zs1", xb_locs=[5], domain="micro")
@@ -54,7 +53,8 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, duration=8)
+    # pf.plot(var="el", savepoint=5, duration=4) #, fname="el")
+
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
 
@@ -100,22 +100,22 @@ if __name__ == "__main__":
     
 
     # # -- plot wave height domain
-    # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="Tm",
-    #         vmin=5,
-    #         vmax=20,
+    pwhd = PlotWaveHeightDomain()
+    # pwhd.plot(stat="Hs",
+    #         vmin=0,
+    #         vmax=1,
     #         single_frame=True,
     #         domain_size="estero",
     #         plt_bldgs=True,
     #         plt_offshore=True,
-    #         fname="Tm-domain.png"
+    #         fname="Hs-domain.png"
     #         )
-    # pwhd.plot_diff(stat="Hs",
-    #         comparison_run="frun57-20p-v2",
-    #         domain_size="estero",
-    #         vmax=0.1,
-    #         fname="Hs-diff-20p20p"
-    #         )
+    pwhd.plot_diff(stat="Hs",
+            comparison_run="run64-nowind",
+            domain_size="estero",
+            vmax=0.5,
+            fname="Hs-diff-windnowind"
+            )
 
     # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     #         model_runname_w_bldgs=None, 
     #         vmax=1, 
     #         vmin=0, 
-    #         domain_size="estero", 
+    #         domain_size="micro", 
     #         grey_background=False, 
     #         fname="Hs-bldg.png"
     #         )
@@ -131,11 +131,11 @@ if __name__ == "__main__":
 
     # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, run_w_bldgs="run59", labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["run59-cp", "run59-19cpu"], plot_hist=True, labels=["20 CPU v1", "20 CPU v2", "19 CPU"], fname="r59-scatter-domain.png")
+    # pwhs.scatter_bldg(stat="Hs", runs=["s2", "s4", "s8", "s16"], plot_hist=True, run_w_bldgs="s1", labels=["1 m", "2 m", "4 m", "8 m", "16 m"], fname="temp-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["s2", "s4", "s8", "s16"], plot_hist=True, labels=["1 m", "2 m", "4 m", "8 m", "16 m"], fname="temp-scatter-domain.png")
 
-    pwhe = PlotWaveHeightError()
-    pwhe.plot_error(stat="Hs", runs=["s16", "s8"], labels=["s4", "s16", "s8"], fname="temp-error.png")
+    # pwhe = PlotWaveHeightError()
+    # pwhe.plot_error(stat="Hs", runs=["s16", "s8", "s4", "s2"], run_w_bldgs="s1", labels=["s1", "s16", "s8", "s4", "s2"], fname="temp-error.png")
 
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()

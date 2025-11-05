@@ -434,6 +434,8 @@ class HelperFuncs():
         return max_H
         
     def compute_Hs(self, H):
+        if len(H) == 0:
+            return 0
         H_one_third = np.quantile(H, q=2/3)
         H = H[H>H_one_third]
         Hs = np.mean(H)
@@ -502,8 +504,9 @@ class HelperFuncs():
                     3:   {"start": 65,    "stop":  68},
                     4:   {"start": 64,    "stop":  68},
                     6:   {"start": 63,    "stop":  69},
-                    8:   {"start": 61,    "stop":  71},
-                    12:  {"start": 60,    "stop":  72}
+                    10:   {"start": 61,    "stop":  71},
+                    12:  {"start": 60,    "stop":  72},
+                    16:  {"start": 58,    "stop":  74}
                                 }
         t_start = duration_to_start_stop[duration]["start"]
         t_stop = duration_to_start_stop[duration]["stop"]
@@ -525,21 +528,24 @@ class HelperFuncs():
         """
         run1_shape = np.shape(run1_max)
         run2_shape = np.shape(run2_max)
+
         if run1_shape != run2_shape:
             r1_to_r2 = np.divide(run1_shape,run2_shape)
             r2_to_r1 = np.divide(run2_shape,run1_shape)
             scale = np.maximum(r1_to_r2, r2_to_r1)
-            if scale[0]!= scale[1]:
-                raise ValueError("need domains to be same proportion.")
+
+            # if scale[0]!= scale[1]:
+            #     raise ValueError("need domains to be same proportion.")
 
             if (scale == r1_to_r2).all():
                 temp = np.repeat(run2_max, scale[0], axis=0)
                 run2_max = np.repeat(temp, scale[0], axis=1)
-
             elif (scale == r2_to_r1).all():
                 temp = np.repeat(run1_max, scale[0], axis=0)
                 run1_max = np.repeat(temp, scale[0], axis=1)
+
         return run1_max, run2_max
+
 
     def rmse(self, predictions, targets):
         return np.sqrt(((predictions - targets) ** 2).mean())
@@ -548,5 +554,21 @@ class HelperFuncs():
 
 if __name__ == '__main__':
     hf = HelperFuncs()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

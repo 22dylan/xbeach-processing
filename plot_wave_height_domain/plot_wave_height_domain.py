@@ -103,7 +103,7 @@ class PlotWaveHeightDomain(HelperFuncs):
 
 
     def plot_diff(self, stat, comparison_run, vmax=1, norm=False, 
-                domain_size="estero", fname=None):
+                domain_size="estero", plt_offshore=False, fname=None):
         
         # get difference in wave heights
         run1_max = self.read_npy(stat)
@@ -113,7 +113,6 @@ class PlotWaveHeightDomain(HelperFuncs):
         mask = np.isnan(run1_max) & np.isnan(run2_max)
         run1_max = np.ma.array(run1_max, mask=mask) # here mask tells numpy which cells to ignore.
         run2_max = np.ma.array(run2_max, mask=mask) # here mask tells numpy which cells to ignore.
-
 
         if norm == True:
             denom = (run1_max+run2_max)/2
@@ -129,7 +128,11 @@ class PlotWaveHeightDomain(HelperFuncs):
         fig, ax0 = plt.subplots(1,1, figsize=figsize)
 
         # determine where water is and setup mask to ignore those cells.
-        mask = (zgr<0)
+        # setting up mask to ignore values less than 0
+        if plt_offshore==False:
+            mask = (zgr<=0)
+        else:
+            mask = (zgr<=-999999999)
         masked_array = np.ma.array(diff, mask=mask) # here mask tells numpy which cells to ignore.
         
         # cmap = mpl.cm.PiYG

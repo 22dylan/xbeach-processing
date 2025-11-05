@@ -213,44 +213,7 @@ class CompareForcingOutput():
         theta_d = np.rad2deg(theta_r)
         return (xo, yo), theta_r
 
-    def frcing_to_dataframe(self, fn, n_header=3):
-        t, el, wx, wy, hs, Tp, wavedir = [], [], [], [], [], [], [],
-        with open(fn,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                if cnt < n_header:
-                    if "VARIABLES" in line:
-                        var = [x.strip() for x in line.split()]
-                        var = [i for i in var if i!="VARIABLES"]
-                        var = [i for i in var if i!="="]
-                    continue
-                t_, el_, wx_, wy_, hs_, Tp_, wavedir_ = [float(x.strip()) for x in line.split()]
-                t.append(t_)
-                el.append(el_)
-                wx.append(wx_)
-                wy.append(wy_)
-                hs.append(hs_)
-                Tp.append(Tp_)
-                wavedir.append(wavedir_)
-        
 
-        # TODO confirm unit conversions with Don
-        df = pd.DataFrame()
-        df["t"] = t
-        df["el"] = el
-        df["wx"] = wx
-        df["wy"] = wy
-        df["hs"] = hs
-        df["Tp"] = Tp
-        df["wavedir"] = wavedir
-
-        df["el"] = df["el"]*0.3048
-        df["hs"] = df["hs"]*0.3048
-
-        dt = (df["t"].iloc[1] - df["t"].iloc[0])*60*60         # time setp in seconds; converting from hours.
-        df["t_sec"] = np.linspace(0, (len(df)-1)*dt, len(df))
-        df["t_hr"] = df["t_sec"]/3600
-
-        return df
 
     def read_data_xarray_point(self, var, idx, idy, prnt_read=False, rtn_time_array=True):
         fn = os.path.join(self.path_to_model, "xboutput.nc")

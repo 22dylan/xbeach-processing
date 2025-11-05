@@ -11,50 +11,111 @@ class PlotWaveHeightScatter(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def scatter_bldg(self, stat, runs, labels, plot_hist=True, run_w_bldgs=None, lim=3, fname=None):
-        xgr, ygr, zgr = self.read_grid()
-        bldgs = self.read_buildings(run_w_bldgs)
-        mask_bldgs = np.ma.getmask(bldgs)
-        print("Need to resample array such that they are the same size when comparing 1 vs 2 m runs.")
-        
-        df = pd.DataFrame()
-        runs.insert(0, self.model_runname)
-        
-        sizes = []
-        for run in runs:
-            H = self.read_npy(stat, run)
-            sizes.append(np.shape(H)[0])
-        
-        largest_size_idx = np.argmax(sizes)
-        H_domain = self.read_npy(stat, runs[largest_size_idx])
+    def scatter_bldg(self, stat, runs, labels, plot_hist=True, run_w_bldgs=None, 
+                    crude=False, lim=3, fname=None):
+        """ only use this when trying to compare runs with different size domains. 
+            This code is so poorly written. not intended to be generalized, so be careful.
+        """
+        if crude:
+            # -- getting buildings / location of buildings
+            bldgs = self.read_buildings(run_w_bldgs)
 
-        for run in runs:
-            # read wave heights
-            H = self.read_npy(stat, run)
-            _, H = self.check_domain_size_wave_stat(H_domain, H)
+            print("this is hideously done")
+            first_row = bldgs[0:1, :]
+            last_row =  bldgs[-1:, :]
+            bldgs = np.vstack((first_row, bldgs, last_row))
+            bldgs = bldgs[:,:-2]
+            mask = (bldgs != 10)
+            bldgs = np.ma.array(bldgs, mask=mask)
 
-            # assign wave height to buildlings
-            bldg_H = self.assign_max_to_bldgs(H, bldgs)    # getting max at each building
+            mask_bldgs = np.ma.getmask(bldgs)
 
-            labeled_mask, num_features = ndi.label(~mask_bldgs)
-            max_H_at_bldgs = []
-            for i in range(num_features+1):
-                if i == 0:
-                    continue
-                m_ = labeled_mask==i
-                val = np.max(bldg_H[m_])
-                max_H_at_bldgs.append(val.item())
-            df[run] = max_H_at_bldgs
+            # -- get size of each domain that is being compared
+            runs.insert(0, self.model_runname)      # list of runs
+            sizes = []                  # list of domain sizes
+            wave_heights = {}           # dict to store wave heights
+            for run in runs:            # loop through runs
+                H = self.read_npy(stat, run)    # read wave height (2D)
+                if run == "s1":
+                    print("This is very crudely done; trimming s1 to exact dimensions of other runs")
+                    first_row = H[0:1, :]
+                    last_row =  H[-1:, :]
+                    H = np.vstack((first_row, H, last_row))
+                    H = H[:,:-2]
+                elif run == "s2":
+                    print("This is very crudely done; trimming s2 to exact dimensions of other runs")
+                    first_row = H[0:1, :]
+                    H = np.vstack((first_row, H))
+                    H = H[:,:-1]
 
-        df["diff"] = df[runs[0]] - df[runs[1]]
-        df_run0_greater = df.loc[df["diff"]>0]
-        df_run1_greater = df.loc[df["diff"]<0]
-        print("number bldgs with {}>{}: {}" .format(labels[0], labels[1], len(df_run0_greater)))
-        print("number bldgs with {}<{}: {}" .format(labels[1], labels[0], len(df_run1_greater)))
+                sizes.append(np.shape(H)[0])
+                wave_heights[run] = H
+
+            largest_size_idx = np.argmax(sizes)
+            H_domain = wave_heights[runs[largest_size_idx]] # domain size that we'll use to compare runs
+
+            df = pd.DataFrame()
+            for run in runs:
+                _, H = self.check_domain_size_wave_stat(H_domain, wave_heights[run])
+                
+                # assign wave height to buildlings
+                bldg_H = self.assign_max_to_bldgs(H, bldgs)    # getting max at each building
+
+                labeled_mask, num_features = ndi.label(~mask_bldgs)
+                max_H_at_bldgs = []
+                for i in range(num_features+1):
+                    if i == 0:
+                        continue
+                    m_ = labeled_mask==i
+                    val = np.max(bldg_H[m_])
+                    max_H_at_bldgs.append(val.item())
+                df[run] = max_H_at_bldgs
+
+        # ---------------------------------------------------
+        else:
+            bldgs = self.read_buildings(run_w_bldgs)
+            mask_bldgs = np.ma.getmask(bldgs)
+            print("Need to resample array such that they are the same size when comparing 1 vs 2 m runs.")
+            
+            df = pd.DataFrame()
+            runs.insert(0, self.model_runname)
+            
+            sizes = []
+            for run in runs:
+                H = self.read_npy(stat, run)
+                sizes.append(np.shape(H)[0])
+            
+            largest_size_idx = np.argmax(sizes)
+            H_domain = self.read_npy(stat, runs[largest_size_idx])
+
+            for run in runs:
+                # read wave heights
+                H = self.read_npy(stat, run)
+                _, H = self.check_domain_size_wave_stat(H_domain, H)
+
+                # assign wave height to buildlings
+                bldg_H = self.assign_max_to_bldgs(H, bldgs)    # getting max at each building
+
+                labeled_mask, num_features = ndi.label(~mask_bldgs)
+                max_H_at_bldgs = []
+                for i in range(num_features+1):
+                    if i == 0:
+                        continue
+                    m_ = labeled_mask==i
+                    val = np.max(bldg_H[m_])
+                    max_H_at_bldgs.append(val.item())
+                df[run] = max_H_at_bldgs
+
+            df["diff"] = df[runs[0]] - df[runs[1]]
+            df_run0_greater = df.loc[df["diff"]>0]
+            df_run1_greater = df.loc[df["diff"]<0]
+            print("number bldgs with {}>{}: {}" .format(labels[0], labels[1], len(df_run0_greater)))
+            print("number bldgs with {}<{}: {}" .format(labels[1], labels[0], len(df_run1_greater)))
+            # ----------------------------------------------------------------
 
         if plot_hist == True:
-            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))        
-            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))        
+            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))        
+            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))        
             runs_short = [i.split("max")[0] for i in runs]
             ticks = np.arange(0, lim+0.5, 0.5)
             for col in range(len(runs)-1,-1,-1):
@@ -73,11 +134,6 @@ class PlotWaveHeightScatter(HelperFuncs):
                             linewidth=0.3,
                             alpha=0.7
                             )
-                        # df[runs[col]].plot.kde(
-                        #     ax=ax[row,col],
-                        #     color='k',
-                        #     lw=1
-                        #     )
                         ax[row,col].set_xlabel(None)
                         ax[row,col].set_ylabel(None)
                         ax[row,col].grid(False)
@@ -153,22 +209,59 @@ class PlotWaveHeightScatter(HelperFuncs):
 
 
 
-    def scatter_domain(self, stat, runs, labels, plot_hist=True, lim=3, fname=None):
-        df = pd.DataFrame()
-        runs.insert(0, self.model_runname)
-        sizes = []
-        for run in runs:
-            H = self.read_npy(stat, run)
-            sizes.append(np.shape(H)[0])
-        
-        largest_size_idx = np.argmax(sizes)
-        H_domain = self.read_npy(stat, runs[largest_size_idx])
-        
-        for run in runs:
-            # read wave heights
-            H = self.read_npy(stat, run)
-            _, H = self.check_domain_size_wave_stat(H_domain, H)
-            df[run] = H.flatten()
+    def scatter_domain(self, stat, runs, labels, plot_hist=True, lim=3, crude=False, fname=None):
+        """ only use this when trying to compare runs with different size domains. 
+            This code is so poorly written. not intended to be generalized, so be careful.
+        """
+        if crude:   
+            runs.insert(0, self.model_runname)
+            sizes = []
+            for run in runs:
+                H = self.read_npy(stat, run)
+                sizes.append(np.shape(H)[0])
+            largest_size_idx = np.argmax(sizes)
+
+            wave_heights = {}
+            for run in runs:
+                H = self.read_npy(stat, run)                
+                if run == "s1":
+                    print("This is crudely done")
+                    first_row = H[0:1, :]
+                    last_row =  H[-1:, :]
+                    H = np.vstack((first_row, H, last_row))
+                    H = H[:,:-2]
+                elif run == "s2":
+                    print("This is crudely done")
+                    first_row = H[0:1, :]
+                    H = np.vstack((first_row, H))
+                    H = H[:,:-1]
+
+                wave_heights[run] = H
+
+            H_domain = wave_heights[runs[largest_size_idx]]
+            for run in runs:
+                _, wave_heights[run] = self.check_domain_size_wave_stat(H_domain, wave_heights[run])
+
+            df = pd.DataFrame()
+            for run in runs:
+                df[run] = wave_heights[run].flatten()
+        else:
+            df = pd.DataFrame()
+            runs.insert(0, self.model_runname)
+            sizes = []
+            for run in runs:
+                H = self.read_npy(stat, run)
+                sizes.append(np.shape(H)[0])
+            
+            largest_size_idx = np.argmax(sizes)
+            H_domain = self.read_npy(stat, runs[largest_size_idx])
+            
+            for run in runs:
+                # read wave heights
+                H = self.read_npy(stat, run)
+                _, H = self.check_domain_size_wave_stat(H_domain, H)
+                df[run] = H.flatten()
+        # ---
         
         """ removing any row that is 0, this happens when comparing runs at
             different resolutions - wave heights at the buildings get funny
@@ -177,8 +270,8 @@ class PlotWaveHeightScatter(HelperFuncs):
         
 
         if plot_hist == True:
-            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))
-            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))
+            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))
+            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))
             ticks = np.arange(0, lim+0.5, 0.5)
             for col in range(len(runs)-1,-1,-1):
                 for row in range(len(runs)-1,-1,-1):

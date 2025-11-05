@@ -15,7 +15,7 @@ class PlotForcing(HelperFuncs):
     def plot(self, var, savepoint, duration=None, fname=None, figsize=(5,3)):
         label, ylabel, color = self.var2label(var)
         df = self.frcing_to_dataframe()
-
+        
         start_idx = 0
         stop_idx = -1
         if duration!=None:
@@ -52,7 +52,6 @@ class PlotForcing(HelperFuncs):
         self.save_fig(fig, fname,
                         transparent=True,
                         dpi=500,
-                        bbox_inches="tight",
-                        pad_inches=0.1)
+                        )
 
 
