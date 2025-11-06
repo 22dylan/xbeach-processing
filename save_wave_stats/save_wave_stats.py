@@ -6,122 +6,259 @@ import numpy as np
 import pandas as pd
 import geopandas as gpd
 from helpers.helpers import HelperFuncs
+import concurrent
+# from concurrent.futures import ThreadPoolExecutor
+import threading
 
 class SaveWaveStats(HelperFuncs):
     """docstring for plot_wave_heights"""
     def __init__(self):
         super().__init__()
 
-    def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, store_in_mem=False, 
-            chunk_size_min=15):
+
+    def _process_spatial_point(self, y2_, x2_, t, t_idxs, t_idx_start, sample_freq, data_all, store_in_mem, stats, chunk_size_sec, data_save_dict, data_save_dict_lock):
         """
-            function to save wave stats to .npy files. these are used later
-            var: variable that is written by XBeach
-            stats: wave statistic to save. options include:
-                Hs: 
-                Hs_max: 
-                Hs_tot: 
-                Hmax: 
-                t_Hs_Nm: 
-                zsmax: 
-                Tm: 
-            trim_beginning_seconds: seconds to trim off of the beginning of the time series
-            store_in_mem: boolean to store entire dataset in memory when running; not possbile for large XBeach runs
-            chunk_size_min: chunk size in minutes; used to compute wave statistics at each tim interval
+        Helper function to process a single (y, x) spatial point.
+        This function will be executed in parallel.
         """
-        chunk_size_sec = chunk_size_min*60
+        if store_in_mem:
+            z = data_all[t_idx_start::sample_freq, y2_, x2_]
+        else:
+            z = data_all[t_idx_start::sample_freq, y2_, x2_].values
+
+        z_chunks = []
+        t_chunks = []
+        t_idx_prior = 0
+        for t_idx in t_idxs[1:]:
+            z_chunks.append(z[t_idx_prior:t_idx])
+            t_chunks.append(t[t_idx_prior:t_idx])
+            t_idx_prior = t_idx
+
+        H = self.get_H(z)
+        H_chunks = [self.get_H(z_) for z_ in z_chunks]
+        T_chunks = [self.get_T(z_chunks[i], t_chunks[i]) for i in range(len(z_chunks))]
+        
+        # Dictionary to hold the results for this single spatial point
+        point_results = {}
+        
+        # compute statistics
+        for stat in stats:
+            data_ = None # Reset for each stat
+
+            if stat == "Hs":
+                data_ = [self.compute_Hs(i) for i in H_chunks]
+            elif stat == "Hs_tot":
+                data_ = self.compute_Hs(H)
+            elif stat == "Hs_max":
+                data_ = np.max([self.compute_Hs(i) for i in H_chunks]).item()
+            elif stat == "Hmax":
+                try:
+                    data_ = np.max(H).item() # Use .item() for consistency with scalar results
+                except ValueError:
+                    data_ = 0
+            elif stat == "Tm":
+                data_ = []
+                for t_chunk in T_chunks:
+                    try:
+                        data_.append(np.mean(t_chunk).item()) # Use .item()
+                    except:
+                        data_.append(0)
+            elif "t_Hs_" in stat:
+                val = stat.split("_")[-1]
+                val = float(val.split("m")[0])
+                Hs = np.array([self.compute_Hs(i) for i in H_chunks])
+                Hs_greater = Hs > val
+                data_ = np.sum(Hs_greater) * chunk_size_sec
+            elif stat == "zs_max":
+                data_ = np.max(z).item()
+
+            if data_ is not None:
+                point_results[stat] = data_
+                
+        # 5. Lock and store results into the shared dictionary
+        # In a parallel environment, writing to a shared resource (data_save_dict)
+        # must be protected to prevent race conditions.
+        with data_save_dict_lock:
+            for stat, data_ in point_results.items():
+                if isinstance(data_, list):
+                    # Data that is a list (e.g., Hs, Tm) is saved by time chunk
+                    for cnt, key in enumerate(data_save_dict[stat].keys()):
+                        data_save_dict[stat][key][y2_, x2_] = data_[cnt]
+                else:
+                    # Scalar data (e.g., Hs_tot, Hmax, zs_max)
+                    data_save_dict[stat][y2_, x2_] = data_
+
+        return y2_, x2_ # Return for tracking/tqdm update
+
+
+    def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, store_in_mem=False, chunk_size_min=15, max_workers=None):
+        """
+        Function to save wave stats to .npy files, parallelized over spatial points.
+        
+        max_workers: The maximum number of threads to use for parallel processing. 
+                     If None, it defaults to the number of processors.
+        """
+        chunk_size_sec = chunk_size_min * 60
         t = self.read_time_xarray()
-        t_idx_start = np.argmin(np.abs(t-trim_beginning_seconds))
-        t = t[t_idx_start::sample_freq]     # time array with beginning trimmed off.
+        t_idx_start = np.argmin(np.abs(t - trim_beginning_seconds))
+        t = t[t_idx_start::sample_freq]  # time array with beginning trimmed off.
 
-        t_chunks = np.arange(t[0], t[-1], step=chunk_size_sec)  # time array corresponding to chunks
-        t_idxs = [self.time_to_tindex(t_,t) for t_ in t_chunks] # indicies to chunk data
-        dims = self.read_dims_xarray()      # dimensions of grid
+        # The rest of the setup is the same
+        t_chunks_val = np.arange(t[0], t[-1], step=chunk_size_sec)
+        t_idxs = [self.time_to_tindex(t_, t) for t_ in t_chunks_val]
+        dims = self.read_dims_xarray()  # dimensions of grid
+        # dims = (3,dims[1])
 
-        if store_in_mem:    # if storing the entire dataset in memory while processing
+        # Read data outside the loop
+        if store_in_mem:
             data_all = self.read_3d_data_xarray(var)
-        else:               # else, read as an xarray dataset
+        else:
             data_all = self.read_3d_data_xarray_nonmem(var)
 
-        data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims) # dictionary to save all data
-        for y2_ in range(dims[0]):
-            print("y2_ = {} out of {}" .format(y2_, dims[0]))
-            for x2_ in tqdm(range(dims[1])):
-                if store_in_mem:
-                    z = data_all[t_idx_start::sample_freq,y2_,x2_]
-                else:
-                    z = data_all[t_idx_start::sample_freq,y2_,x2_].values
+        data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims)
+        
+        # Create a lock for thread-safe access to the shared data_save_dict
+        data_save_dict_lock = threading.Lock() # Import threading at the top
 
-                z_chunks = []
-                t_chunks = []
-                t_idx_prior = 0
-                for t_idx in t_idxs[1:]:
-                    z_chunks.append(z[t_idx_prior:t_idx])
-                    t_chunks.append(t[t_idx_prior:t_idx])
-                    t_idx_prior = t_idx
-                
-                H = self.get_H(z)
-                H_chunks = [self.get_H(z_) for z_ in z_chunks]
-                T = self.get_T(z, t)
-                T_chunks = [self.get_T(z_chunks[i],t_chunks[i]) for i in range(len(z_chunks))]
+        print(f"Starting parallel processing with {max_workers if max_workers else 'default'} workers...")
 
-                prnt=False
-                for stat in stats:
-                    # signficant wave height; one for each time chunk
-                    if stat == "Hs":
-                        data_ = [self.compute_Hs(i) for i in H_chunks]
+        # Parallel Execution over spatial dimensions
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for y2_ in range(dims[0]):
+                for x2_ in range(dims[1]):
+                    # Submit the processing of a single spatial point as a task
+                    future = executor.submit(
+                        self._process_spatial_point, 
+                        y2_, x2_, t, t_idxs, t_idx_start, sample_freq, 
+                        data_all, store_in_mem, stats, chunk_size_sec, 
+                        data_save_dict, data_save_dict_lock
+                    )
+                    futures.append(future)
 
-                    # total signficant wave height across entire time series
-                    elif stat == "Hs_tot":
-                        data_ = self.compute_Hs(H)
+            # Use tqdm to monitor the progress of the submitted tasks
+            for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Processing spatial points"):
+                # You can get the result if needed, but here it's mainly for monitoring
+                future.result() 
 
-                    # maximum signficant wave height from chunks
-                    elif stat == "Hs_max":
-                        data_ = np.max([self.compute_Hs(i) for i in H_chunks]).item()
-
-                    # maximum wave height across entire record
-                    elif stat == "Hmax":
-                        try:
-                            data_ = np.max(H)
-                        except ValueError:
-                            data_ = 0
-                        # data_ = np.max(H)
-
-                    # mean period
-                    elif stat == "Tm":
-                        data_ = [np.mean(i).item() for i in T_chunks]
-                        
-                    # time that signficant wave height exceeds threshold value
-                    elif "t_Hs_" in stat:
-                        val = stat.split("_")[-1]
-                        val = float(val.split("m")[0])
-                        Hs = np.array([self.compute_Hs(i) for i in H_chunks])
-                        Hs_greater = Hs>val
-                        data_ = np.sum(Hs_greater)*chunk_size_sec
-
-                    # maximum water elevation in entire time series                   
-                    elif stat == "zs_max":
-                        data_ = np.max(z).item()
-                    
-                    if prnt:
-                        if isinstance(data_, list):
-                            print("{}: {}" .format(stat, data_))
-                        else:
-                            print("{}: {:0.3f}" .format(stat, data_))
-
-                    # storing in dataframe
-                    if isinstance(data_, list):
-                        for cnt, key in enumerate(data_save_dict[stat].keys()):
-                            data_save_dict[stat][key][y2_,x2_] = data_[cnt]
-                    else:
-                        data_save_dict[stat][y2_, x2_] = data_
-
-        print("writing to {}:" .format(self.path_to_save_plot))
+        print(f"Finished processing {dims[0]*dims[1]} spatial points.")
+        print("writing to {}:".format(self.path_to_save_plot))
         self.write_data_save_dict(data_save_dict, self.path_to_save_plot)
 
-        # fn_out = os.path.join(self.path_to_save_plot, stat)
-        # np.save(fn_out, data_save)
-        # print("{} saved as: {}.npy" .format(stat, fn_out))
+    # def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, store_in_mem=False, 
+    #         chunk_size_min=15):
+    #     """
+    #         function to save wave stats to .npy files. these are used later
+    #         var: variable that is written by XBeach
+    #         stats: wave statistic to save. options include:
+    #             Hs: 
+    #             Hs_max: 
+    #             Hs_tot: 
+    #             Hmax: 
+    #             t_Hs_Nm: 
+    #             zsmax: 
+    #             Tm: 
+    #         trim_beginning_seconds: seconds to trim off of the beginning of the time series
+    #         store_in_mem: boolean to store entire dataset in memory when running; not possbile for large XBeach runs
+    #         chunk_size_min: chunk size in minutes; used to compute wave statistics at each tim interval
+    #     """
+    #     chunk_size_sec = chunk_size_min*60
+    #     t = self.read_time_xarray()
+    #     t_idx_start = np.argmin(np.abs(t-trim_beginning_seconds))
+    #     t = t[t_idx_start::sample_freq]     # time array with beginning trimmed off.
+
+    #     t_chunks = np.arange(t[0], t[-1], step=chunk_size_sec)  # time array corresponding to chunks
+    #     t_idxs = [self.time_to_tindex(t_,t) for t_ in t_chunks] # indicies to chunk data
+    #     dims = self.read_dims_xarray()      # dimensions of grid
+
+    #     if store_in_mem:    # if storing the entire dataset in memory while processing
+    #         data_all = self.read_3d_data_xarray(var)
+    #     else:               # else, read as an xarray dataset
+    #         data_all = self.read_3d_data_xarray_nonmem(var)
+
+    #     data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims) # dictionary to save all data
+    #     for y2_ in range(dims[0]):
+    #         print("y2_ = {} out of {}" .format(y2_, dims[0]))
+            
+    #         for x2_ in tqdm(range(dims[1])):
+    #             if store_in_mem:
+    #                 z = data_all[t_idx_start::sample_freq,y2_,x2_]
+    #             else:
+    #                 z = data_all[t_idx_start::sample_freq,y2_,x2_].values
+
+    #             z_chunks = []
+    #             t_chunks = []
+    #             t_idx_prior = 0
+    #             for t_idx in t_idxs[1:]:
+    #                 z_chunks.append(z[t_idx_prior:t_idx])
+    #                 t_chunks.append(t[t_idx_prior:t_idx])
+    #                 t_idx_prior = t_idx
+                
+    #             H = self.get_H(z)
+    #             H_chunks = [self.get_H(z_) for z_ in z_chunks]
+    #             T = self.get_T(z, t)
+    #             T_chunks = [self.get_T(z_chunks[i],t_chunks[i]) for i in range(len(z_chunks))]
+
+    #             prnt=False
+    #             for stat in stats:
+    #                 # signficant wave height; one for each time chunk
+    #                 if stat == "Hs":
+    #                     data_ = [self.compute_Hs(i) for i in H_chunks]
+
+    #                 # total signficant wave height across entire time series
+    #                 elif stat == "Hs_tot":
+    #                     data_ = self.compute_Hs(H)
+
+    #                 # maximum signficant wave height from chunks
+    #                 elif stat == "Hs_max":
+    #                     data_ = np.max([self.compute_Hs(i) for i in H_chunks]).item()
+
+    #                 # maximum wave height across entire record
+    #                 elif stat == "Hmax":
+    #                     try:
+    #                         data_ = np.max(H)
+    #                     except ValueError:
+    #                         data_ = 0
+    #                     # data_ = np.max(H)
+
+    #                 # mean period
+    #                 elif stat == "Tm":
+    #                     data_ = []
+    #                     for t in T_chunks:
+    #                         try:
+    #                             data_.append(np.mean(t))
+    #                         except:
+    #                             data_.append(0)
+    #                     # data_ = [np.mean(i).item() for i in T_chunks]
+                        
+    #                 # time that signficant wave height exceeds threshold value
+    #                 elif "t_Hs_" in stat:
+    #                     val = stat.split("_")[-1]
+    #                     val = float(val.split("m")[0])
+    #                     Hs = np.array([self.compute_Hs(i) for i in H_chunks])
+    #                     Hs_greater = Hs>val
+    #                     data_ = np.sum(Hs_greater)*chunk_size_sec
+
+    #                 # maximum water elevation in entire time series                   
+    #                 elif stat == "zs_max":
+    #                     data_ = np.max(z).item()
+                    
+    #                 if prnt:
+    #                     if isinstance(data_, list):
+    #                         print("{}: {}" .format(stat, data_))
+    #                     else:
+    #                         print("{}: {:0.3f}" .format(stat, data_))
+
+    #                 # storing in dataframe
+    #                 if isinstance(data_, list):
+    #                     for cnt, key in enumerate(data_save_dict[stat].keys()):
+    #                         data_save_dict[stat][key][y2_,x2_] = data_[cnt]
+    #                 else:
+    #                     data_save_dict[stat][y2_, x2_] = data_
+
+    #     print("writing to {}:" .format(self.path_to_save_plot))
+    #     self.write_data_save_dict(data_save_dict, self.path_to_save_plot)
+
 
     def setup_data_save_dict(self, stats, t_idxs, dims):
         data_save_dict = {}
@@ -166,23 +303,6 @@ class SaveWaveStats(HelperFuncs):
             else:
                 print(f"Skipping non-array/non-dict item: {base_name} (Type: {type(value)})")
     
-
-    # # -- old --
-    # if stat == "Tm":
-    #     T = self.get_T(z, t)
-    #     data_ = np.mean(T)
-    # elif stat == "Hs":
-    #     if (var == "zs1") or (var=="zs"): # if zs1 or zs, have water elevation time series, need to get H
-    #         H = self.get_H(z)       #   getting wave heights from time series
-    #     elif var == "H":            # else, can just use H since this is wave height from group.
-    #         H = z
-    #     data_ = self.compute_Hs(H)
-    # elif stat == "Hmax":
-    #     if (var == "zs1") or (var=="zs"): # if zs1 or zs, have water elevation time series, need to get H
-    #         H = self.get_H(z)       #   getting wave heights from time series
-    #     data_ = np.max(H)
-
-
     def geolocate(self, stat="Hs"):
         fn_params = os.path.join(self.path_to_model, "params.txt")
         with open(fn_params,'r') as f:

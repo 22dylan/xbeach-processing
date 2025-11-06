@@ -14,3 +14,4 @@
 *.out
 *.tar.gz
 *.npy
+log*

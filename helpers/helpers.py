@@ -444,7 +444,11 @@ class HelperFuncs():
             return 0
         H_one_third = np.quantile(H, q=2/3)
         H = H[H>H_one_third]
+        if len(H) == 0:
+            return 0
+
         Hs = np.mean(H)
+
         return Hs.item()
 
     def cartesian_to_nautical_angle(self, deg):

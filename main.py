@@ -22,10 +22,11 @@ if __name__ == "__main__":
     # -- save wave stats
     sws = SaveWaveStats()
     sws.save(var="zs", 
-             stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_1.5m", "t_Hs_2m", "t_Hs_2.5m", "t_Hs_3m"],
+             stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
              trim_beginning_seconds=500, 
              store_in_mem=False,
              chunk_size_min=15,
+             max_workers=10,
              )
 
     # sws.geolocate(stat="Hmax")
