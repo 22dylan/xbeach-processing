@@ -71,16 +71,16 @@ class PlotOutputPoint(HelperFuncs):
                 fn = "obs-points.png"
                 self.save_fig(fig1, fn, transparent=True, dpi=300)
 
-    def plot_Hs(self, var, xys, time_chunks_min=15, t_start=None, t_stop=None, drawdomain=False, fulldomain=True, savefig=False):
-        time_chunks_sec = time_chunks_min*60
+    def plot_Hs(self, var, xys, chunk_size_min=15, t_start=None, t_stop=None, drawdomain=False, fulldomain=True, savefig=False):
+        chunk_size_sec = chunk_size_min*60
         xgr, ygr, zgr = self.read_grid()
         t = self.read_time_xarray()
 
-        if len(t) % time_chunks_sec != 0:
-            steps_to_trim = len(t) % time_chunks_sec
+        if len(t) % chunk_size_sec != 0:
+            steps_to_trim = len(t) % chunk_size_sec
             t = t[steps_to_trim:]
         
-        t_chunks = np.arange(t[0], t[-1], step=time_chunks_sec)
+        t_chunks = np.arange(t[0], t[-1], step=chunk_size_sec)
         t_idxs = [self.time_to_tindex(t_,t) for t_ in t_chunks] # get indicies to chunk out data
         
         colors = sns.color_palette("husl")
@@ -100,7 +100,7 @@ class PlotOutputPoint(HelperFuncs):
                 t_idx_prior = t_idx
 
             # -- plotting
-            ax.plot(range(len(Hs)), Hs, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
+            ax.plot(t_chunks, Hs, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
             cnt += 1
 
         ax.set_xlabel("Time (hrs)")

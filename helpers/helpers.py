@@ -399,6 +399,7 @@ class HelperFuncs():
         wave_heights = np.array(crests) - np.array(troughs)
         return wave_heights
 
+
     def get_T(self, z, t, detrend=True):
         if detrend:
             z = z - np.mean(z)  # de-trend signal with mean
@@ -444,7 +445,7 @@ class HelperFuncs():
         H_one_third = np.quantile(H, q=2/3)
         H = H[H>H_one_third]
         Hs = np.mean(H)
-        return Hs
+        return Hs.item()
 
     def cartesian_to_nautical_angle(self, deg):
         """ converting from cartesian to nautical angles for xbeach input

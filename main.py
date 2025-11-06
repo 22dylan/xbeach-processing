@@ -19,9 +19,15 @@ from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 if __name__ == "__main__":
-    # # -- save wave stats
-    # sws = SaveWaveStats()
-    # sws.save(var="zs1", stat="Hs", trim_beginning_seconds=500, store_in_mem=True)
+    # -- save wave stats
+    sws = SaveWaveStats()
+    sws.save(var="zs", 
+             stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_1.5m", "t_Hs_2m", "t_Hs_2.5m", "t_Hs_3m"],
+             trim_beginning_seconds=500, 
+             store_in_mem=False,
+             chunk_size_min=15,
+             )
+
     # sws.geolocate(stat="Hmax")
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
@@ -67,20 +73,20 @@ if __name__ == "__main__":
     # phwm.plot_scatter()
 
     # # -- plot output point
-    pop = PlotOutputPoint()
+    # pop = PlotOutputPoint()
     # pop.plot_timeseries(var="zs",
     #         xys=[[100,400]], 
     #         drawdomain=True,
     #         fulldomain=False, 
     #         savefig=False
     #         )
-    pop.plot_Hs(var="zs",
-            xys=[[100,400]], 
-            time_chunks_min=15,
-            drawdomain=False,
-            fulldomain=False, 
-            savefig=False
-            )
+    # pop.plot_Hs(var="zs",
+    #         xys=[[500,400]], 
+    #         time_chunks_min=15,
+    #         drawdomain=True,
+    #         fulldomain=False, 
+    #         savefig=True
+    #         )
 
 
     # # -- plot transect
