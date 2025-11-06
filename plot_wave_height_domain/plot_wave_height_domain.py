@@ -11,7 +11,7 @@ class PlotWaveHeightDomain(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def plot(self, stat, vmax=None, vmin=None, fname=None, prnt_read=False, 
+    def plot(self, stat, vmin=0, vmax=1, fname=None, prnt_read=False, 
             single_frame=False, domain_size="estero", plt_bldgs=True, plt_offshore=False):
         
         # read wave heights
@@ -36,18 +36,15 @@ class PlotWaveHeightDomain(HelperFuncs):
             mask = (zgr<=-999999999)
         masked_array = np.ma.array(H, mask=mask)
 
-        # setting up colormap for water
-        if stat == "H":
+        if (stat=="Hs_max") or (stat=="Hs_tot") or (stat=="Hs"):
             cmap = mpl.cm.plasma
-            cmap.set_bad('grey')
-            vmax = 1.0 if vmax == None else vmax
-            vmin = 0
-        else:
-            cmap = mpl.cm.plasma
-            # cmap = mpl.cm.cividis
-            cmap.set_bad('grey')
-            vmax = 1 if vmax == None else vmax
-            vmin = 0 if vmin == None else vmin
+        elif "t_Hs" in stat:
+            cmap = mpl.cm.Blues
+            masked_array = masked_array/3600
+        elif stat == "zs_max":
+            cmap = mpl.cm.Blues
+        cmap.set_bad('grey')
+
 
         # -- drawing first plot
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=vmin, vmax=vmax, cmap=cmap)
@@ -55,8 +52,14 @@ class PlotWaveHeightDomain(HelperFuncs):
             ax_bar = ax0
         else:
             ax_bar = ax1
-        if stat == "Hs":
-            labl = "Sig. Wave Height (m)"
+        if stat == "Hs_max":
+            labl = "Maximum Sig. Wave Height (m)"
+        elif stat == "Hs_tot":
+            labl = "Total Sig. Wave Height (m)"
+        elif stat == "zs_max":
+            labl = "Maximum Water Elevation (m)"
+        elif "t_Hs" in stat:
+            labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
         elif stat == "Hmax":
             labl = "Max. Wave Height (m)"
         elif stat == "Tm":

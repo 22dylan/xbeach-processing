@@ -20,16 +20,16 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 if __name__ == "__main__":
     # -- save wave stats
-    sws = SaveWaveStats()
-    sws.save(var="zs", 
-             stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
-             trim_beginning_seconds=500, 
-             store_in_mem=False,
-             chunk_size_min=15,
-             max_workers=10,
-             )
-
+    # sws = SaveWaveStats()
+    # sws.save(var="zs",
+    #          stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
+    #          trim_beginning_seconds=500, 
+    #          store_in_mem=False,
+    #          chunk_size_min=15,
+    #          max_workers=10,
+    #          )
     # sws.geolocate(stat="Hmax")
+
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
     #                     path_to_bldgs=path_to_bldgs, 
@@ -115,16 +115,16 @@ if __name__ == "__main__":
     
 
     # # -- plot wave height domain
-    # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="Hs",
-    #         vmin=0,
-    #         vmax=1,
-    #         single_frame=True,
-    #         domain_size="estero",
-    #         plt_bldgs=True,
-    #         plt_offshore=True,
-    #         fname="Hs-domain.png"
-    #         )
+    pwhd = PlotWaveHeightDomain()
+    pwhd.plot(stat="Hs_max",
+            vmin=0,
+            vmax=2,
+            single_frame=True,
+            domain_size="micro",
+            plt_bldgs=True,
+            plt_offshore=False,
+            # fname="Hs-domain.png"
+            )
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run64-nowind",
     #         domain_size="estero",
