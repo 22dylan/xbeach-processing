@@ -1,7 +1,6 @@
 relative_path     = True
-
-path_to_model     = ../xbeach/models/comp-run2
-path_to_forcing   = ../data/forcing/2025-08-12/xbeach5-nearshore.dat
-path_to_save_plot = ../processed-results/comp-run2
+path_to_model     = ../xbeach/models/run62
+path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
+path_to_save_plot = ../processed-results/run62
 
 

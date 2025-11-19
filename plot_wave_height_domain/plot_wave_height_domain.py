@@ -36,13 +36,14 @@ class PlotWaveHeightDomain(HelperFuncs):
             mask = (zgr<=-999999999)
         masked_array = np.ma.array(H, mask=mask)
 
-        if (stat=="Hs_max") or (stat=="Hs_tot") or (stat=="Hs"):
+        if (stat=="Hs") or (stat=="Hs_max") or (stat=="Hs_tot") or (stat=="Hs") or (stat=="Hmax"):
             cmap = mpl.cm.plasma
         elif "t_Hs" in stat:
-            cmap = mpl.cm.Blues
+            cmap = mpl.cm.BuPu
             masked_array = masked_array/3600
-        elif stat == "zs_max":
-            cmap = mpl.cm.Blues
+        elif "zs" in stat:
+            # cmap = mpl.cm.Blues
+            cmap = mpl.cm.YlGnBu_r
         cmap.set_bad('grey')
 
 
@@ -52,18 +53,24 @@ class PlotWaveHeightDomain(HelperFuncs):
             ax_bar = ax0
         else:
             ax_bar = ax1
+        
         if stat == "Hs_max":
             labl = "Maximum Sig. Wave Height (m)"
+        elif stat == "Hs":
+            labl = "Sig. Wave Height (m)"
         elif stat == "Hs_tot":
             labl = "Total Sig. Wave Height (m)"
         elif stat == "zs_max":
             labl = "Maximum Water Elevation (m)"
+        elif stat == "zs_mean":
+            labl = "Mean Water Elevation (m)"    
         elif "t_Hs" in stat:
             labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
         elif stat == "Hmax":
             labl = "Max. Wave Height (m)"
         elif stat == "Tm":
             labl = "Mean Period (s)"
+        
         plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:
             custom_color = 'springgreen'

@@ -71,6 +71,11 @@ class SaveWaveStats(HelperFuncs):
                 data_ = np.sum(Hs_greater) * chunk_size_sec
             elif stat == "zs_max":
                 data_ = np.nanmax(z).item()
+            elif stat == "zs_mean":
+                data_ = np.nanmean(z).item()
+            elif stat == "surge_max":
+                data_ = np.nanmax([np.nanmean(i) for i in z_chunks]).item()
+
 
             if data_ is not None:
                 point_results[stat] = data_
@@ -209,6 +214,7 @@ class SaveWaveStats(HelperFuncs):
                     l_ = [i.strip() for i in line.split()]
                     dy = float(l_[-1])
 
+        
         fn_out = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat))
         Hs = self.read_npy(stat)
         bldgs = self.read_buildings()
@@ -282,14 +288,26 @@ class SaveWaveStats(HelperFuncs):
         """
         rows, cols = H.shape
 
+
         theta_rad = np.deg2rad(theta)
+        # -- old
         a = np.cos(theta_rad)
         b = -np.sin(theta_rad)
         c = xo
         d = np.sin(theta_rad)
         e = np.cos(theta_rad)
         f = yo
-        
+        # -- old
+
+        # -- new
+        a = dx * np.cos(theta_rad)  # x-scale * cos(theta)
+        b = -dx * np.sin(theta_rad) # y-shear * -sin(theta) (Note: dx is usually used here for non-square pixels)
+        c = xo                      # x-translation (xo)
+        d = dx * np.sin(theta_rad)  # x-shear * sin(theta)
+        e = dy * np.cos(theta_rad) # y-scale * cos(theta) (Note: -dy is used for the standard top-left origin)
+        f = yo                      # y-translation (yo)
+        # -- new
+
         # Create the transform
         transform = rasterio.transform.Affine(a, b, c, d, e, f)
 

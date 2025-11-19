@@ -28,7 +28,7 @@ if __name__ == "__main__":
     #          chunk_size_min=15,
     #          max_workers=10,
     #          )
-    # sws.geolocate(stat="Hmax")
+    # sws.geolocate(stat="zs_mean")
 
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=5, duration=4) #, fname="el")
+    # pf.plot(var="el", savepoint=1, duration=8) #, fname="el")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -76,15 +76,15 @@ if __name__ == "__main__":
     # # -- plot output point
     # pop = PlotOutputPoint()
     # pop.plot_timeseries(var="zs",
-    #         xys=[[100,400]], 
+    #         xys=[[200,400]], 
     #         drawdomain=True,
     #         fulldomain=False, 
-    #         savefig=False
+    #         savefig=True
     #         )
     # pop.plot_Hs(var="zs",
-    #         xys=[[500,400]], 
-    #         time_chunks_min=15,
-    #         drawdomain=True,
+    #         xys=[[200,400]], 
+    #         chunk_size_min=15,
+    #         drawdomain=False,
     #         fulldomain=False, 
     #         savefig=True
     #         )
@@ -115,16 +115,16 @@ if __name__ == "__main__":
     
 
     # # -- plot wave height domain
-    pwhd = PlotWaveHeightDomain()
-    pwhd.plot(stat="Hs_max",
-            vmin=0,
-            vmax=2,
-            single_frame=True,
-            domain_size="micro",
-            plt_bldgs=True,
-            plt_offshore=False,
-            # fname="Hs-domain.png"
-            )
+    # pwhd = PlotWaveHeightDomain()
+    # pwhd.plot(stat="zs_mean",
+    #         vmin=3,
+    #         vmax=5,
+    #         single_frame=True,
+    #         domain_size="estero",
+    #         plt_bldgs=True,
+    #         plt_offshore=True,
+    #         # fname="Hs_temp-domain.png"
+    #         )
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run64-nowind",
     #         domain_size="estero",
@@ -146,8 +146,8 @@ if __name__ == "__main__":
 
     # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
-    # pwhs.scatter_bldg(stat="Hs", runs=["s2", "s4", "s8", "s16"], plot_hist=True, run_w_bldgs="s1", labels=["1 m", "2 m", "4 m", "8 m", "16 m"], fname="temp-scatter-bldg.png")
-    # pwhs.scatter_domain(stat="Hs", runs=["s2", "s4", "s8", "s16"], plot_hist=True, labels=["1 m", "2 m", "4 m", "8 m", "16 m"], fname="temp-scatter-domain.png")
+    # pwhs.scatter_bldg(stat="Hs", runs=["run60_45p_2Hz", "run60_45p_1Hz"], plot_hist=True, run_w_bldgs="run60_45p_4Hz", labels=["4 Hz", "2 Hz", "1 Hz"], fname="samplingfreq-scatter-bldg.png")
+    # pwhs.scatter_domain(stat="Hs", runs=["run60_45p_2Hz", "run60_45p_1Hz"], plot_hist=True, labels=["4 Hz", "2 Hz", "1 Hz"], fname="samplingfreq-scatter-domain.png")
 
     # pwhe = PlotWaveHeightError()
     # pwhe.plot_error(stat="Hs", runs=["s16", "s8", "s4", "s2"], run_w_bldgs="s1", labels=["s1", "s16", "s8", "s4", "s2"], fname="temp-error.png")

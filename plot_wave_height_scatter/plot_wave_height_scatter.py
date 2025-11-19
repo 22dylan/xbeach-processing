@@ -114,8 +114,8 @@ class PlotWaveHeightScatter(HelperFuncs):
             # ----------------------------------------------------------------
 
         if plot_hist == True:
-            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))        
-            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))        
+            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))        
+            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))        
             runs_short = [i.split("max")[0] for i in runs]
             ticks = np.arange(0, lim+0.5, 0.5)
             for col in range(len(runs)-1,-1,-1):
@@ -267,11 +267,13 @@ class PlotWaveHeightScatter(HelperFuncs):
             different resolutions - wave heights at the buildings get funny
         """
         df = df[~(df == 0).any(axis=1)]
-        
+
+        # df = df.iloc[0:10000000]
+        # print("temporarily using first 1,000,000 points")
 
         if plot_hist == True:
-            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))
-            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))
+            fig, ax = plt.subplots(len(runs), len(runs), figsize=(9,8))
+            # fig, ax = plt.subplots(len(runs), len(runs), figsize=(9*1.5,8*1.5))
             ticks = np.arange(0, lim+0.5, 0.5)
             for col in range(len(runs)-1,-1,-1):
                 for row in range(len(runs)-1,-1,-1):
@@ -310,7 +312,7 @@ class PlotWaveHeightScatter(HelperFuncs):
                     x_data = df[runs[col]]
                     y_data = df[runs[row]]
 
-                    ax[row,col].scatter(x_data, y_data, s=10, facecolor="None", edgecolor='k')
+                    ax[row,col].scatter(x_data, y_data, s=0.001, lw=0.01, alpha=0.9, marker=".", facecolor="None", edgecolor='k')
                     ax[row,col].plot([-1,6], [-1,6], ls="-.", lw=1.0, zorder=1, color='r')
                     ax[row,col].set_xlim([0,lim])
                     ax[row,col].set_ylim([0,lim])

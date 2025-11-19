@@ -44,7 +44,7 @@ class PlotOutputPoint(HelperFuncs):
         ax.set_xlim(xlim)
 
         if savefig:
-            fn = "elevation-timeseries.png"
+            fn = "{}-timeseries.png" .format(var)
             self.save_fig(fig0, fn, transparent=True, dpi=300)
 
         if drawdomain:
@@ -100,7 +100,7 @@ class PlotOutputPoint(HelperFuncs):
                 t_idx_prior = t_idx
 
             # -- plotting
-            ax.plot(t_chunks, Hs, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
+            ax.plot(t_chunks[1:]/3600, Hs, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
             cnt += 1
 
         ax.set_xlabel("Time (hrs)")
@@ -117,7 +117,7 @@ class PlotOutputPoint(HelperFuncs):
         ax.set_xlim(xlim)
 
         if savefig:
-            fn = "elevation-timeseries.png"
+            fn = "Hs-timeseries.png"
             self.save_fig(fig0, fn, transparent=True, dpi=300)
 
         if drawdomain:
@@ -139,7 +139,8 @@ class PlotOutputPoint(HelperFuncs):
                 ax.scatter(x, y, color=colors[cnt],s=50)
                 ax.annotate("{}" .format(cnt), (x, y))
                 cnt += 1
-
+            ax.set_aspect("equal")
+            
             if savefig:
                 fn = "obs-points.png"
                 self.save_fig(fig1, fn, transparent=True, dpi=300)
