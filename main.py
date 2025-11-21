@@ -21,8 +21,8 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 if __name__ == "__main__":
     # -- save wave stats
-    # sws = SaveWaveStats()
-    # sws.save_forces(var="zs1")
+    sws = SaveWaveStats()
+    sws.save_forces(var="zs1")
     # sws.save(var="zs1",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
     #          stats = ["Hmax", "Hs_max"],
@@ -31,7 +31,7 @@ if __name__ == "__main__":
     #          chunk_size_min=15,
     #          max_workers=10,
     #          )
-    # sws.geolocate(stat="zs_mean")
+    # sws.geolocate(stat="surge_max")
 
     # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
     # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
@@ -134,16 +134,16 @@ if __name__ == "__main__":
     #         fname="Hs-diff-windnowind"
     #         )
 
-    # # -- plot wave height building
-    pwhb = PlotWaveHeightBldg()
-    pwhb.plot(stat="impulse",
-            model_runname_w_bldgs=None,
-            vmax=None,
-            vmin=0,
-            domain_size="estero", 
-            grey_background=False, 
-            # fname="Hs-bldg.png"
-            )
+    # # # -- plot wave height building
+    # pwhb = PlotWaveHeightBldg()
+    # pwhb.plot(stat="impulse",
+    #         model_runname_w_bldgs=None,
+    #         vmax=None,
+    #         vmin=0,
+    #         domain_size="estero", 
+    #         grey_background=False, 
+    #         # fname="Hs-bldg.png"
+    #         )
 
 
     # -- PlotWaveHeightScatter

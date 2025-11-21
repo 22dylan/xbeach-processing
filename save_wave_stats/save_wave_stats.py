@@ -53,16 +53,18 @@ class SaveWaveStats(HelperFuncs):
             idxs = [(idxs[i,0].item(), idxs[i,1].item()) for i in range(len(idxs))] # reorganize such that it's a list of tuples
 
             # getting z data for each point. Results in 2d array where rows are time and cols represent each point.
-            z = data_all.sel(point=idxs).values
+            loaded_data = data_all.sel(point=idxs).compute()
+            z = loaded_data.values
+
             h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
             eta = z_trimmed - h
 
             # calculate wave force
             fw = ((rho*g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
             f = np.trapz(fw, dx=dt, axis=0)     # units are (N/m)-s
-            f = f*res                           # units are N-s
-            f = f/3600                          # units are N-hr
-            f = f/1000                          # units are kN-hr
+            f = f*res                           # units are now N-s
+            f = f/3600                          # units are now N-hr
+            f = f/1000                          # units are now kN-hr
 
             max_F[labeled_mask==i] = np.nanmax(f)
 
