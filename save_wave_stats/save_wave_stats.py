@@ -7,14 +7,119 @@ import pandas as pd
 import geopandas as gpd
 from helpers.helpers import HelperFuncs
 import concurrent
-# from concurrent.futures import ThreadPoolExecutor
 import threading
+
+import scipy.ndimage as ndi
 
 class SaveWaveStats(HelperFuncs):
     """docstring for plot_wave_heights"""
     def __init__(self):
         super().__init__()
 
+    def save_forces(self, var, avg_window_min=2):
+        avg_window_sec = avg_window_min * 60
+        t = self.read_time_xarray()             # reading time array
+        dx, dy = self.get_resolution()
+        if dx != dy:
+            raise ValueError("chose dx or dy for resolution")
+        res = dx
+
+        # reading data to xarray dataset
+        data_all = self.read_3d_data_xarray_nonmem(var)    
+        data_all = data_all.stack(point=['nx', 'ny'])   # stacking the x/y data so that i can easily index it later
+
+        # reading buildings and identifying number of buildings
+        bldgs = self.read_buildings()
+        mask = np.ma.getmask(bldgs)
+        labeled_mask, num_features = ndi.label(~mask)
+
+        # setting constants
+        rho = 1025          # density of salt (kg/m^3)
+        g = 9.81            # gravity (m/s^2)
+        dt = t[1]-t[0]      # time step (s)
+
+        # setting up empty array to store F
+        dims = self.read_dims_xarray()
+        max_F = np.empty(dims)
+        # loop through each building
+        for i in range(num_features+1):
+            print("{} of {}" .format(i, num_features))
+            if i == 0:      # if 0, these are non-buildings; skip
+                continue
+            offset_mask = self.get_offset_mask(labeled_mask, i) # offset the location of buildlings to get neighbhoring cells
+
+            # getting indicies of importance. E.g., (x,y) of cells to consider
+            idxs = np.argwhere(offset_mask)
+            idxs = [(idxs[i,0].item(), idxs[i,1].item()) for i in range(len(idxs))] # reorganize such that it's a list of tuples
+
+            # getting z data for each point. Results in 2d array where rows are time and cols represent each point.
+            z = data_all.sel(point=idxs).values
+            h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
+            eta = z_trimmed - h
+
+            # calculate wave force
+            fw = ((rho*g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
+            f = np.trapz(fw, dx=dt, axis=0)     # units are (N/m)-s
+            f = f*res                           # units are N-s
+            f = f/3600                          # units are N-hr
+            f = f/1000                          # units are kN-hr
+
+            max_F[labeled_mask==i] = np.nanmax(f)
+
+        filename = "impulse" + ".npy"
+        full_path = os.path.join(self.path_to_save_plot, filename)
+        np.save(full_path, max_F)
+
+    def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, store_in_mem=False, chunk_size_min=15, max_workers=None):
+        """
+        Function to save wave stats to .npy files, parallelized over spatial points.
+        
+        max_workers: The maximum number of threads to use for parallel processing. 
+                     If None, it defaults to the number of processors.
+        """
+        chunk_size_sec = chunk_size_min * 60
+        t = self.read_time_xarray()
+        t_idx_start = np.argmin(np.abs(t - trim_beginning_seconds))
+        t = t[t_idx_start::sample_freq]  # time array with beginning trimmed off.
+
+        # The rest of the setup is the same
+        t_chunks_val = np.arange(t[0], t[-1], step=chunk_size_sec)
+        t_idxs = [self.time_to_tindex(t_, t) for t_ in t_chunks_val]
+        dims = self.read_dims_xarray()  # dimensions of grid
+
+        # Read data outside the loop
+        if store_in_mem:
+            data_all = self.read_3d_data_xarray(var)
+        else:
+            data_all = self.read_3d_data_xarray_nonmem(var)
+
+        data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims)
+        
+        # Create a lock for thread-safe access to the shared data_save_dict
+        data_save_dict_lock = threading.Lock() # Import threading at the top
+
+        print(f"Starting parallel processing with {max_workers if max_workers else 'default'} workers...")
+
+        # Parallel Execution over spatial dimensions
+        futures = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for y2_ in range(dims[0]):
+                for x2_ in range(dims[1]):
+                    # Submit the processing of a single spatial point as a task
+                    future = executor.submit(
+                        self._process_spatial_point, 
+                        y2_, x2_, t, t_idxs, t_idx_start, sample_freq, 
+                        data_all, store_in_mem, stats, chunk_size_sec, 
+                        data_save_dict, data_save_dict_lock
+                    )
+                    futures.append(future)
+            # all tasks have been submitted, now using tqdm to monitor the progress
+            for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Processing spatial points"):
+                future.result() 
+
+        print(f"Finished processing {dims[0]*dims[1]} spatial points.")
+        print("writing to {}:".format(self.path_to_save_plot))
+        self.write_data_save_dict(data_save_dict, self.path_to_save_plot)
 
     def _process_spatial_point(self, y2_, x2_, t, t_idxs, t_idx_start, sample_freq, data_all, store_in_mem, stats, chunk_size_sec, data_save_dict, data_save_dict_lock):
         """
@@ -94,60 +199,6 @@ class SaveWaveStats(HelperFuncs):
                     data_save_dict[stat][y2_, x2_] = data_
 
         return y2_, x2_ # Return for tracking/tqdm update
-
-
-    def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, store_in_mem=False, chunk_size_min=15, max_workers=None):
-        """
-        Function to save wave stats to .npy files, parallelized over spatial points.
-        
-        max_workers: The maximum number of threads to use for parallel processing. 
-                     If None, it defaults to the number of processors.
-        """
-        chunk_size_sec = chunk_size_min * 60
-        t = self.read_time_xarray()
-        t_idx_start = np.argmin(np.abs(t - trim_beginning_seconds))
-        t = t[t_idx_start::sample_freq]  # time array with beginning trimmed off.
-
-        # The rest of the setup is the same
-        t_chunks_val = np.arange(t[0], t[-1], step=chunk_size_sec)
-        t_idxs = [self.time_to_tindex(t_, t) for t_ in t_chunks_val]
-        dims = self.read_dims_xarray()  # dimensions of grid
-        # dims = (3,dims[1])
-
-        # Read data outside the loop
-        if store_in_mem:
-            data_all = self.read_3d_data_xarray(var)
-        else:
-            data_all = self.read_3d_data_xarray_nonmem(var)
-
-        data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims)
-        
-        # Create a lock for thread-safe access to the shared data_save_dict
-        data_save_dict_lock = threading.Lock() # Import threading at the top
-
-        print(f"Starting parallel processing with {max_workers if max_workers else 'default'} workers...")
-
-        # Parallel Execution over spatial dimensions
-        futures = []
-        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-            for y2_ in range(dims[0]):
-                for x2_ in range(dims[1]):
-                    # Submit the processing of a single spatial point as a task
-                    future = executor.submit(
-                        self._process_spatial_point, 
-                        y2_, x2_, t, t_idxs, t_idx_start, sample_freq, 
-                        data_all, store_in_mem, stats, chunk_size_sec, 
-                        data_save_dict, data_save_dict_lock
-                    )
-                    futures.append(future)
-            # all tasks have been submitted, now using tqdm to monitor the progress
-            for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Processing spatial points"):
-                future.result() 
-
-        print(f"Finished processing {dims[0]*dims[1]} spatial points.")
-        print("writing to {}:".format(self.path_to_save_plot))
-        self.write_data_save_dict(data_save_dict, self.path_to_save_plot)
-
 
     def setup_data_save_dict(self, stats, t_idxs, dims):
         data_save_dict = {}
@@ -338,6 +389,30 @@ class SaveWaveStats(HelperFuncs):
         except Exception as e:
             print(f"An error occurred during raster writing: {e}")
 
+
+
+    def get_offset_mask(self, labeled_mask, i):
+        m_ = ~(labeled_mask==i)
+        m_ = np.pad(m_, pad_width=1, mode="constant", constant_values=True)
+        shifted_up = m_[2:, 1:-1]
+        shifted_down = m_[:-2, 1:-1]
+        shifted_left = m_[1:-1, 2:]
+        shifted_right = m_[1:-1, :-2]
+        original_mask_trimmed = m_[1:-1, 1:-1]
+
+        offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
+        return ~offset_mask
+
+    def running_mean(self, z, t, N):
+        cumsum = np.cumsum(np.vstack([np.zeros(np.shape(z)[1]),z]), axis=0) # insert row of zeros at top
+        h = (cumsum[N:,:] - cumsum[:-N,:]) / float(N)      # running mean with window size N; i.e. water depth, h
+        
+        # trimming up elevation and time data to be same length as running mean
+        trim_start = (N - 1) // 2
+        trim_end = trim_start + len(h)
+        time_trimmed = t[trim_start:trim_end]
+        z_trimmed = z[trim_start:trim_end,:]
+        return h, z_trimmed, time_trimmed
 
 
 

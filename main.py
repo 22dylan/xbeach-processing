@@ -11,6 +11,7 @@ from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
 from plot_output_point.plot_output_point import PlotOutputPoint
 from plot_output_transect.plot_output_transect import PlotOutputTransect
 from save_wave_stats.save_wave_stats import SaveWaveStats
+from plot_wave_forces.plot_wave_forces import PlotWaveForces
 from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
 from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
 from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
@@ -18,11 +19,14 @@ from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScat
 from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
+
 if __name__ == "__main__":
     # -- save wave stats
     # sws = SaveWaveStats()
-    # sws.save(var="zs",
-    #          stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
+    # sws.save_forces(var="zs1")
+    # sws.save(var="zs1",
+    #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
+    #          stats = ["Hmax", "Hs_max"],
     #          trim_beginning_seconds=500, 
     #          store_in_mem=False,
     #          chunk_size_min=15,
@@ -60,7 +64,7 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, duration=8) #, fname="el")
+    # pf.plot(var="el", savepoint=1, duration=4, fname="el-4hr")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -112,7 +116,6 @@ if __name__ == "__main__":
     #                   dpi=100,
     #                   )
 
-    
 
     # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
@@ -133,15 +136,15 @@ if __name__ == "__main__":
     #         )
 
     # # -- plot wave height building
-    # pwhb = PlotWaveHeightBldg()
-    # pwhb.plot(stat="Hs",
-    #         model_runname_w_bldgs=None, 
-    #         vmax=1, 
-    #         vmin=0, 
-    #         domain_size="micro", 
-    #         grey_background=False, 
-    #         fname="Hs-bldg.png"
-    #         )
+    pwhb = PlotWaveHeightBldg()
+    pwhb.plot(stat="impulse",
+            model_runname_w_bldgs=None,
+            vmax=None,
+            vmin=0,
+            domain_size="estero", 
+            grey_background=False, 
+            # fname="Hs-bldg.png"
+            )
 
 
     # -- PlotWaveHeightScatter
@@ -155,6 +158,9 @@ if __name__ == "__main__":
     # # -- PlotWaveHeightHist
     # pwhw = PlotWaveHeightHist()
     # pwhw.plot(stat="Hs", runs=["run42"], labels=["run40", "run41"]) #, fname="hist")
+
+
+
 
     plt.show()
 

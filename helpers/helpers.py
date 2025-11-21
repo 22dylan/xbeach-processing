@@ -67,7 +67,6 @@ class HelperFuncs():
         self.model_runname = self.path_to_model.split(os.sep)[-1]
         print("paths set for {}" .format(self.model_runname))
 
-
     def get_output_filename(self):
         """
         Returns the output file name that is located in the `path_to_model` 
@@ -117,6 +116,21 @@ class HelperFuncs():
         nx = ds.sizes["nx"]
         ny = ds.sizes["ny"]
         return (ny, nx)
+    
+    def get_resolution(self):
+        fn_params = os.path.join(self.path_to_model, "params.txt")
+        with open(fn_params,'r') as f:
+            for cnt, line in enumerate(f.readlines()):
+                if "dx" in line:
+                    if "vardx" in line:
+                        continue
+                    l_ = [i.strip() for i in line.split()]
+                    dx = float(l_[-1])
+                if "dy" in line:
+                    l_ = [i.strip() for i in line.split()]
+                    dy = float(l_[-1])
+        return dx, dy
+
 
     def read_transect_data_xarray(self, var, idy, t_idx):
         """

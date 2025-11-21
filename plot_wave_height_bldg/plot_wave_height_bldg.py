@@ -29,11 +29,32 @@ class PlotWaveHeightBldg(HelperFuncs):
         else:
             cmap.set_bad(alpha=0.5)
 
+        if stat == "Hs_max":
+            labl = "Maximum Sig. Wave Height (m)"
+        elif stat == "Hs":
+            labl = "Sig. Wave Height (m)"
+        elif stat == "Hs_tot":
+            labl = "Total Sig. Wave Height (m)"
+        elif stat == "zs_max":
+            labl = "Maximum Water Elevation (m)"
+        elif stat == "zs_mean":
+            labl = "Mean Water Elevation (m)"    
+        elif "t_Hs" in stat:
+            labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
+        elif stat == "Hmax":
+            labl = "Max. Wave Height (m)"
+        elif stat == "Tm":
+            labl = "Mean Period (s)"
+        elif stat == "impulse":
+            labl = "Impulse (KN-hr)"
+
         figsize = self.get_figsize(domain_size)        
         fig, ax = plt.subplots(1,1, figsize=figsize)
         ax.pcolormesh(xgr, ygr, zgr, vmin=-8.5, vmax=8.5, cmap="BrBG_r", zorder=0)
         pcm = ax.pcolormesh(xgr, ygr, bldg_H, vmin=vmin, vmax=vmax, cmap=cmap, zorder=1)
-        plt.colorbar(pcm, ax=ax, extend="max", label="Max Wave Height (m)", aspect=40)
+
+
+        plt.colorbar(pcm, ax=ax, extend="max", label=labl, aspect=40)
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
 
