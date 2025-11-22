@@ -26,7 +26,8 @@ class SaveWaveStats(HelperFuncs):
 
         # reading data to xarray dataset
         data_all = self.read_3d_data_xarray_nonmem(var)    
-        data_all = data_all.stack(point=['nx', 'ny'])   # stacking the x/y data so that i can easily index it later
+        # data_all = data_all.stack(point=['nx', 'ny'])   # stacking the x/y data so that i can easily index it later
+        # data_all = data_all.chunk({"point": 100})
 
         # reading buildings and identifying number of buildings
         bldgs = self.read_buildings()
@@ -50,23 +51,42 @@ class SaveWaveStats(HelperFuncs):
 
             # getting indicies of importance. E.g., (x,y) of cells to consider
             idxs = np.argwhere(offset_mask)
-            idxs = [(idxs[i,0].item(), idxs[i,1].item()) for i in range(len(idxs))] # reorganize such that it's a list of tuples
+            # idxs = [(idxs[i,0].item(), idxs[i,1].item()) for i in range(len(idxs))] # reorganize such that it's a list of tuples
+            
+            # -- new
+            F = []
 
-            # getting z data for each point. Results in 2d array where rows are time and cols represent each point.
-            loaded_data = data_all.sel(point=idxs).compute()
-            z = loaded_data.values
+            for idx in idxs:
+                z = data_all[:, idx[0], idx[1]].values
+                h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
+                eta = z_trimmed - h
 
-            h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
-            eta = z_trimmed - h
+                # calculate wave force
+                fw = ((rho*g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
+                f = np.trapz(fw, dx=dt, axis=0)     # units are (N/m)-s
+                f = f*res                           # units are now N-s
+                f = f/3600                          # units are now N-hr
+                f = f/1000                          # units are now kN-hr
 
-            # calculate wave force
-            fw = ((rho*g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
-            f = np.trapz(fw, dx=dt, axis=0)     # units are (N/m)-s
-            f = f*res                           # units are now N-s
-            f = f/3600                          # units are now N-hr
-            f = f/1000                          # units are now kN-hr
+                F.append(f)
+            max_F[idx[0],idx[1]] = np.nanmax(F)
 
-            max_F[labeled_mask==i] = np.nanmax(f)
+            # # -- old
+            # # getting z data for each point. Results in 2d array where rows are time and cols represent each point.
+            # loaded_data = data_all.sel(point=idxs).compute()
+            # z = loaded_data.values
+
+            # h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
+            # eta = z_trimmed - h
+
+            # # calculate wave force
+            # fw = ((rho*g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
+            # f = np.trapz(fw, dx=dt, axis=0)     # units are (N/m)-s
+            # f = f*res                           # units are now N-s
+            # f = f/3600                          # units are now N-hr
+            # f = f/1000                          # units are now kN-hr
+
+            # max_F[labeled_mask==i] = np.nanmax(f)
 
         filename = "impulse" + ".npy"
         full_path = os.path.join(self.path_to_save_plot, filename)
@@ -405,17 +425,28 @@ class SaveWaveStats(HelperFuncs):
         offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
         return ~offset_mask
 
+    # def running_mean(self, z, t, N):
+    #     cumsum = np.cumsum(np.vstack([np.zeros(np.shape(z)[1]),z]), axis=0) # insert row of zeros at top
+    #     h = (cumsum[N:,:] - cumsum[:-N,:]) / float(N)      # running mean with window size N; i.e. water depth, h
+        
+    #     # trimming up elevation and time data to be same length as running mean
+    #     trim_start = (N - 1) // 2
+    #     trim_end = trim_start + len(h)
+    #     time_trimmed = t[trim_start:trim_end]
+    #     z_trimmed = z[trim_start:trim_end,:]
+    #     return h, z_trimmed, time_trimmed
+
+
     def running_mean(self, z, t, N):
-        cumsum = np.cumsum(np.vstack([np.zeros(np.shape(z)[1]),z]), axis=0) # insert row of zeros at top
-        h = (cumsum[N:,:] - cumsum[:-N,:]) / float(N)      # running mean with window size N; i.e. water depth, h
+        cumsum = np.cumsum(np.insert(z,0,0)) # insert row of zeros at top
+        h = (cumsum[N:] - cumsum[:-N]) / float(N)      # running mean with window size N; i.e. water depth, h
         
         # trimming up elevation and time data to be same length as running mean
         trim_start = (N - 1) // 2
         trim_end = trim_start + len(h)
         time_trimmed = t[trim_start:trim_end]
-        z_trimmed = z[trim_start:trim_end,:]
+        z_trimmed = z[trim_start:trim_end]
         return h, z_trimmed, time_trimmed
-
 
 
 
