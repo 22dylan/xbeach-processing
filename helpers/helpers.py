@@ -131,6 +131,20 @@ class HelperFuncs():
                     dy = float(l_[-1])
         return dx, dy
 
+    def get_origin(self):
+        fn_params = os.path.join(self.path_to_model, "params.txt")
+        with open(fn_params,'r') as f:
+            for cnt, line in enumerate(f.readlines()):
+                if "xo" in line:
+                    l_ = [i.strip() for i in line.split()]
+                    xo = float(l_[-1])
+                if "yo" in line:
+                    l_ = [i.strip() for i in line.split()]
+                    yo = float(l_[-1])
+                if "theta" in line:
+                    l_ = [i.strip() for i in line.split()]
+                    theta = float(l_[-1])
+        return xo, yo, theta
 
     def read_transect_data_xarray(self, var, idy, t_idx):
         """
@@ -383,7 +397,7 @@ class HelperFuncs():
         if fn != None:
             fn = os.path.join(self.path_to_save_plot, fn)
             plt.savefig(fn,
-                        pad_inches=0,
+                        pad_inches=0.1,
                         bbox_inches='tight',
                         **kwargs,
                         # transparent=True, 

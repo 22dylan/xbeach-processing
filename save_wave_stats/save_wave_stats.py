@@ -26,8 +26,6 @@ class SaveWaveStats(HelperFuncs):
 
         # reading data to xarray dataset
         data_all = self.read_3d_data_xarray_nonmem(var)    
-        # data_all = data_all.stack(point=['nx', 'ny'])   # stacking the x/y data so that i can easily index it later
-        # data_all = data_all.chunk({"point": 100})
 
         # reading buildings and identifying number of buildings
         bldgs = self.read_buildings()
@@ -51,12 +49,13 @@ class SaveWaveStats(HelperFuncs):
 
             # getting indicies of importance. E.g., (x,y) of cells to consider
             idxs = np.argwhere(offset_mask)
-            # idxs = [(idxs[i,0].item(), idxs[i,1].item()) for i in range(len(idxs))] # reorganize such that it's a list of tuples
             
             # -- new
+            print("confirm this works")
             F = []
-
             for idx in idxs:
+                print(np.shape(data_all))
+                fds
                 z = data_all[:, idx[0], idx[1]].values
                 h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
                 eta = z_trimmed - h
@@ -70,23 +69,6 @@ class SaveWaveStats(HelperFuncs):
 
                 F.append(f)
             max_F[idx[0],idx[1]] = np.nanmax(F)
-
-            # # -- old
-            # # getting z data for each point. Results in 2d array where rows are time and cols represent each point.
-            # loaded_data = data_all.sel(point=idxs).compute()
-            # z = loaded_data.values
-
-            # h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
-            # eta = z_trimmed - h
-
-            # # calculate wave force
-            # fw = ((rho*g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
-            # f = np.trapz(fw, dx=dt, axis=0)     # units are (N/m)-s
-            # f = f*res                           # units are now N-s
-            # f = f/3600                          # units are now N-hr
-            # f = f/1000                          # units are now kN-hr
-
-            # max_F[labeled_mask==i] = np.nanmax(f)
 
         filename = "impulse" + ".npy"
         full_path = os.path.join(self.path_to_save_plot, filename)
@@ -296,8 +278,8 @@ class SaveWaveStats(HelperFuncs):
         self.create_rotated_raster(Hs, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
                                    theta=theta, output_filepath=fn_out)
 
-    def assign_to_bldgs(self, stats, path_to_bldgs, runs=None, col_names=None):
-        bldgs = gpd.read_file(path_to_bldgs)
+    def assign_to_bldgs(self, stats, runs=None, col_names=None):
+        bldgs = gpd.read_file(self.path_to_bldgs)
         
         if runs != None:
             runs.insert(0, self.model_runname)
@@ -327,21 +309,12 @@ class SaveWaveStats(HelperFuncs):
 
                 cnt += 1
 
-        dem = os.path.join(os.getcwd(), "..", "data", "dem", "dem-resampled.tiff")
-        self.reproject_raster(dem, bldgs.crs)
-        with rasterio.open("temp.tiff", "r") as r:
-            bldgs["dem_elev"] = [x[0] for x in r.sample(coord_list)]
-            os.remove("temp.tiff")
-    
-        # bldgs.to_crs("epsg:4326", inplace=True)
         bldgs["centroid"] = bldgs["centroid"].to_crs("epsg:4326")
         bldgs["lon"] = bldgs["centroid"].x
         bldgs["lat"] = bldgs["centroid"].y
-
-        max_surge = 3.740
-        bldgs["water_depth_temp"] = max_surge-bldgs["dem_elev"]
-
-        keep_cols = ["VDA_id", "TARGET_FID", "OBJECTID", "FolioID", "lon", "lat", "water_depth_temp"] + col_names
+        print(bldgs.columns)
+        fds
+        keep_cols = ["VDA_id", "TARGET_FID", "OBJECTID", "FolioID", "lon", "lat"] + col_names
         bldgs = bldgs[keep_cols]
         fn_out = os.path.join(self.path_to_save_plot, "H_at_bldgs.csv")
         bldgs.to_csv(fn_out, index=False)

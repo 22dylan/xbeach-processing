@@ -48,7 +48,7 @@ class PlotWaveHeightBldg(HelperFuncs):
         elif stat == "impulse":
             labl = "Impulse (KN-hr)"
 
-        figsize = self.get_figsize(domain_size)        
+        figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)
         ax.pcolormesh(xgr, ygr, zgr, vmin=-8.5, vmax=8.5, cmap="BrBG_r", zorder=0)
         pcm = ax.pcolormesh(xgr, ygr, bldg_H, vmin=vmin, vmax=vmax, cmap=cmap, zorder=1)

@@ -1,6 +1,7 @@
 relative_path     = True
-path_to_model     = ../xbeach/models/run62
+path_to_model     = ../xbeach/models/temp
 path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
-path_to_save_plot = ../processed-results/run62
+path_to_save_plot = ../processed-results/temp
 
-
+path_to_bldgs     = ../data/buildings/amini-bldgs-estero.geojson
+path_to_dmg       = ../data/mehrshad/data/Geoscience-collection--overall-dataset/data/FMB_VDA_FFE_Final.csv

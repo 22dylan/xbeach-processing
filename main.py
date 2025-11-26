@@ -5,12 +5,14 @@ from make_animation.make_animation import MakeAnimation
 
 
 # from compare_forcing_output.compare_forcing_output import CompareForcingOutput
+from plot_bldg_dmg.plot_bldg_dmg import PlotBldgDmg
 from plot_forcing.plot_forcing import PlotForcing
 from plot_grid.plot_grid import PlotGrid
 from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
 from plot_output_point.plot_output_point import PlotOutputPoint
 from plot_output_transect.plot_output_transect import PlotOutputTransect
 from save_wave_stats.save_wave_stats import SaveWaveStats
+from plot_violin_dmg.plot_violin_dmg import PlotViolinDmg
 from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
 from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
 from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
@@ -22,7 +24,8 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 if __name__ == "__main__":
     # -- save wave stats
     sws = SaveWaveStats()
-    sws.save_forces(var="zs1")
+    # sws.save_forces(var="zs1")
+
     # sws.save(var="zs1",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
     #          stats = ["Hmax", "Hs_max"],
@@ -31,31 +34,29 @@ if __name__ == "__main__":
     #          chunk_size_min=15,
     #          max_workers=10,
     #          )
-    # sws.geolocate(stat="surge_max")
+    # sws.geolocate(stat="impulse")
 
-    # path_to_bldgs = os.path.join(os.getcwd(), "..", "data", "buildings", "amini-bldgs-microgrid.geojson")
-    # sws.assign_to_bldgs(stats=["Hs", "Hmax"], 
-    #                     path_to_bldgs=path_to_bldgs, 
-    #                     runs=["run52", "run53"], 
-    #                     col_names=["Hs_no_bldgs", "Hs_bldgs_on_grnd", "Hs_remove_elevated", "Hmax_no_bldgs", "Hmax_bldgs_on_grnd", "Hmax_remove_elevated"]
+    # sws.assign_to_bldgs(stats=["Hs_max", "Hs_tot", "Hmax", "surge_max", "impulse", "t_Hs_0.5m", "t_Hs_1m"],
+    #                     # runs=["run62"],
+    #                     col_names=["Hs_max", "Hs_tot", "Hmax", "surge_max", "impulse", "t_Hs_0.5m", "t_Hs_1m"]
     #                     )
 
     # -- animation plots
-    # ma = MakeAnimation(
-    #             var              = "zs1",                       # variable to plot (H=wave height; zs=water level)
-    #             tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-    #             tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-    #             domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-    #             xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-    #             vmin             = -1,                           # vmin for plotting
-    #             vmax             = 1,                           # vmax for plotting
-    #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
-    #             dpi              = 200,                         # image resolution (dpi = dots per inch)
-    #             fps              = 10,
-    #             detrend          = False,                        # detrend the elevation data
-    #             )
+    ma = MakeAnimation(
+                var              = "zs",                       # variable to plot (H=wave height; zs=water level)
+                tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+                tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+                domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+                xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+                vmin             = 0,                           # vmin for plotting
+                vmax             = 3,                           # vmax for plotting
+                make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
+                dpi              = 200,                         # image resolution (dpi = dots per inch)
+                fps              = 10,
+                detrend          = False,                        # detrend the elevation data
+                )
     # ma.make_animation(parallel=True, num_proc=10)
-    # ma.plot_frame(t_hr=1)
+    ma.plot_frame(t_hr=0)
 
     # # -- compare forcing to output
     # cfo = CompareForcingOutput(var="zs1", xb_locs=[5], domain="micro")
@@ -136,13 +137,13 @@ if __name__ == "__main__":
 
     # # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
-    # pwhb.plot(stat="impulse",
+    # pwhb.plot(stat="Hs_max",
     #         model_runname_w_bldgs=None,
     #         vmax=None,
     #         vmin=0,
     #         domain_size="estero", 
     #         grey_background=False, 
-    #         # fname="Hs-bldg.png"
+    #         fname="Hs_max-bldg.png"
     #         )
 
 
@@ -159,9 +160,33 @@ if __name__ == "__main__":
     # pwhw.plot(stat="Hs", runs=["run42"], labels=["run40", "run41"]) #, fname="hist")
 
 
+    # # -- PlotBldgDmg
+    # pbd = PlotBldgDmg()
+    # pbd.plot()
+
+
+    # # # -- PlotViolinDmg
+    # pvd = PlotViolinDmg()
+    path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run62", "H_at_bldgs.csv")
+    pvd.plot(stats=["impulse" , "Hs_max", "Hs_tot", "Hmax", "surge_max", "t_Hs_0.5m"], 
+            path_to_stats=path_to_stats,
+            ncols=2,
+            fname="violin.png"
+            )
+
+
+
+
+
+
+
+
+
+
 
 
     plt.show()
+
 
 
 
