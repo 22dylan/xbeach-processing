@@ -24,7 +24,6 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 if __name__ == "__main__":
     # -- save wave stats
     sws = SaveWaveStats()
-    # sws.save_forces(var="zs1")
     # sws.save(var="zs",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
     #          stats = ["impulse"],
