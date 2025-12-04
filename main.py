@@ -25,38 +25,39 @@ if __name__ == "__main__":
     # -- save wave stats
     sws = SaveWaveStats()
     # sws.save_forces(var="zs1")
-
-    # sws.save(var="zs1",
+    # sws.save(var="zs",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
-    #          stats = ["Hmax", "Hs_max"],
+    #          stats = ["impulse"],
     #          trim_beginning_seconds=500, 
     #          store_in_mem=False,
     #          chunk_size_min=15,
-    #          max_workers=10,
+    #          max_workers=100,
     #          )
+
     # sws.geolocate(stat="impulse")
 
-    # sws.assign_to_bldgs(stats=["Hs_max", "Hs_tot", "Hmax", "surge_max", "impulse", "t_Hs_0.5m", "t_Hs_1m"],
+    # sws.assign_to_bldgs(stats=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_0.25m", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m", "zs_max", "zs_mean"],
     #                     # runs=["run62"],
-    #                     col_names=["Hs_max", "Hs_tot", "Hmax", "surge_max", "impulse", "t_Hs_0.5m", "t_Hs_1m"]
+    #                     col_names=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_0.25m", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m", "zs_max", "zs_mean"]
     #                     )
 
+
     # -- animation plots
-    ma = MakeAnimation(
-                var              = "zs",                       # variable to plot (H=wave height; zs=water level)
-                tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-                tstop            = 1,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-                domain_size      = "estero",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-                xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-                vmin             = 0,                           # vmin for plotting
-                vmax             = 3,                           # vmax for plotting
-                make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
-                dpi              = 200,                         # image resolution (dpi = dots per inch)
-                fps              = 10,
-                detrend          = False,                        # detrend the elevation data
-                )
-    # ma.make_animation(parallel=True, num_proc=10)
-    ma.plot_frame(t_hr=0)
+    # ma = MakeAnimation(
+    #             var              = "zs",                       # variable to plot (H=wave height; zs=water level)
+    #             tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+    #             tstop            = 0.05,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+    #             domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+    #             xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+    #             vmin             = 0,                           # vmin for plotting
+    #             vmax             = 3,                           # vmax for plotting
+    #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
+    #             dpi              = 100,                         # image resolution (dpi = dots per inch)
+    #             fps              = 10,
+    #             detrend          = False,                        # detrend the elevation data
+    #             )
+    # ma.make_animation(parallel=True, num_proc=5)
+    # ma.plot_frame(t_hr=30/3600)
 
     # # -- compare forcing to output
     # cfo = CompareForcingOutput(var="zs1", xb_locs=[5], domain="micro")
@@ -64,7 +65,7 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, duration=4, fname="el-4hr")
+    # pf.plot(var="hs", savepoint=1, figsize=(10,3), duration=2, fname="hs-2hr")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -118,16 +119,16 @@ if __name__ == "__main__":
 
 
     # # -- plot wave height domain
-    # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="zs_mean",
-    #         vmin=3,
-    #         vmax=5,
-    #         single_frame=True,
-    #         domain_size="estero",
-    #         plt_bldgs=True,
-    #         plt_offshore=True,
-    #         # fname="Hs_temp-domain.png"
-    #         )
+    pwhd = PlotWaveHeightDomain()
+    pwhd.plot(stat="impulse",
+            # vmin=3,
+            # vmax=5,
+            single_frame=True,
+            domain_size="micro",
+            plt_bldgs=True,
+            plt_offshore=True,
+            # fname="Hs_temp-domain.png"
+            )
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run64-nowind",
     #         domain_size="estero",
@@ -136,16 +137,15 @@ if __name__ == "__main__":
     #         )
 
     # # # -- plot wave height building
-    # pwhb = PlotWaveHeightBldg()
-    # pwhb.plot(stat="Hs_max",
-    #         model_runname_w_bldgs=None,
-    #         vmax=None,
-    #         vmin=0,
-    #         domain_size="estero", 
-    #         grey_background=False, 
-    #         fname="Hs_max-bldg.png"
-    #         )
-
+    pwhb = PlotWaveHeightBldg()
+    pwhb.plot(stat="impulse",
+            model_runname_w_bldgs=None,
+            vmin=0,
+            vmax=None,
+            domain_size="micro", 
+            grey_background=False, 
+            # fname="Hs_max-bldg.png"
+            )
 
     # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
@@ -165,14 +165,14 @@ if __name__ == "__main__":
     # pbd.plot()
 
 
-    # # # -- PlotViolinDmg
+    # # -- PlotViolinDmg
     # pvd = PlotViolinDmg()
-    path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run62", "H_at_bldgs.csv")
-    pvd.plot(stats=["impulse" , "Hs_max", "Hs_tot", "Hmax", "surge_max", "t_Hs_0.5m"], 
-            path_to_stats=path_to_stats,
-            ncols=2,
-            fname="violin.png"
-            )
+    # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run62", "H_at_bldgs.csv")
+    # pvd.plot(stats=["impulse" , "Hs_max", "Hs_tot", "Hmax", "surge_max", "t_Hs_0.5m"], 
+    #         path_to_stats=path_to_stats,
+    #         ncols=2,
+    #         fname="violin.png"
+    #         )
 
 
 

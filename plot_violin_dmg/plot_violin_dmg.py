@@ -13,13 +13,19 @@ class PlotViolinDmg(HelperFuncs):
     def plot(self, stats, path_to_stats, ncols=1, scatter=True, fname=None):
         df = pd.read_csv(path_to_stats)
         dmg = pd.read_csv(self.path_to_dmg)
-        dmg = dmg[["TA_FolioID", "VDA_DS_overall"]]
-        dmg_unique = dmg.drop_duplicates(subset=["TA_FolioID"], keep="first")
 
-        df = pd.merge(df, dmg_unique, left_on="FolioID", right_on="TA_FolioID", how="inner")
-        df = df.loc[~(df["impulse"]==0)]
+        # dmg = dmg[["VDA_id", "VDA_DS_overall"]]
+        dmg_unique = dmg.drop_duplicates(subset=["VDA_id"], keep="first")
+
+        df.set_index("VDA_id", inplace=True)
+        dmg_unique.set_index("VDA_id", inplace=True)
+
+        df = pd.merge(df, dmg_unique, left_index=True, right_index=True)
+        
         df = df.loc[~(df["surge_max"]>9)]
-
+        
+        self.temp_tree(df)
+        fds
 
         fig, ax = plt.subplots(int(len(stats)/ncols),ncols, figsize=(16,8))
         
@@ -87,4 +93,37 @@ class PlotViolinDmg(HelperFuncs):
 
     def rand_scatter(self, x, n):
         return np.ones(n)*x + 0.02*np.random.uniform(low=-1,high=1, size=n)
+    
+    def temp_tree(self, df):
+        from sklearn.datasets import load_iris
+        from sklearn import tree
+
+        x_cols = ["FFE_ffe_ft", "Hmax", "Hs_max", "impulse", "surge_max", "t_Hs_0.5m"]
+        # x_cols = ["Hs_max", "t_Hs_0.5m"]
+        y_col = ["VDA_DS_overall"]
+        X = df[x_cols].values
+        y = df[y_col].values
+        y = np.ravel(y)
+        print(len(y))
+        clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=3)
+        clf = clf.fit(X, y)
+        fig, ax = plt.subplots(1,1,figsize=(15,8))
+        tree.plot_tree(clf, ax=ax, fontsize=5, feature_names=x_cols, class_names=np.unique(y),
+                filled=True)
+        
+        plt.show()
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
 

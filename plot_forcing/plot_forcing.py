@@ -50,7 +50,7 @@ class PlotForcing(HelperFuncs):
         ax.set_xlim([0,96])
 
         self.save_fig(fig, fname,
-                        transparent=True,
+                        transparent=False,
                         dpi=500,
                         )
 

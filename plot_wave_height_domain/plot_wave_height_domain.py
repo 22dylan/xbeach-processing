@@ -11,7 +11,7 @@ class PlotWaveHeightDomain(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def plot(self, stat, vmin=0, vmax=1, fname=None, prnt_read=False, 
+    def plot(self, stat, vmin=None, vmax=None, fname=None, prnt_read=False, 
             single_frame=False, domain_size="estero", plt_bldgs=True, plt_offshore=False):
         
         # read wave heights
@@ -44,6 +44,8 @@ class PlotWaveHeightDomain(HelperFuncs):
         elif "zs" in stat:
             # cmap = mpl.cm.Blues
             cmap = mpl.cm.YlGnBu_r
+        else:
+            cmap = mpl.cm.plasma
         cmap.set_bad('grey')
 
 
@@ -70,6 +72,8 @@ class PlotWaveHeightDomain(HelperFuncs):
             labl = "Max. Wave Height (m)"
         elif stat == "Tm":
             labl = "Mean Period (s)"
+        elif stat == "impulse":
+            labl = "Impulse ((kN-hr)/m))"
         
         plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:
