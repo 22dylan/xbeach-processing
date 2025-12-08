@@ -67,12 +67,14 @@ class HelperFuncs():
         self.model_runname = self.path_to_model.split(os.sep)[-1]
         print("paths set for {}" .format(self.model_runname))
 
-    def get_output_filename(self):
+    def get_output_filename(self, model_dir=None):
         """
         Returns the output file name that is located in the `path_to_model` 
           directory.
         """
-        files = os.listdir(self.path_to_model)        
+        if model_dir == None:
+            model_dir = self.path_to_model
+        files = os.listdir(model_dir)        
         nc_files = [i for i in files if ".nc" in i]
         if len(nc_files) > 0:
             # fn  = [i for i in files if ".nc" in i][0]
@@ -145,6 +147,17 @@ class HelperFuncs():
                     l_ = [i.strip() for i in line.split()]
                     theta = float(l_[-1])
         return xo, yo, theta
+    
+    def read_from_params(self, fn_params=None, var=None):
+        if fn_params == None:
+            fn_params = os.path.join(self.path_to_model, "params.txt")
+        with open(fn_params,'r') as f:
+            for cnt, line in enumerate(f.readlines()):
+                if var in line:
+                    l_ = [i.strip() for i in line.split()]
+                    val = float(l_[-1])
+                    break
+        return val
 
     def read_transect_data_xarray(self, var, idy, t_idx):
         """
@@ -179,7 +192,7 @@ class HelperFuncs():
         ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
         return ds[var][:,:,:]
 
-    def read_2d_data_xarray_timestep(self, var, t):        
+    def read_2d_data_xarray_timestep(self, var, t, model_dir=None):        
         """
         Reads xarray data for entire domain at specified time step.
         Inputs:
@@ -188,7 +201,10 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        if model_dir == None:
+            model_dir = self.path_to_model
+        xb_output = self.get_output_filename(model_dir)
+        fn = os.path.join(model_dir, xb_output)
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         
         slice_data = ds[var].isel(globaltime=slice(t,t+1))
@@ -260,14 +276,16 @@ class HelperFuncs():
                         resampling=Resampling.nearest)
 
 
-    def read_buildings(self, run_w_bldgs=None):
+    def read_buildings(self, run_w_bldgs=None, model_dir=None):
         """
         TODO: add docstring
         """
+        if model_dir == None:
+            model_dir = self.path_to_model
         if run_w_bldgs == None:
-            fn_zgrid = os.path.join(self.path_to_model, "z.grd")
+            fn_zgrid = os.path.join(model_dir, "z.grd")
         else:
-            fn_zgrid = os.path.join(self.path_to_model, "..", run_w_bldgs, "z.grd")
+            fn_zgrid = os.path.join(model_dir, "..", run_w_bldgs, "z.grd")
         zs = []
         with open(fn_zgrid,'r') as f:
             for cnt, line in enumerate(f.readlines()):
@@ -323,12 +341,14 @@ class HelperFuncs():
         df["t_hr"] = df["t_sec"]/3600
         return df
 
-    def read_grid(self):
+    def read_grid(self, model_dir=None):
         """
         TODO: add docstring
         """
         # -- reading xgrid
-        xgrid = os.path.join(self.path_to_model, "x.grd")
+        if model_dir == None:
+            model_dir = self.path_to_model
+        xgrid = os.path.join(model_dir, "x.grd")
         with open(xgrid,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 xs = [float(i.strip()) for i in line.split()]
@@ -337,7 +357,7 @@ class HelperFuncs():
         
         # -- reading ygrid
         ys = []
-        ygrid = os.path.join(self.path_to_model, "y.grd")
+        ygrid = os.path.join(model_dir, "y.grd")
         with open(ygrid,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 y_ = [float(i.strip()) for i in line.split()][0]
@@ -345,7 +365,7 @@ class HelperFuncs():
         
         # -- reading zgrid
         zgr = np.zeros((len(ys), len(xs)))
-        zgrid = os.path.join(self.path_to_model, "z.grd")
+        zgrid = os.path.join(model_dir, "z.grd")
         with open(zgrid,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 z_ = [float(i.strip()) for i in line.split()]

@@ -22,10 +22,7 @@ class MakeAnimation(HelperFuncs):
         super().__init__()
 
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
-        # self.path_to_model = path_to_model
-        # self.xboutput_filename = self.get_output_filename()
-        # self.model_runname = self.path_to_model.split(os.sep)[-1]
-
+        
         self.var = var
         self.tstart = tstart
         self.tstop = tstop
@@ -54,7 +51,7 @@ class MakeAnimation(HelperFuncs):
         masked_array = np.ma.array(data_plot, mask=mask)
 
         # setting some info for the plot        
-        cmap, cmap_bldg = self.setup_coloramp()
+        cmap, cmap_bldg = self.setup_colormap()
         s, cbar_s = self.get_labels(t, t_idx)
 
         # -- make figure and subplots
@@ -100,7 +97,7 @@ class MakeAnimation(HelperFuncs):
         mask = (data_plot < -99999)
         masked_array = np.ma.array(data_plot, mask=mask)
         
-        cmap, cmap_bldg = self.setup_coloramp()
+        cmap, cmap_bldg = self.setup_colormap()
         s, cbar_s = self.get_labels(t, t_idx)
 
         # -- drawing first plot
@@ -185,7 +182,7 @@ class MakeAnimation(HelperFuncs):
             cbar_s = "Water Elevation - Minus Tide (m)"
         return s, cbar_s
 
-    def setup_coloramp(self):
+    def setup_colormap(self):
         # setting up colormap for water
         if self.var == "H":
             cmap = mpl.cm.plasma
@@ -204,7 +201,6 @@ class MakeAnimation(HelperFuncs):
         return cmap, cmap_bldg
 
     def get_detrend_map(self):
-        
         dims = self.read_dims_xarray()
         if self.detrend:
             print("making detrend map...")

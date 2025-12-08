@@ -1,9 +1,10 @@
 import os
 import matplotlib.pyplot as plt
 from helpers.helpers import HelperFuncs
+
+
 from make_animation.make_animation import MakeAnimation
-
-
+from make_animation_hotstart.make_animation_hotstart import MakeAnimationHotstart
 # from compare_forcing_output.compare_forcing_output import CompareForcingOutput
 from plot_bldg_dmg.plot_bldg_dmg import PlotBldgDmg
 from plot_forcing.plot_forcing import PlotForcing
@@ -23,7 +24,7 @@ from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 
 if __name__ == "__main__":
     # -- save wave stats
-    sws = SaveWaveStats()
+    # sws = SaveWaveStats()
     # sws.save(var="zs",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
     #          stats = ["impulse"],
@@ -43,20 +44,45 @@ if __name__ == "__main__":
 
     # -- animation plots
     # ma = MakeAnimation(
-    #             var              = "zs",                       # variable to plot (H=wave height; zs=water level)
-    #             tstart           = 0,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-    #             tstop            = 0.05,                         # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+    #             var              = "zs",                        # variable to plot (H=wave height; zs=water level)
+    #             tstart           = 179/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+    #             tstop            = 181/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
     #             domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-    #             xbeach_duration  = 0.5,                           # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+    #             xbeach_duration  = 0.5,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
     #             vmin             = 0,                           # vmin for plotting
-    #             vmax             = 3,                           # vmax for plotting
+    #             vmax             = 5,                           # vmax for plotting
     #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
     #             dpi              = 100,                         # image resolution (dpi = dots per inch)
     #             fps              = 10,
-    #             detrend          = False,                        # detrend the elevation data
+    #             detrend          = False,                       # detrend the elevation data
     #             )
-    # ma.make_animation(parallel=True, num_proc=5)
-    # ma.plot_frame(t_hr=30/3600)
+
+    # ma.make_animation(parallel=True, num_proc=1)
+    # ma.plot_frame(t_hr=3600/3600)
+
+
+
+    # -- animation for hotsttart runs
+    ma = MakeAnimationHotstart(
+                var              = "zs",                        # variable to plot (H=wave height; zs=water level)
+                tstart           = 239/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+                tstop            = 241/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+                domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+                xbeach_duration  = 0.5,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+                vmin             = 0,                           # vmin for plotting
+                vmax             = 5,                           # vmax for plotting
+                make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
+                dpi              = 100,                         # image resolution (dpi = dots per inch)
+                fps              = 10,
+                detrend          = False,                       # detrend the elevation data
+                dt_video         = 2,
+                )
+
+    hotstart_runs = ["test_a1", "test_a2", "test_b1", "test_b2", "test_c1", "test_c2", 
+                     "test_d1", "test_d2", "test_e1", "test_e2", "test_f1", "test_f2", 
+                     "test_g1", "test_g2", "test_h1", "test_h2"]
+    ma.make_animation_hotstart(hotstart_runs=hotstart_runs)
+
 
     # # -- compare forcing to output
     # cfo = CompareForcingOutput(var="zs1", xb_locs=[5], domain="micro")
@@ -118,16 +144,16 @@ if __name__ == "__main__":
 
 
     # # -- plot wave height domain
-    pwhd = PlotWaveHeightDomain()
-    pwhd.plot(stat="impulse",
-            # vmin=3,
-            # vmax=5,
-            single_frame=True,
-            domain_size="micro",
-            plt_bldgs=True,
-            plt_offshore=True,
-            # fname="Hs_temp-domain.png"
-            )
+    # pwhd = PlotWaveHeightDomain()
+    # pwhd.plot(stat="surge_max",
+    #         vmin=3,
+    #         vmax=5,
+    #         single_frame=True,
+    #         domain_size="estero",
+    #         plt_bldgs=True,
+    #         plt_offshore=True,
+    #         fname="surge_max-domain.png"
+    #         )
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run64-nowind",
     #         domain_size="estero",
@@ -136,15 +162,15 @@ if __name__ == "__main__":
     #         )
 
     # # # -- plot wave height building
-    pwhb = PlotWaveHeightBldg()
-    pwhb.plot(stat="impulse",
-            model_runname_w_bldgs=None,
-            vmin=0,
-            vmax=None,
-            domain_size="micro", 
-            grey_background=False, 
-            # fname="Hs_max-bldg.png"
-            )
+    # pwhb = PlotWaveHeightBldg()
+    # pwhb.plot(stat="surge_max",
+    #         model_runname_w_bldgs=None,
+    #         vmin=0,
+    #         vmax=None,
+    #         domain_size="estero", 
+    #         grey_background=False, 
+    #         # fname="Hmax-bldg.png"
+    #         )
 
     # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()

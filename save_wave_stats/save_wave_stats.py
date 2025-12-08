@@ -260,22 +260,3 @@ class SaveWaveStats(HelperFuncs):
         return h, z_trimmed, time_trimmed
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

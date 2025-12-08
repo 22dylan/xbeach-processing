@@ -57,7 +57,8 @@ class PlotWaveHeightBldg(HelperFuncs):
         plt.colorbar(pcm, ax=ax, extend="max", label=labl, aspect=40)
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
-
+        ax.set_aspect("equal")
+        
         self.save_fig(fig, fname, transparent=True, dpi=1000)
 
 

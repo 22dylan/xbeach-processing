@@ -74,7 +74,9 @@ class PlotWaveHeightDomain(HelperFuncs):
             labl = "Mean Period (s)"
         elif stat == "impulse":
             labl = "Impulse ((kN-hr)/m))"
-        
+        elif stat == "surge_max":
+            labl = "Maximum Storm Surge (m)"
+
         plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:
             custom_color = 'springgreen'
@@ -111,7 +113,8 @@ class PlotWaveHeightDomain(HelperFuncs):
             # # -- adding rectangle showing where zoomed in area is
             rect = patches.Rectangle(box_lower_left, box_l, box_h, linewidth=3, zorder=10, edgecolor='r', facecolor='none')
             ax0.add_patch(rect)
-
+        
+        ax0.set_aspect("equal")
         # --- saving file
         self.save_fig(fig, fname, transparent=True, dpi=1000)
 
@@ -171,7 +174,7 @@ class PlotWaveHeightDomain(HelperFuncs):
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)
         ax0.set_xlabel("x (m)")
         ax0.set_ylabel("y (m)")
-
+        ax0.set_aspect("equal")
         # --- saving file
         self.save_fig(fig, fname, transparent=True, dpi=1000)
 
