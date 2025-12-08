@@ -68,7 +68,7 @@ if __name__ == "__main__":
                 tstart           = 239/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
                 tstop            = 241/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
                 domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-                xbeach_duration  = 0.5,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+                xbeach_duration  = 8,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
                 vmin             = 0,                           # vmin for plotting
                 vmax             = 5,                           # vmax for plotting
                 make_all_figs    = True,                        # create all frames, or read from existing `temp` dir

@@ -111,7 +111,7 @@ class MakeAnimationHotstart(HelperFuncs):
         ax0.set_title(s)
         ax0.set_aspect("equal")
 
-        # self.draw_time_series(ax1, t_hr, t_start, t_stop)
+        self.draw_time_series(ax1, t_df, t_row["t_hr"].item())
 
         # --- saving figure
         self.save_fig(fig, 
@@ -127,8 +127,6 @@ class MakeAnimationHotstart(HelperFuncs):
             cmap.set_bad('bisque')
         else:
             cmap = mpl.cm.plasma
-            # cmap = mpl.cm.Blues_r
-            # cmap = mpl.cm.berlin
             cmap.set_bad('bisque')
 
         # setting color for buildings.
@@ -159,7 +157,6 @@ class MakeAnimationHotstart(HelperFuncs):
         df["t_idx"] = t_idx
         df["run"] = runs
         df["t_idx_run"] = t_idx_run
-
         return df
 
 
@@ -177,7 +174,6 @@ class MakeAnimationHotstart(HelperFuncs):
             s = "Time {:2.1f}h ({:8.0f}s)" .format(t_row["t_hr"].item(), t_row["t_sec"].item())
             cbar_s = "Water Elevation - Minus Tide (m)"
         return s, cbar_s
-
 
 
     def matplotlib_writer(self, tstart_idx, tstop_idx, temp_dir, figsize):
@@ -202,7 +198,34 @@ class MakeAnimationHotstart(HelperFuncs):
         if os.path.isdir(temp_dir):
             shutil.rmtree(temp_dir)
 
+    def draw_time_series(self, ax, t_df, t_hr):
+        # # -- now plotting time series
+        forcing = self.frcing_to_dataframe()
+        forcing["idx"] = range(0, len(forcing))
+        x,y = forcing["t_hr"], forcing["el"]
+        ax.plot(x,y, lw=0.75, ls="-.", color='k', zorder=0, label="ADCIRC/SWAN")
+        
+        s,e = self.xbeach_duration_to_start_stop(self.xbeach_duration)
+        start = t_df.iloc[0]["t_hr"].item() + s
+        stop  = t_df.iloc[-1]["t_hr"].item() + s
 
+        start_idx = int(forcing.loc[(forcing["t_hr"] - start).abs().idxmin()]["idx"].item())
+        stop_idx  = int(forcing.loc[(forcing["t_hr"] - stop).abs().idxmin()]["idx"].item())
+        
+        df_trnc = forcing.iloc[start_idx:stop_idx]
+        ax.plot(df_trnc["t_hr"], df_trnc["el"], color="#ff5370", lw=2, zorder=1, label="XBeach")
+
+        df_trnc.reset_index(inplace=True)
+        t_trnc_hr = df_trnc["t_hr"].iloc[0]+t_hr
+
+        # interpolating water level on time series
+        y_ = np.interp(t_trnc_hr, df_trnc["t_hr"].values, df_trnc["el"].values)
+        ax.scatter(t_trnc_hr, y_, color="k", s=40, zorder=2)
+        ax.set_xlabel("Time (hr)")
+        ax.set_ylabel("Water Elevation (m)")
+        ax.set_xlim([20,90])
+        leg = ax.legend(loc="upper left", facecolor='white')
+        leg.get_frame().set_alpha(None)
 
 
 
