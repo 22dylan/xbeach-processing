@@ -48,6 +48,7 @@ class PlotForcing(HelperFuncs):
         ax.set_ylabel(ylabel)
         ax.set_title("{}-sp{}-{}" .format(var, savepoint, self.loc_keys[savepoint]))
         ax.set_xlim([0,96])
+        # ax.set_xlim([60,72])
 
         self.save_fig(fig, fname,
                         transparent=False,

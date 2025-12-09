@@ -133,8 +133,10 @@ class HelperFuncs():
                     dy = float(l_[-1])
         return dx, dy
 
-    def get_origin(self):
-        fn_params = os.path.join(self.path_to_model, "params.txt")
+    def get_origin(self, model_dir=None):
+        if model_dir == None:
+            model_dir = self.path_to_model
+        fn_params = os.path.join(model_dir, "params.txt")
         with open(fn_params,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 if "xo" in line:
@@ -321,7 +323,6 @@ class HelperFuncs():
                 wavedir_ = self.nautical_to_xbeach_angle(wavedir_, alfa=55.92839019260679)
 
                 wavedir.append(wavedir_)
-        
 
         # TODO confirm unit conversions with Don
         df = pd.DataFrame()

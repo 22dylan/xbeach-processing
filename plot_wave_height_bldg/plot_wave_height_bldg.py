@@ -12,7 +12,7 @@ class PlotWaveHeightBldg(HelperFuncs):
         super().__init__()
 
     def plot(self, stat, model_runname_w_bldgs=None, vmax=1, vmin=0, 
-            domain_size="estero", grey_background=False, fname=None):
+            domain_size="estero", grey_background=False, cmap=None, fname=None):
         # read wave heights
         H = self.read_npy(stat)
         
@@ -24,6 +24,7 @@ class PlotWaveHeightBldg(HelperFuncs):
 
         # setting up cmap
         cmap = mpl.cm.plasma
+
         if grey_background:
             cmap.set_bad("grey")
         else:

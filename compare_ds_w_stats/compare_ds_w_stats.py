@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 
 from helpers.helpers import HelperFuncs
 
-class PlotViolinDmg(HelperFuncs):
+class CompareDSwStats(HelperFuncs):
     """docstring for xb_plotting_pt"""
     def __init__(self):
         super().__init__()
     
-    def plot(self, stats, path_to_stats, ncols=1, scatter=True, fname=None):
+    def read_df(self, path_to_stats):
         df = pd.read_csv(path_to_stats)
         dmg = pd.read_csv(self.path_to_dmg)
 
@@ -23,10 +23,9 @@ class PlotViolinDmg(HelperFuncs):
         df = pd.merge(df, dmg_unique, left_index=True, right_index=True)
         
         df = df.loc[~(df["surge_max"]>9)]
-        
-        self.temp_tree(df)
-        fds
 
+    def plot_violin(self, stats, path_to_stats, ncols=1, scatter=True, fname=None):
+        df = self.read_df(path_to_stats)
         fig, ax = plt.subplots(int(len(stats)/ncols),ncols, figsize=(16,8))
         
         if isinstance(ax, np.ndarray):
@@ -113,7 +112,8 @@ class PlotViolinDmg(HelperFuncs):
         
         plt.show()
         
-
+    def plot_confusion(self):
+        pass
 
 
 
