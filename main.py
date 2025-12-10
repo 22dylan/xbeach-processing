@@ -81,7 +81,7 @@ if __name__ == "__main__":
                 detrend          = False,                       # detrend the elevation data
                 dt_video         = 2,
                 )
-    # mah.make_animation_hotstart(hotstart_runs=hotstart_runs)
+    # mah.make_animation_hotstart()
     mah.plot_frame(t_hr=0.4)
 
 
