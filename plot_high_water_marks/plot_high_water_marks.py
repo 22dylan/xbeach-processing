@@ -15,11 +15,14 @@ class PlotHighWaterMarks(HelperFuncs):
 
 
     def plot_scatter(self, domain="regular", d_threshold=5, fname=None):
-        max_zs = self.read_max_xarray(var="zs")
+        max_zs = self.read_npy(stat="surge_max")
         gdf_zs = self.max_zs_to_gdf(domain, max_zs)
+        
         gdf_hwm = self.read_hwm()
+
         gdf_hwm.to_crs(gdf_zs.crs, inplace=True)
         gdf_comp = gpd.sjoin_nearest(gdf_hwm, gdf_zs[["zs", "geometry"]], how="left", distance_col="distance")
+
         gdf_comp = gdf_comp.loc[gdf_comp["distance"]<d_threshold]
         gdf_comp["elev_m"] = gdf_comp["elev_ft"]*0.3048
 
@@ -28,29 +31,35 @@ class PlotHighWaterMarks(HelperFuncs):
         xbz = gdf_comp["zs"].values
 
         # setting up mask; ignore all NaN's and cells that are considered water.
-        mask = ~np.isnan(hwm) & ~np.isnan(xbz)
+        mask = ~np.isnan(hwm) & ~np.isnan(xbz)        
         hwm_nonan, xbz_nonan = hwm[mask], xbz[mask]
         hwm_nonan = hwm_nonan.flatten()
         xbz_nonan = xbz_nonan.flatten()
-
+        
         fig, ax = plt.subplots(1,1, figsize=(5,4))
         ax.scatter(xbz_nonan, hwm_nonan, facecolor="none", edgecolor="cadetblue",lw=1, s=10, zorder=0)
 
         # regression to r^2 and best fit line
         # slope, intercept, r_value, p_value, std_err = st.linregress(xbz_nonan, hwm_nonan)
-        xbz_nonan = xbz_nonan[:,np.newaxis]
-        slope, r_value, _, _ = np.linalg.lstsq(xbz_nonan, hwm_nonan)
-        slope = slope[0]
-        intercept = 0
-        r_value = r_value[0]
-        x = np.linspace(0,6, 100)
-        y = slope*x + intercept
-        ax.plot(x,y, ls="-", lw=1.5, color="purple", label="Regression")
 
-        s1 = "Slope = {:0.4f}\n" .format(slope)
-        s2 = "Intercept = {:0.4f}\n" .format(intercept)
-        s3 = r"$r^2= $ {:0.4f}" .format(r_value)
-        s = s1+s2+s3
+        rmse = self.rmse(xbz_nonan, hwm_nonan)
+        mae  = self.mae(xbz_nonan, hwm_nonan)
+        s = "RMSE: {:0.3f}\nMAE:   {:0.3f}" .format(rmse, mae)
+
+        # xbz_nonan = xbz_nonan[:,np.newaxis]
+        # slope, r_value, _, _ = np.linalg.lstsq(xbz_nonan, hwm_nonan)
+        # slope = slope[0]
+        # intercept = 0
+        # r_value = r_value[0]
+        # x = np.linspace(0,6, 100)
+        # y = slope*x + intercept
+        # ax.plot(x,y, ls="-", lw=1.5, color="purple", label="Regression")
+
+
+        # s1 = "Slope = {:0.4f}\n" .format(slope)
+        # s2 = "Intercept = {:0.4f}\n" .format(intercept)
+        # s3 = r"$r^2= $ {:0.4f}" .format(r_value)
+        # s = s1+s2+s3
 
         ax.text(x=0.95, y=0.05, s=s, 
                 transform=ax.transAxes, 
@@ -69,10 +78,11 @@ class PlotHighWaterMarks(HelperFuncs):
         ax.set_title("Water Elevation")
 
         self.save_fig(fig, fname,
-                        transparent=True, 
+                        transparent=False, 
                         dpi=300,
-                        bbox_inches="tight",
-                        pad_inches=0)
+                        # bbox_inches="tight",
+                        # pad_inches=0
+                        )
 
     def max_zs_to_gdf(self, domain, max_zs):
         domain_dir = os.path.join(self.file_dir, "..", "..", "data", "xbeach-domain")

@@ -324,8 +324,7 @@ class SaveWaveStats(HelperFuncs):
         bldgs["centroid"] = bldgs["centroid"].to_crs("epsg:4326")
         bldgs["lon"] = bldgs["centroid"].x
         bldgs["lat"] = bldgs["centroid"].y
-        print(bldgs.columns)
-        fds
+
         keep_cols = ["VDA_id", "TARGET_FID", "OBJECTID", "FolioID", "lon", "lat"] + col_names
         bldgs = bldgs[keep_cols]
         fn_out = os.path.join(self.path_to_save_plot, "H_at_bldgs.csv")

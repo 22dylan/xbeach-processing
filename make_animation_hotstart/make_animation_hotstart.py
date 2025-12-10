@@ -16,7 +16,8 @@ class MakeAnimationHotstart(HelperFuncs):
     """docstring for xb_plotting_large"""
     def __init__(self, var="H", tstart=None, 
                 tstop=None, domain_size="estero", xbeach_duration=12, vmax=1, 
-                vmin=0, make_all_figs=True, dpi=300, fps=10, detrend=False, dt_video=1):
+                vmin=0, make_all_figs=True, dpi=300, fps=10, detrend=False, dt_video=1, 
+                hotstart_runs=None):
         super().__init__()
 
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -33,9 +34,11 @@ class MakeAnimationHotstart(HelperFuncs):
         self.fps = fps
         self.detrend = detrend
         self.dt_video = dt_video
-        
-    def make_animation_hotstart(self, hotstart_runs, parallel=False, num_proc=None):
-        t_df = self.construct_time_df(hotstart_runs)
+        self.set_hotstart_runs()
+
+
+    def make_animation_hotstart(self, parallel=False, num_proc=None):
+        t_df = self.construct_time_df(self.hotstart_runs)
         
         t_start_row = t_df.loc[(t_df["t_hr"] - self.tstart).abs().idxmin()]
         t_stop_row  = t_df.loc[(t_df["t_hr"] - self.tstop).abs().idxmin()]
@@ -77,16 +80,27 @@ class MakeAnimationHotstart(HelperFuncs):
         # if self.domain_size == "estero":
         #     self.plot_timestep(t_hr=t_hr, fname=fn, t_start=t_start_xbeach, t_stop=t_stop_xbeach)
         if self.domain_size == "micro":
-            self.plot_timestep_micro(t_=t_, t_df=t_df, fname=fn, start_row=start_row, stop_row=stop_row)
+            self.plot_timestep_micro(t_=t_, t_df=t_df, fname=fn)
         plt.close()
-        
-    def plot_timestep_micro(self, t_, t_df, fname=None, start_row=None, stop_row=None):
 
+    def plot_frame(self, t_hr):
+        t_df = self.construct_time_df(self.hotstart_runs)
+        t_plot_row = t_df.loc[(t_df["t_hr"] - t_hr).abs().idxmin()]
+        
+        print("creating frame at t_hr = {:.2f} hr" .format(t_hr))
+        print("  nearest time step to input <{:.2f}> hr is t_hr = {:.2f} hr" .format(t_hr, t_plot_row["t_hr"]))
+        print("  this corresponds to time array index: t_idx={}" .format(t_plot_row["t_idx"]))
+
+        fn = "f{}.png" .format(t_plot_row["t_idx"])
+        
+        if self.domain_size == "micro":
+            self.plot_timestep_micro(t_=t_plot_row["t_idx"], t_df=t_df, fname=fn)
+        
+    def plot_timestep_micro(self, t_, t_df, fname=None):
         t_row = t_df.loc[t_df["t_idx"]==t_]
         t_idx = t_row["t_idx_run"].item()
         hot_start_name = t_row["run"].item()
         model_dir = os.path.join(self.path_to_model, hot_start_name)
-
         xgr, ygr, _ = self.read_grid(model_dir)                                     # reading grid data
         data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx, model_dir=model_dir)        # reading xbeach output
 
@@ -228,6 +242,9 @@ class MakeAnimationHotstart(HelperFuncs):
         leg.get_frame().set_alpha(None)
 
 
+    def set_hotstart_runs(self):
+        hotstart_runs = [i for i in os.listdir(self.path_to_model) if os.path.isdir(os.path.join(self.path_to_model, i))]
+        self.hotstart_runs = sorted(hotstart_runs)
 
 
 

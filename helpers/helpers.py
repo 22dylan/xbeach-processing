@@ -208,7 +208,7 @@ class HelperFuncs():
         xb_output = self.get_output_filename(model_dir)
         fn = os.path.join(model_dir, xb_output)
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
-        
+
         slice_data = ds[var].isel(globaltime=slice(t,t+1))
         return slice_data.values[0,:,:]
 

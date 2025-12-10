@@ -23,9 +23,12 @@ class CompareDSwStats(HelperFuncs):
         df = pd.merge(df, dmg_unique, left_index=True, right_index=True)
         
         df = df.loc[~(df["surge_max"]>9)]
+        return df
 
     def plot_violin(self, stats, path_to_stats, ncols=1, scatter=True, fname=None):
         df = self.read_df(path_to_stats)
+        df["t_Hs_0.5m"] = df["t_Hs_0.5m"]/3600
+
         fig, ax = plt.subplots(int(len(stats)/ncols),ncols, figsize=(16,8))
         
         if isinstance(ax, np.ndarray):
@@ -40,6 +43,7 @@ class CompareDSwStats(HelperFuncs):
         ds4 = df.loc[df["VDA_DS_overall"]=="DS4"]
         ds5 = df.loc[df["VDA_DS_overall"]=="DS5"]
         ds6 = df.loc[df["VDA_DS_overall"]=="DS6"]
+
 
         for stat_cnt, stat in enumerate(stats):
             ax_ = ax[stat_cnt]
