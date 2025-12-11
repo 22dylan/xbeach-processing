@@ -47,8 +47,5 @@ class PlotRemovedBldgs(HelperFuncs):
         
         self.save_fig(fig, fname, transparent=True, dpi=1000)
 
-    def read_removed_bldgs(self):
-        fn = os.path.join(self.path_to_model, "bldgs_removed.npy")
-        return np.load(fn)
 
 

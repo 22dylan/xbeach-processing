@@ -3,8 +3,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.metrics import confusion_matrix
 
 from helpers.helpers import HelperFuncs
+from save_wave_stats.save_wave_stats import SaveWaveStats
+
 
 class CompareDSwStats(HelperFuncs):
     """docstring for xb_plotting_pt"""
@@ -129,8 +132,68 @@ class CompareDSwStats(HelperFuncs):
         
         plt.show()
         
-    def plot_confusion(self):
-        pass
+    def plot_confusion(self, fname=None):
+        fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        # if csv file with removed buildings doesn't exist, create it. 
+        if os.path.exists(fn)==False:
+            sws = SaveWaveStats()
+            sws.save_removed_bldgs()
+            sws.geolocate("removed_bldgs")
+            sws.assign_to_bldgs(stats=["removed_bldgs"],
+                            col_names=["removed_bldgs"],
+                            runs=["test"],
+                            fname="removed_bldgs.csv",
+                            )
+        df_xbeach = pd.read_csv(fn)                         # read csv
+        df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
+        df_xbeach.set_index("VDA_id", inplace=True)         # set index
+        
+        df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
+        df_dmg.set_index("VDA_id", inplace=True)            # set index
+        # set column for remove
+        df_dmg["removed_vda"] = 0
+        df_dmg.loc[df_dmg["VDA_DS_overall"].isin(["DS5", "DS6"]), "removed_vda"] = 1
+
+        # merge two dataframes
+        df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
+        
+
+        # -- now create confusion matrix
+        # Calculate the confusion matrix
+        labels = [0,1]
+        cm = confusion_matrix(df["removed_vda"], df["removed_bldgs"], labels=labels)
+        
+        # -- create plot
+        fig, ax = plt.subplots(figsize=(6, 4))
+        im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Greys)
+        ax.set_ylabel('Observed', fontsize=14, rotation=0)
+        ax.set_xlabel('XBeach', fontsize=14)
+
+        labels = ["Standing", "Destroyed"]
+        tick_marks = range(len(labels))
+
+        ax.set_xticks(tick_marks)
+        ax.set_xticklabels(labels, rotation=0, fontsize=10)
+        ax.set_yticks(tick_marks)
+        ax.set_yticklabels(labels, rotation=0, fontsize=10)
+
+        thresh = cm.max() / 2.
+        for i in range(cm.shape[0]):
+            for j in range(cm.shape[1]):
+                ax.text(
+                    j, i, cm[i, j],  # Position (j, i) and value
+                    ha="center",     # Horizontal alignment
+                    va="center",     # Vertical alignment
+                    color="white" if cm[i, j] > thresh else "black", # Color logic
+                    fontsize=12
+                )
+        ax.set_xticks(np.arange(-.5, len(labels), 1), minor=True)
+        ax.set_yticks(np.arange(-.5, len(labels), 1), minor=True)
+
+        ax.grid(which='minor', color='k', linestyle='-', linewidth=0.5)
+        fig.tight_layout()
+        self.save_fig(fig, fname, dpi=1000)
+
 
 
 

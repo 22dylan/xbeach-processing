@@ -36,10 +36,9 @@ if __name__ == "__main__":
     #          )
 
     # for stat in ["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", 
-    #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]:
+    #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max", "removed"]:
     #     sws.geolocate(stat=stat)
 
-    
     # sws.assign_to_bldgs(stats=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"],
     #                     # runs=["run62"],
     #                     col_names=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]
@@ -193,7 +192,7 @@ if __name__ == "__main__":
 
     
     # # -- PlotViolinDmg
-    # cdws = CompareDSwStats()
+    cdws = CompareDSwStats()
     # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
     # cdws.plot_violin(
     #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
@@ -201,19 +200,18 @@ if __name__ == "__main__":
     #                 path_to_stats=path_to_stats,
     #                 ncols=2,
     #                 # fname="violin-Hs-max.png"
-    #                 )
-    # cdws.plot_confusion(path_to_npy=, 
-    #                     fname=None)
+                    # )
+    cdws.plot_confusion(fname="confusion.png")
 
     # # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
-    prb.plot(
-             # stat="test__t_Hs_0.5", 
-             # threshold=1800, 
-             grey_background=False, 
-             domain_size="micro",
-             fname="removed-bldgs"
-             )
+    # prb = PlotRemovedBldgs()
+    # prb.plot(
+    #          # stat="test__t_Hs_0.5", 
+    #          # threshold=1800, 
+    #          grey_background=False, 
+    #          domain_size="micro",
+    #          fname="removed-bldgs"
+    #          )
 
     plt.show()
 

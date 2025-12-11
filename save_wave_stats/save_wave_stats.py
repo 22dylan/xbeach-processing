@@ -24,6 +24,12 @@ class SaveWaveStats(HelperFuncs):
         self.rho = 1025     # density of salt (kg/m^3)
         self.g = 9.81       # gravity (m/s^2)
 
+    def save_removed_bldgs(self):
+        bldgs = self.read_removed_bldgs()
+        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.npy")
+        np.save(fn_out, bldgs)
+
+
     def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, 
             store_in_mem=False, chunk_size_min=15, avg_window_min=2, max_workers=None):
         """
@@ -261,6 +267,13 @@ class SaveWaveStats(HelperFuncs):
 
     def geolocate(self, stat="Hs"):
         fn_params = os.path.join(self.path_to_model, "params.txt")
+        if os.path.exists(fn_params):
+            model_dir = self.path_to_model
+        else:
+            hs0 = self.set_hotstart_runs()[0]
+            model_dir = os.path.join(self.path_to_model, hs0)
+            fn_params = os.path.join(model_dir, "params.txt")
+
         with open(fn_params,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 if "xo" in line:
@@ -284,19 +297,20 @@ class SaveWaveStats(HelperFuncs):
         
         fn_out = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat))
         Hs = self.read_npy(stat)
-        bldgs = self.read_buildings()
+        bldgs = self.read_buildings(model_dir)
         Hs_bldg = self.assign_max_to_bldgs(Hs, bldgs)
         Hs = np.fmax(Hs, Hs_bldg)
         self.create_rotated_raster(Hs, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
                                    theta=theta, output_filepath=fn_out)
 
-    def assign_to_bldgs(self, stats, runs=None, col_names=None):
+    def assign_to_bldgs(self, stats, runs=None, col_names=None, fname=None):
         bldgs = gpd.read_file(self.path_to_bldgs)
         
         if runs != None:
             runs.insert(0, self.model_runname)
         else:
             runs = [self.model_runname]
+        runs = list(filter(None, runs))
 
         bldgs["centroid"] = bldgs["geometry"].centroid
         coord_list = [(x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)]
@@ -315,7 +329,7 @@ class SaveWaveStats(HelperFuncs):
                 else:
                     col_name = col_names[cnt]
 
-                rstr = os.path.join(self.path_to_save_plot, "..", run,  "{}.tiff" .format(stat))            
+                rstr = os.path.join(self.path_to_save_plot, "..", run, "{}.tiff" .format(stat))
                 with rasterio.open(rstr, "r") as r:
                     bldgs[col_name] = [x[0] for x in r.sample(coord_list)]
 
@@ -327,7 +341,9 @@ class SaveWaveStats(HelperFuncs):
 
         keep_cols = ["VDA_id", "TARGET_FID", "OBJECTID", "FolioID", "lon", "lat"] + col_names
         bldgs = bldgs[keep_cols]
-        fn_out = os.path.join(self.path_to_save_plot, "H_at_bldgs.csv")
+        if fname == None:
+            fname = "H_at_bldgs.csv"
+        fn_out = os.path.join(self.path_to_save_plot, fname)
         bldgs.to_csv(fn_out, index=False)
 
 

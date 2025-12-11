@@ -277,7 +277,10 @@ class HelperFuncs():
                         dst_crs=epsg,
                         resampling=Resampling.nearest)
 
-
+    def read_removed_bldgs(self):
+        fn = os.path.join(self.path_to_model, "bldgs_removed.npy")
+        return np.load(fn)
+        
     def read_buildings(self, run_w_bldgs=None, model_dir=None):
         """
         TODO: add docstring
