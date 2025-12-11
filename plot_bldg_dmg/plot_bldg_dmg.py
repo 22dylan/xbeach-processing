@@ -20,8 +20,15 @@ class PlotBldgDmg(HelperFuncs):
         
         bldgs = pd.merge(bldgs[["FolioID", "geometry"]], dmg[["TA_FolioID", "VDA_DS_overall"]], left_on="FolioID", right_on="TA_FolioID")
         
+        fn_params = os.path.join(self.path_to_model, "params.txt")
+        if os.path.exists(fn_params):
+            model_dir = self.path_to_model
+        else:
+            hs0 = self.set_hotstart_runs()[0]
+            model_dir = os.path.join(self.path_to_model, hs0)
+            fn_params = os.path.join(model_dir, "params.txt")
 
-        xo, yo, theta = self.get_origin()
+        xo, yo, theta = self.get_origin(model_dir=model_dir)
         bldgs["geometry"] = bldgs["geometry"].rotate(angle=-theta, origin=(xo, yo))
 
         figsize = self.get_figsize(domain_size)

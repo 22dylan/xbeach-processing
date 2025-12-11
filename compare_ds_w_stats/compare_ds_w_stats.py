@@ -132,7 +132,7 @@ class CompareDSwStats(HelperFuncs):
         
         plt.show()
         
-    def plot_confusion(self, fname=None):
+    def plot_confusion(self, damaged_DSs=["DS5", "DS6"], fname=None):
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
         if os.path.exists(fn)==False:
             sws = SaveWaveStats()
@@ -155,7 +155,7 @@ class CompareDSwStats(HelperFuncs):
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         # set column for remove
         df_dmg["removed_vda"] = 0
-        df_dmg.loc[df_dmg["VDA_DS_overall"].isin(["DS5", "DS6"]), "removed_vda"] = 1
+        df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
 
         # merge two dataframes
         df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)

@@ -191,27 +191,27 @@ if __name__ == "__main__":
     # pbd.plot(domain_size="micro", remove_elevated=True)
 
     
-    # # -- PlotViolinDmg
+    # # # -- PlotViolinDmg
     cdws = CompareDSwStats()
-    # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
-    # cdws.plot_violin(
-    #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
-    #                 # stats = ["Hs_max"],
-    #                 path_to_stats=path_to_stats,
-    #                 ncols=2,
-    #                 # fname="violin-Hs-max.png"
-                    # )
-    cdws.plot_confusion(fname="confusion.png")
+    # # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
+    # # cdws.plot_violin(
+    # #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
+    # #                 # stats = ["Hs_max"],
+    # #                 path_to_stats=path_to_stats,
+    # #                 ncols=2,
+    # #                 # fname="violin-Hs-max.png"
+    #                 # )
+    cdws.plot_confusion(damaged_DSs=["DS6"], fname="confusion.png")
 
-    # # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
-    prb.plot(
-             # stat="test__t_Hs_0.5", 
-             # threshold=1800, 
-             grey_background=False, 
-             domain_size="micro",
-             fname="removed-bldgs"
-             )
+    # # # -- PlotRemoveBldgs
+    # prb = PlotRemovedBldgs()
+    # prb.plot(
+    #          # stat="test__t_Hs_0.5", 
+    #          # threshold=1800, 
+    #          grey_background=False, 
+    #          domain_size="micro",
+    #          fname="removed-bldgs"
+    #          )
 
     plt.show()
 
