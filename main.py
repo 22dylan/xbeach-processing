@@ -188,20 +188,20 @@ if __name__ == "__main__":
 
     # -- PlotBldgDmg
     # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="micro", remove_elevated=True)
+    # pbd.plot(domain_size="micro", remove_elevated=True, remove_DSs=["DS6"], fname="bldg_dmg_binary")
 
     
     # # # -- PlotViolinDmg
     cdws = CompareDSwStats()
-    # # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
-    # # cdws.plot_violin(
-    # #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
-    # #                 # stats = ["Hs_max"],
-    # #                 path_to_stats=path_to_stats,
-    # #                 ncols=2,
-    # #                 # fname="violin-Hs-max.png"
-    #                 # )
-    cdws.plot_confusion(damaged_DSs=["DS6"], fname="confusion.png")
+    # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
+    # cdws.plot_violin(
+    #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
+    #                 # stats = ["Hs_max"],
+    #                 path_to_stats=path_to_stats,
+    #                 ncols=2,
+    #                 # fname="violin-Hs-max.png"
+                    # )
+    cdws.plot_confusion(damaged_DSs=["DS6"])
 
     # # # -- PlotRemoveBldgs
     # prb = PlotRemovedBldgs()

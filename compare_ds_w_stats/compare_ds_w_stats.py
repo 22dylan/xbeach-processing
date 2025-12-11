@@ -147,7 +147,6 @@ class CompareDSwStats(HelperFuncs):
         df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
 
-
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
         remove_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
         df_dmg = df_dmg.loc[~remove_bldgs]
@@ -156,15 +155,15 @@ class CompareDSwStats(HelperFuncs):
         # set column for remove
         df_dmg["removed_vda"] = 0
         df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
-
+        
         # merge two dataframes
         df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
-
+        
         # -- now create confusion matrix
         # Calculate the confusion matrix
         labels = [0,1]
         cm = confusion_matrix(df["removed_vda"], df["removed_bldgs"], labels=labels)
-        
+
         # -- create plot
         fig, ax = plt.subplots(figsize=(6, 4))
         im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Greys)
