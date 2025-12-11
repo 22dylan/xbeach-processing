@@ -278,9 +278,9 @@ class HelperFuncs():
                         resampling=Resampling.nearest)
 
     def read_removed_bldgs(self):
-        fn = os.path.join(self.path_to_model, "bldgs_removed.npy")
+        fn = os.path.join(self.path_to_model, "removed_bldgs.npy")
         return np.load(fn)
-        
+
     def read_buildings(self, run_w_bldgs=None, model_dir=None):
         """
         TODO: add docstring
