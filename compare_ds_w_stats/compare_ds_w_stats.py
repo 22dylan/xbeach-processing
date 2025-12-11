@@ -134,21 +134,24 @@ class CompareDSwStats(HelperFuncs):
         
     def plot_confusion(self, fname=None):
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
-        # if csv file with removed buildings doesn't exist, create it. 
         if os.path.exists(fn)==False:
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
             sws.geolocate("removed_bldgs")
             sws.assign_to_bldgs(stats=["removed_bldgs"],
                             col_names=["removed_bldgs"],
-                            runs=["test"],
+                            runs=None,
                             fname="removed_bldgs.csv",
                             )
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
-        
+
+
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
+        remove_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
+        df_dmg = df_dmg.loc[~remove_bldgs]
+
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         # set column for remove
         df_dmg["removed_vda"] = 0
@@ -156,7 +159,6 @@ class CompareDSwStats(HelperFuncs):
 
         # merge two dataframes
         df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
-        
 
         # -- now create confusion matrix
         # Calculate the confusion matrix

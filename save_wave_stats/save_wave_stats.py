@@ -307,9 +307,9 @@ class SaveWaveStats(HelperFuncs):
         bldgs = gpd.read_file(self.path_to_bldgs)
         
         if runs != None:
-            runs.insert(0, self.model_runname)
+            runs.insert(0, self.path_to_save_plot)
         else:
-            runs = [self.model_runname]
+            runs = [self.path_to_save_plot]
         runs = list(filter(None, runs))
 
         bldgs["centroid"] = bldgs["geometry"].centroid

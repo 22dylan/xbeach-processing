@@ -204,14 +204,14 @@ if __name__ == "__main__":
     cdws.plot_confusion(fname="confusion.png")
 
     # # -- PlotRemoveBldgs
-    # prb = PlotRemovedBldgs()
-    # prb.plot(
-    #          # stat="test__t_Hs_0.5", 
-    #          # threshold=1800, 
-    #          grey_background=False, 
-    #          domain_size="micro",
-    #          fname="removed-bldgs"
-    #          )
+    prb = PlotRemovedBldgs()
+    prb.plot(
+             # stat="test__t_Hs_0.5", 
+             # threshold=1800, 
+             grey_background=False, 
+             domain_size="micro",
+             fname="removed-bldgs"
+             )
 
     plt.show()
 
