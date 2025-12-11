@@ -34,7 +34,7 @@ class MakeAnimationHotstart(HelperFuncs):
         self.fps = fps
         self.detrend = detrend
         self.dt_video = dt_video
-        self.set_hotstart_runs()
+        self.hotstart_runs = self.set_hotstart_runs()
 
 
     def make_animation_hotstart(self, parallel=False, num_proc=None):
@@ -241,10 +241,6 @@ class MakeAnimationHotstart(HelperFuncs):
         leg = ax.legend(loc="upper left", facecolor='white')
         leg.get_frame().set_alpha(None)
 
-
-    def set_hotstart_runs(self):
-        hotstart_runs = [i for i in os.listdir(self.path_to_model) if os.path.isdir(os.path.join(self.path_to_model, i))]
-        self.hotstart_runs = sorted(hotstart_runs)
 
 
 

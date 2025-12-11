@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 from helpers.helpers import HelperFuncs
 
@@ -35,6 +36,7 @@ class CompareDSwStats(HelperFuncs):
             ax = ax.flatten()
         else:
             ax = [ax]
+        colors = sns.color_palette("RdYlGn_r", 7)
 
         ds0 = df.loc[df["VDA_DS_overall"]=="DS0"]
         ds1 = df.loc[df["VDA_DS_overall"]=="DS1"]
@@ -48,33 +50,44 @@ class CompareDSwStats(HelperFuncs):
         for stat_cnt, stat in enumerate(stats):
             ax_ = ax[stat_cnt]
             
-            ax_.violinplot(ds0[stat].values, positions=[0], showextrema=False)
-            ax_.violinplot(ds1[stat].values, positions=[1], showextrema=False)
-            ax_.violinplot(ds2[stat].values, positions=[2], showextrema=False)
-            ax_.violinplot(ds3[stat].values, positions=[3], showextrema=False)
-            ax_.violinplot(ds4[stat].values, positions=[4], showextrema=False)
-            ax_.violinplot(ds5[stat].values, positions=[5], showextrema=False)
-            ax_.violinplot(ds6[stat].values, positions=[6], showextrema=False)
+            data_list = [ds0[stat].values, ds1[stat].values, ds2[stat].values, ds3[stat].values, 
+                         ds4[stat].values, ds5[stat].values, ds6[stat].values]
 
-            x0 = self.rand_scatter(0,len(ds0))
-            x1 = self.rand_scatter(1,len(ds1))
-            x2 = self.rand_scatter(2,len(ds2))
-            x3 = self.rand_scatter(3,len(ds3))
-            x4 = self.rand_scatter(4,len(ds4))
-            x5 = self.rand_scatter(5,len(ds5))
-            x6 = self.rand_scatter(6,len(ds6))
+            # Loop through the data, colors, and positions
+            for i, data in enumerate(data_list):
+                vplot = ax_.violinplot(data, positions=[i], showextrema=False)
+                
+                # Set the color for the current violin
+                for body in vplot['bodies']:
+                    body.set_facecolor(colors[i])
+                    body.set_edgecolor('black')
+                    body.set_linewidth(0.5)
+                    body.set_alpha(0.8)
 
-            if scatter:
-                ax_.scatter(x0, ds0[stat].values, s=0.01, color='k', zorder=2)
-                ax_.scatter(x1, ds1[stat].values, s=0.01, color='k', zorder=2)
-                ax_.scatter(x2, ds2[stat].values, s=0.01, color='k', zorder=2)
-                ax_.scatter(x3, ds3[stat].values, s=0.01, color='k', zorder=2)
-                ax_.scatter(x4, ds4[stat].values, s=0.01, color='k', zorder=2)
-                ax_.scatter(x5, ds5[stat].values, s=0.01, color='k', zorder=2)
-                ax_.scatter(x6, ds6[stat].values, s=0.01, color='k', zorder=2)
+                x = self.rand_scatter(i, len(data))
+
+                if scatter:
+                    ax_.scatter(x, data, s=0.01, color='k', zorder=2)
+
+            # x0 = self.rand_scatter(0,len(ds0))
+            # x1 = self.rand_scatter(1,len(ds1))
+            # x2 = self.rand_scatter(2,len(ds2))
+            # x3 = self.rand_scatter(3,len(ds3))
+            # x4 = self.rand_scatter(4,len(ds4))
+            # x5 = self.rand_scatter(5,len(ds5))
+            # x6 = self.rand_scatter(6,len(ds6))
+
+            # if scatter:
+            #     ax_.scatter(x0, ds0[stat].values, s=0.1, color='k', zorder=2)
+            #     ax_.scatter(x1, ds1[stat].values, s=0.1, color='k', zorder=2)
+            #     ax_.scatter(x2, ds2[stat].values, s=0.1, color='k', zorder=2)
+            #     ax_.scatter(x3, ds3[stat].values, s=0.1, color='k', zorder=2)
+            #     ax_.scatter(x4, ds4[stat].values, s=0.1, color='k', zorder=2)
+            #     ax_.scatter(x5, ds5[stat].values, s=0.1, color='k', zorder=2)
+            #     ax_.scatter(x6, ds6[stat].values, s=0.1, color='k', zorder=2)
 
             if stat == "impulse":
-                lbl = "Impulse (kN-hr)"
+                lbl = "Impulse ((kN-hr)/m)"
             elif stat == "Hs_max":
                 lbl = "Hs_max (m)"
             elif stat == "Hs_tot":

@@ -47,7 +47,7 @@ class PlotWaveHeightBldg(HelperFuncs):
         elif stat == "Tm":
             labl = "Mean Period (s)"
         elif stat == "impulse":
-            labl = "Impulse (KN-hr)"
+            labl = "Impulse ((KN-hr)/m)"
 
         figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)

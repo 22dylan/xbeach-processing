@@ -606,6 +606,9 @@ class HelperFuncs():
 
         return run1_max, run2_max
 
+    def set_hotstart_runs(self):
+        hotstart_runs = [i for i in os.listdir(self.path_to_model) if os.path.isdir(os.path.join(self.path_to_model, i))]
+        return sorted(hotstart_runs)
 
     def rmse(self, predictions, targets):
         return np.sqrt(((predictions - targets) ** 2).mean())
