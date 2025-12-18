@@ -11,8 +11,6 @@ import threading
 
 import scipy.ndimage as ndi
 
-# testing
-# from __future__ import annotations
 from typing import SupportsIndex
 import numpy as np
 from numpy._typing._array_like import _ArrayLikeComplex_co, _ArrayLikeTD64_co, _ArrayLikeObject_co
@@ -54,6 +52,10 @@ class SaveWaveStats(HelperFuncs):
             data_all = self.read_3d_data_xarray(var)
         else:
             data_all = self.read_3d_data_xarray_nonmem(var)
+
+        if any(["velocity" in i for i in stats]):
+            self.ue_data = self.read_3d_data_xarray_nonmem("ue")
+            self.ve_data = self.read_3d_data_xarray_nonmem("ve")
 
         data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims)
         
@@ -147,6 +149,15 @@ class SaveWaveStats(HelperFuncs):
                 data_ = np.nanmax([np.nanmean(i) for i in z_chunks]).item()
             elif stat == "impulse":
                 data_ = self.compute_impulse(z, t, dt, avg_window_sec)
+            elif stat == "velocity_magnitude":
+                ue = self.ue_data[t_idx_start::sample_freq, y2_, x2_].values
+                ve = self.ve_data[t_idx_start::sample_freq, y2_, x2_].values
+                data_ = self.compute_velocity_mag(ue, ve)
+
+            elif stat == "velocity_direction":
+                ue = self.ue_data[t_idx_start::sample_freq, y2_, x2_].values
+                ve = self.ve_data[t_idx_start::sample_freq, y2_, x2_].values
+                data_ = self.compute_velocity_dir(ue, ve)
 
             if data_ is not None:
                 point_results[stat] = data_
@@ -165,6 +176,33 @@ class SaveWaveStats(HelperFuncs):
                     data_save_dict[stat][y2_, x2_] = data_
 
         return y2_, x2_ # Return for tracking/tqdm update
+
+    def compute_velocity_mag(self, ue, ve):        
+        mag = np.sqrt(np.square(ue) + np.square(ve))
+        if np.all(np.isnan(mag)):
+            return np.nan
+        return np.nanmax(mag).item()
+
+    def compute_velocity_dir(self, ue, ve):
+        mag = np.sqrt(np.square(ue) + np.square(ve))
+        if np.all(np.isnan(mag)):
+            return np.nan
+        max_idx = np.nanargmax(np.sqrt(np.square(ue) + np.square(ve))).item()
+        ue, ve = ue[max_idx], ve[max_idx]
+        return self.compute_angle(ue, ve)
+
+    def compute_angle(self, x_vec, y_vec):
+        """
+        Calculates the angle of a 2D vector from the x-axis in a counter-clockwise direction
+        and returns it in the range [0, 360) degrees.
+        """
+        angles_rad = np.arctan2(y_vec, x_vec)
+        angles_deg = np.degrees(angles_rad)
+        # Convert negative angles to the [0, 360) range
+        if angles_deg < 0:
+            angles_deg += 360
+        # angles_deg[angles_deg < 0] += 360
+        return angles_deg
 
     def compute_impulse(self, z, t, dt, avg_window_sec):
         h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
@@ -425,13 +463,3 @@ class SaveWaveStats(HelperFuncs):
         offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
         return ~offset_mask
 
-    # def running_mean(self, z, t, N):
-    #     cumsum = np.cumsum(np.vstack([np.zeros(np.shape(z)[1]),z]), axis=0) # insert row of zeros at top
-    #     h = (cumsum[N:,:] - cumsum[:-N,:]) / float(N)      # running mean with window size N; i.e. water depth, h
-        
-    #     # trimming up elevation and time data to be same length as running mean
-    #     trim_start = (N - 1) // 2
-    #     trim_end = trim_start + len(h)
-    #     time_trimmed = t[trim_start:trim_end]
-    #     z_trimmed = z[trim_start:trim_end,:]
-    #     return h, z_trimmed, time_trimmed

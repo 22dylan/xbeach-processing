@@ -76,6 +76,8 @@ class PlotWaveHeightDomain(HelperFuncs):
             labl = "Impulse ((kN-hr)/m))"
         elif stat == "surge_max":
             labl = "Maximum Storm Surge (m)"
+        else:
+            labl = "No label created yet"
 
         plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:

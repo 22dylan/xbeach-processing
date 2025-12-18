@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # sws = SaveWaveStats()
     # sws.save(var="zs",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
-    #          stats = ["impulse"],
+    #          stats = ["impulse", "current_velocity", "current_direction"],
     #          trim_beginning_seconds=500, 
     #          store_in_mem=False,
     #          chunk_size_min=15,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     #          )
 
     # for stat in ["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", 
-    #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max", "removed"]:
+    #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]:
     #     sws.geolocate(stat=stat)
 
     # sws.assign_to_bldgs(stats=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"],
@@ -192,7 +192,7 @@ if __name__ == "__main__":
 
     
     # # # -- PlotViolinDmg
-    cdws = CompareDSwStats()
+    # cdws = CompareDSwStats()
     # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
     # cdws.plot_violin(
     #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
@@ -201,17 +201,15 @@ if __name__ == "__main__":
     #                 ncols=2,
     #                 # fname="violin-Hs-max.png"
                     # )
-    cdws.plot_confusion(damaged_DSs=["DS6"])
+    # cdws.plot_confusion(damaged_DSs=["DS6"])
 
-    # # # -- PlotRemoveBldgs
-    # prb = PlotRemovedBldgs()
-    # prb.plot(
-    #          # stat="test__t_Hs_0.5", 
-    #          # threshold=1800, 
-    #          grey_background=False, 
-    #          domain_size="micro",
-    #          fname="removed-bldgs"
-    #          )
+    # # -- PlotRemoveBldgs
+    prb = PlotRemovedBldgs()
+    prb.plot(
+             grey_background=False, 
+             domain_size="micro",
+             fname="removed-bldgs"
+             )
 
     plt.show()
 
