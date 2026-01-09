@@ -7,6 +7,7 @@ from make_animation.make_animation import MakeAnimation
 from make_animation_hotstart.make_animation_hotstart import MakeAnimationHotstart
 # from compare_forcing_output.compare_forcing_output import CompareForcingOutput
 from plot_bldg_dmg.plot_bldg_dmg import PlotBldgDmg
+from plot_current_quiver.plot_current_quiver import PlotCurrentQuiver
 from plot_forcing.plot_forcing import PlotForcing
 from plot_grid.plot_grid import PlotGrid
 from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
@@ -188,12 +189,12 @@ if __name__ == "__main__":
 
     # -- PlotBldgDmg
     # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="micro", remove_elevated=True, remove_DSs=["DS6"], fname="bldg_dmg_binary")
+    # pbd.plot(domain_size="micro", remove_elevated=False, remove_DSs=["DS6"]) #, fname="bldg_dmg_binary_all")
 
     
     # # # -- PlotViolinDmg
-    # cdws = CompareDSwStats()
-    # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
+    cdws = CompareDSwStats()
+    path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
     # cdws.plot_violin(
     #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
     #                 # stats = ["Hs_max"],
@@ -201,16 +202,22 @@ if __name__ == "__main__":
     #                 ncols=2,
     #                 # fname="violin-Hs-max.png"
                     # )
-    # cdws.plot_confusion(damaged_DSs=["DS6"])
+    cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=False, fname="confusion-remove-elevated")
+    # cdws.explore_confusion(damaged_DSs=["DS6"])
 
-    # # -- PlotRemoveBldgs
+    # # # -- PlotRemoveBldgs
     prb = PlotRemovedBldgs()
-    prb.plot(
-             grey_background=False, 
-             domain_size="micro",
-             fname="removed-bldgs"
-             )
+    # prb.plot(
+    #          grey_background=False, 
+    #          domain_size="micro",
+    #          fname="removed-bldgs"
+    #          )
+    prb.plot_geopandas(remove_elevated=True, fname="removed-bldgs-geopandas")
 
+    # -- PlotCurrentQuiver
+    # pcq = PlotCurrentQuiver()
+    # pcq.plot()
+    
     plt.show()
 
 

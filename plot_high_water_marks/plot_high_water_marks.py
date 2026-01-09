@@ -26,6 +26,8 @@ class PlotHighWaterMarks(HelperFuncs):
         gdf_comp = gdf_comp.loc[gdf_comp["distance"]<d_threshold]
         gdf_comp["elev_m"] = gdf_comp["elev_ft"]*0.3048
 
+        # self.write_to_csv(gdf_comp)
+        
         # -- now plotting
         hwm = gdf_comp["elev_m"].values
         xbz = gdf_comp["zs"].values
@@ -35,7 +37,7 @@ class PlotHighWaterMarks(HelperFuncs):
         hwm_nonan, xbz_nonan = hwm[mask], xbz[mask]
         hwm_nonan = hwm_nonan.flatten()
         xbz_nonan = xbz_nonan.flatten()
-        
+
         fig, ax = plt.subplots(1,1, figsize=(5,4))
         ax.scatter(xbz_nonan, hwm_nonan, facecolor="none", edgecolor="cadetblue",lw=1, s=10, zorder=0)
 
@@ -83,6 +85,16 @@ class PlotHighWaterMarks(HelperFuncs):
                         # bbox_inches="tight",
                         # pad_inches=0
                         )
+
+    def write_to_csv(self, gdf_comp):
+        gdf_out = pd.DataFrame()
+        gdf_out["source"] = gdf_comp["source"]
+        gdf_out["elev_m_observed"] = gdf_comp["elev_m"]
+        gdf_out["elev_m_xbeach"] = gdf_comp["zs"]
+        gdf_comp.to_crs("epsg:4326", inplace=True)
+        gdf_out["lon"] = gdf_comp["geometry"].x
+        gdf_out["lat"] = gdf_comp["geometry"].y
+        gdf_out.to_csv("hwm_comparison.csv", index=False)
 
     def max_zs_to_gdf(self, domain, max_zs):
         domain_dir = os.path.join(self.file_dir, "..", "..", "data", "xbeach-domain")

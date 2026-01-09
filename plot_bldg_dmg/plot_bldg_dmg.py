@@ -12,15 +12,15 @@ class PlotBldgDmg(HelperFuncs):
     def __init__(self):
         super().__init__()
         
-    def plot(self, domain_size="estero", remove_elevated=False, remove_DSs=None, fname=None):
+    def plot(self, domain_size="estero", remove_elevated=False, remove_DSs=None, plot_elevated=True, fname=None):
         bldgs = gpd.read_file(self.path_to_bldgs)
         dmg   =  pd.read_csv(self.path_to_dmg)
         if remove_elevated:
             remove_bldgs = (dmg["FFE_elev_status"] == "elevated") & (dmg["FFE_foundation"]=="Piles/Columns")
             dmg = dmg.loc[~remove_bldgs]
-        
-        bldgs = pd.merge(bldgs[["FolioID", "geometry"]], dmg[["TA_FolioID", "VDA_DS_overall"]], left_on="FolioID", right_on="TA_FolioID")
-        
+
+        bldgs = pd.merge(bldgs[["VDA_id", "geometry"]], dmg[["VDA_id", "VDA_DS_overall"]], left_on="VDA_id", right_on="VDA_id")
+
         fn_params = os.path.join(self.path_to_model, "params.txt")
         if os.path.exists(fn_params):
             model_dir = self.path_to_model
@@ -51,6 +51,26 @@ class PlotBldgDmg(HelperFuncs):
                                 "bbox_to_anchor":(1.05,1.01),
                                 "loc":"upper left"}
                     )
+
+            if plot_elevated:
+                dmg.set_index("VDA_id", inplace=True)
+                bldgs.set_index("VDA_id", inplace=True)
+                bldgs = pd.merge(bldgs, dmg, left_index=True, right_index=True)
+
+                elevated_bldgs = (bldgs["FFE_elev_status"] == "elevated") & (bldgs["FFE_foundation"]=="Piles/Columns")
+                
+                bldgs_elevated = bldgs[elevated_bldgs]
+                # bldgs["elevated"] = False
+                # bldgs.loc[elevated_bldgs, "elevated"] = True
+                # bldgs_elevated = bldgs.loc[elevated_bldgs]
+                bldgs_elevated.plot(
+                    ax=ax,
+                    color="none",
+                    edgecolor='k',
+                    legend_kwds={"labels":["Elevated"]}
+                    )
+
+
         else:
             bldgs.plot(ax=ax, column="VDA_DS_overall", cmap="RdYlGn_r", 
                         legend=True, 

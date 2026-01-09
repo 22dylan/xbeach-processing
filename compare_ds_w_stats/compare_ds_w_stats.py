@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
@@ -132,7 +133,83 @@ class CompareDSwStats(HelperFuncs):
         
         plt.show()
         
-    def plot_confusion(self, damaged_DSs=["DS5", "DS6"], fname=None):
+    def explore_confusion(self, damaged_DSs=["DS5", "DS6"]):
+        fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        df_xbeach = pd.read_csv(fn)                         # read csv
+        df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
+        df_xbeach.set_index("VDA_id", inplace=True)         # set index
+
+        df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
+        remove_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
+        df_dmg = df_dmg.loc[~remove_bldgs]
+        df_dmg["VDA_DS_overall"].hist()
+
+        df_dmg.set_index("VDA_id", inplace=True)            # set index
+        df_dmg["removed_vda"] = 0
+        df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
+        
+        df_dmg['TA_ActYearBuilt_pre1970'] = False
+        df_dmg.loc[df_dmg["TA_ActYearBuilt"]>1970, "TA_ActYearBuilt_pre1970"] = True
+        
+        # ---
+
+        """ each column with observations for:
+            [ALL]: all buildings vs. standing / not standing
+            [MICRO]: false predictions in xbeach vs. observations.
+        """
+        # col = "NSI_bldgtype"          # [ALL] H (manufactured) destroyed   | [MICRO] -
+        # col = "LC_occupancy_type"     # [ALL] manufactured homes destroyed | [MICRO] -
+        col = "VDA_breakaway_walls"   # [ALL] -                            | [MICRO] breakaway walls result in standing building ***
+        # col = "TA_BldgUseTyp"         # [ALL] destroyed mobile homes       | [MICRO] -  
+        # col="TA_ActYearBuilt_pre1970" # [ALL] before 1970, more destroyed  | [MICRO] before 1970, more destroyed ***
+        # col = "TA_EffYearBuilt"       # [ALL] -                            | [MICRO] before 1990, more destroyed
+        # col = "FEC_Building_Use"      # [ALL] -                            | [MICRO] - 
+        # col = "FFE_bldg_diagram"      # [ALL] "8" results in destroyed     | [MICRO] 1a (slab on grade) result in destroyed buildings
+
+        # -- two plots
+        df_dmg = df_dmg.dropna(subset=[col])
+        x_vals = df_dmg[col].unique().tolist()
+        df_observed_destroyd = df_dmg.loc[df_dmg["removed_vda"] == 1]
+        df_observed_standing = df_dmg.loc[df_dmg["removed_vda"] == 0]
+        
+        fig1, ax = plt.subplots(1,2, figsize=(10,4))
+        
+        # df_observed_destroyd[col].hist(ax=ax[0], grid=False, xrot=45)
+        # df_observed_standing[col].hist(ax=ax[1], grid=False, xrot=45)
+        ax[0].set_title("destroyed")
+        ax[1].set_title("standing")
+        df_observed_destroyd[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[0], grid=False, title="destroyed")
+        df_observed_standing[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[1], grid=False, title="standing")
+        
+        # self.save_fig(fig1, "all-{}" .format(col), dpi=1000)
+        plt.show()
+        fds
+        # -- four plots
+        df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
+
+        df_true_standing = df.loc[(df["removed_bldgs"]==0) & (df["removed_vda"]==0)].index.to_list()
+        df_true_destroyd = df.loc[(df["removed_bldgs"]==1) & (df["removed_vda"]==1)].index.to_list()
+        df_false_standing = df.loc[(df["removed_bldgs"]==0) & (df["removed_vda"]==1)].index.to_list()
+        df_false_destroyd = df.loc[(df["removed_bldgs"]==1) & (df["removed_vda"]==0)].index.to_list()
+        
+        df_true_standing = df_dmg.loc[df_true_standing]
+        df_true_destroyd = df_dmg.loc[df_true_destroyd]
+        df_false_standing = df_dmg.loc[df_false_standing]
+        df_false_destroyd = df_dmg.loc[df_false_destroyd]
+        
+        fig2, ax = plt.subplots(2,2, figsize=(8,6))
+        df_true_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,0], grid=False, title="True Standing")
+        df_false_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,1], grid=False, title="False Destroyed")
+        df_false_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,0], grid=False, title="False Standing")
+        df_true_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,1], grid=False, title="True Destroyed")
+
+
+        plt.tight_layout()
+        # self.save_fig(fig2, "confusion-{}" .format(col), dpi=1000)
+        plt.show()
+
+
+    def plot_confusion(self, damaged_DSs=["DS5", "DS6"], count_elevated=False, fname=None):
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
         if os.path.exists(fn)==False:
             sws = SaveWaveStats()
@@ -148,8 +225,11 @@ class CompareDSwStats(HelperFuncs):
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
 
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
-        remove_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
-        df_dmg = df_dmg.loc[~remove_bldgs]
+        elevated_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
+        txt = "All buildings (including elevated)"
+        if count_elevated==False:
+            df_dmg = df_dmg.loc[~elevated_bldgs]
+            txt = "Ignore Elevated"
 
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         # set column for remove
@@ -158,17 +238,21 @@ class CompareDSwStats(HelperFuncs):
         
         # merge two dataframes
         df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
-        
+
         # -- now create confusion matrix
         # Calculate the confusion matrix
         labels = [0,1]
         cm = confusion_matrix(df["removed_vda"], df["removed_bldgs"], labels=labels)
-
+        score = (cm[0,0]+cm[1,1])/(np.sum(cm))
+        score = "Percent Correct: {:0.3f}" .format(score)
+        
         # -- create plot
         fig, ax = plt.subplots(figsize=(6, 4))
         im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Greys)
         ax.set_ylabel('Observed', fontsize=14, rotation=0)
         ax.set_xlabel('XBeach', fontsize=14)
+        ax.text(x=1.0, y=1.01, s=score,transform=ax.transAxes, ha="right", va="bottom")
+        ax.text(x=1.0, y=1.08, s=txt,  transform=ax.transAxes, ha="right", va="bottom")
 
         labels = ["Standing", "Destroyed"]
         tick_marks = range(len(labels))
@@ -191,6 +275,7 @@ class CompareDSwStats(HelperFuncs):
         ax.set_xticks(np.arange(-.5, len(labels), 1), minor=True)
         ax.set_yticks(np.arange(-.5, len(labels), 1), minor=True)
 
+        
         ax.grid(which='minor', color='k', linestyle='-', linewidth=0.5)
         fig.tight_layout()
         self.save_fig(fig, fname, dpi=1000)

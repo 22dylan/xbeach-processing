@@ -27,6 +27,22 @@ class SaveWaveStats(HelperFuncs):
         fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.npy")
         np.save(fn_out, bldgs)
 
+    def get_all_stats(self):
+        stats = [
+                "Hs", 
+                "Hs_tot", 
+                "Hs_max", 
+                "Hmax", 
+                "Tm", 
+                "t_Hs_", 
+                "zs_max", 
+                "zs_mean", 
+                "surge_max", 
+                "impulse", 
+                "velocity_magnitude", 
+                "velocity_direction",
+                ]
+        return stats
 
     def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, 
             store_in_mem=False, chunk_size_min=15, avg_window_min=2, max_workers=None):
