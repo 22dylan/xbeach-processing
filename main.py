@@ -189,12 +189,12 @@ if __name__ == "__main__":
 
     # -- PlotBldgDmg
     # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="micro", remove_elevated=False, remove_DSs=["DS6"]) #, fname="bldg_dmg_binary_all")
+    # pbd.plot(domain_size="micro", remove_elevated=False, remove_DSs=["DS6"], fname="bldg_dmg_binary_all")
 
     
     # # # -- PlotViolinDmg
-    cdws = CompareDSwStats()
-    path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
+    # cdws = CompareDSwStats()
+    # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
     # cdws.plot_violin(
     #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
     #                 # stats = ["Hs_max"],
@@ -202,7 +202,7 @@ if __name__ == "__main__":
     #                 ncols=2,
     #                 # fname="violin-Hs-max.png"
                     # )
-    cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=False, fname="confusion-remove-elevated")
+    # cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=False, fname="confusion-remove-elevated")
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # # -- PlotRemoveBldgs
@@ -212,7 +212,7 @@ if __name__ == "__main__":
     #          domain_size="micro",
     #          fname="removed-bldgs"
     #          )
-    prb.plot_geopandas(remove_elevated=True, fname="removed-bldgs-geopandas")
+    prb.plot_geopandas(remove_elevated=False) #, fname="removed-bldgs-geopandas")
 
     # -- PlotCurrentQuiver
     # pcq = PlotCurrentQuiver()

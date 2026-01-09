@@ -31,13 +31,16 @@ class PlotRemovedBldgs(HelperFuncs):
         gdf_bldgs = gpd.read_file(self.path_to_bldgs)
         gdf_bldgs.set_index("VDA_id", inplace=True)
 
+        df_bldgs = pd.read_csv(self.path_to_dmg)
+        df_bldgs.set_index("VDA_id", inplace=True)
+        remove_bldgs = (df_bldgs["FFE_elev_status"] == "elevated") & (df_bldgs["FFE_foundation"]=="Piles/Columns")
         if remove_elevated:
-            df_bldgs = pd.read_csv(self.path_to_dmg)
-            df_bldgs.set_index("VDA_id", inplace=True)
-            remove_bldgs = (df_bldgs["FFE_elev_status"] == "elevated") & (df_bldgs["FFE_foundation"]=="Piles/Columns")
             df_xbeach = df_xbeach.loc[~remove_bldgs]
+        else:
+            df_remove = df_xbeach.loc[remove_bldgs]
+            gdf_remove = pd.merge(gdf_bldgs, df_remove, left_index = True, right_index=True)
 
-        gdf_bldgs = pd.merge(gdf_bldgs,df_xbeach["removed_bldgs"], left_index=True, right_index=True)
+        gdf_bldgs = pd.merge(gdf_bldgs, df_xbeach["removed_bldgs"], left_index=True, right_index=True)
 
         # -- rotate geodataframe
         fn_params = os.path.join(self.path_to_model, "params.txt")
@@ -57,6 +60,15 @@ class PlotRemovedBldgs(HelperFuncs):
         gdf_bldgs.plot(ax=ax, column="removed_bldgs", cmap=cmap)
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
+
+        if remove_elevated == False:
+            gdf_remove["geometry"] = gdf_remove["geometry"].rotate(angle=-theta, origin=(xo, yo))
+            gdf_remove.plot(
+                    ax=ax,
+                    color="none",
+                    edgecolor='k',
+                    legend_kwds={"labels":["Elevated"]}
+                    )
         
         self.save_fig(fig, fname, transparent=True, dpi=1000)
 
