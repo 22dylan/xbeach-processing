@@ -134,6 +134,7 @@ class CompareDSwStats(HelperFuncs):
         plt.show()
         
     def explore_confusion(self, damaged_DSs=["DS5", "DS6"]):
+
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
@@ -142,15 +143,15 @@ class CompareDSwStats(HelperFuncs):
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
         remove_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
         df_dmg = df_dmg.loc[~remove_bldgs]
-        df_dmg["VDA_DS_overall"].hist()
 
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         df_dmg["removed_vda"] = 0
         df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
         
         df_dmg['TA_ActYearBuilt_pre1970'] = False
-        df_dmg.loc[df_dmg["TA_ActYearBuilt"]>1970, "TA_ActYearBuilt_pre1970"] = True
-        
+        df_dmg.loc[df_dmg["TA_ActYearBuilt"]<1998, "TA_ActYearBuilt_pre1970"] = True
+        # df_dmg.loc[df_dmg["TA_ActYearBuilt"]<1974, "TA_ActYearBuilt_pre1970"] = True
+
         # ---
 
         """ each column with observations for:
@@ -159,9 +160,9 @@ class CompareDSwStats(HelperFuncs):
         """
         # col = "NSI_bldgtype"          # [ALL] H (manufactured) destroyed   | [MICRO] -
         # col = "LC_occupancy_type"     # [ALL] manufactured homes destroyed | [MICRO] -
-        col = "VDA_breakaway_walls"   # [ALL] -                            | [MICRO] breakaway walls result in standing building ***
+        # col = "VDA_breakaway_walls"   # [ALL] -                            | [MICRO] breakaway walls result in standing building ***
         # col = "TA_BldgUseTyp"         # [ALL] destroyed mobile homes       | [MICRO] -  
-        # col="TA_ActYearBuilt_pre1970" # [ALL] before 1970, more destroyed  | [MICRO] before 1970, more destroyed ***
+        col="TA_ActYearBuilt_pre1970" # [ALL] before 1970, more destroyed  | [MICRO] before 1970, more destroyed ***
         # col = "TA_EffYearBuilt"       # [ALL] -                            | [MICRO] before 1990, more destroyed
         # col = "FEC_Building_Use"      # [ALL] -                            | [MICRO] - 
         # col = "FFE_bldg_diagram"      # [ALL] "8" results in destroyed     | [MICRO] 1a (slab on grade) result in destroyed buildings
@@ -182,8 +183,7 @@ class CompareDSwStats(HelperFuncs):
         df_observed_standing[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[1], grid=False, title="standing")
         
         # self.save_fig(fig1, "all-{}" .format(col), dpi=1000)
-        plt.show()
-        fds
+
         # -- four plots
         df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
 

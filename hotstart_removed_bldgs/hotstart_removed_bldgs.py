@@ -35,7 +35,8 @@ class PlotRemovedBldgs(HelperFuncs):
         df_bldgs.set_index("VDA_id", inplace=True)
         remove_bldgs = (df_bldgs["FFE_elev_status"] == "elevated") & (df_bldgs["FFE_foundation"]=="Piles/Columns")
         if remove_elevated:
-            df_xbeach = df_xbeach.loc[~remove_bldgs]
+            remove_bldgs = pd.DataFrame(remove_bldgs)
+            df_xbeach = pd.merge(df_xbeach, remove_bldgs, left_index=True, right_index=True)
         else:
             df_remove = df_xbeach.loc[remove_bldgs]
             gdf_remove = pd.merge(gdf_bldgs, df_remove, left_index = True, right_index=True)

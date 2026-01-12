@@ -188,8 +188,8 @@ if __name__ == "__main__":
 
 
     # -- PlotBldgDmg
-    # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="micro", remove_elevated=False, remove_DSs=["DS6"], fname="bldg_dmg_binary_all")
+    pbd = PlotBldgDmg()
+    pbd.plot(domain_size="micro", remove_elevated=True) #, remove_DSs=["DS6"], fname="bldg_dmg_binary_all")
 
     
     # # # -- PlotViolinDmg
@@ -206,13 +206,13 @@ if __name__ == "__main__":
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
+    # prb = PlotRemovedBldgs()
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",
     #          fname="removed-bldgs"
     #          )
-    prb.plot_geopandas(remove_elevated=False) #, fname="removed-bldgs-geopandas")
+    # prb.plot_geopandas(remove_elevated=False) #, fname="removed-bldgs-geopandas")
 
     # -- PlotCurrentQuiver
     # pcq = PlotCurrentQuiver()
