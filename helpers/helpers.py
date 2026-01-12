@@ -280,11 +280,15 @@ class HelperFuncs():
     def read_removed_bldgs(self):
         fn = os.path.join(self.path_to_model, "removed_bldgs.npy")
         if os.path.exists(fn):
-            return np.load(fn)
+            removed_bldgs = np.load(fn)
+            removed_bldgs = np.array(removed_bldgs, dtype=bool)
+            return removed_bldgs
         
         fn = os.path.join(self.path_to_model, "removed_bldgs.dat")
         if os.path.exists(fn):
-            return np.loadtxt(fn)
+            removed_bldgs = np.loadtxt(fn)
+            removed_bldgs = np.array(removed_bldgs, dtype=bool)
+            return removed_bldgs
 
     def read_buildings(self, run_w_bldgs=None, model_dir=None):
         """
