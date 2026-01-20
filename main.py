@@ -192,27 +192,18 @@ if __name__ == "__main__":
 
     
     # # # -- PlotViolinDmg
-    # cdws = CompareDSwStats()
-    # path_to_stats = os.path.join(os.getcwd(), "..", "processed-results", "run65", "H_at_bldgs.csv")
-    # cdws.plot_violin(
-    #                 stats = ["impulse", "Hmax", "Hs_max", "Hs_tot", "surge_max", "t_Hs_0.5m"], 
-    #                 # stats = ["Hs_max"],
-    #                 path_to_stats=path_to_stats,
-    #                 ncols=2,
-    #                 # fname="violin-Hs-max.png"
-                    # )
-    # cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=False) #, fname="confusion-remove-elevated")
+    cdws = CompareDSwStats()
+    cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=True) #, fname="confusion-remove-elevated")
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
-    # # # -- PlotRemoveBldgs
+    # # -- PlotRemoveBldgs
     prb = PlotRemovedBldgs()
+    prb.plot_geopandas(count_elevated=True, domain_size="micro") #, fname="removed-bldgs-geopandas")
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",
-    #          include_elevated=True,
-    #          # fname="removed-bldgs-w-elevated"
-    #          )
-    prb.plot_geopandas(count_elevated=False, domain_size="micro") #, fname="removed-bldgs-geopandas")
+             # fname="removed-bldgs-w-elevated"
+             # )
 
     # -- PlotCurrentQuiver
     # pcq = PlotCurrentQuiver()

@@ -80,13 +80,6 @@ class PlotRemovedBldgs(HelperFuncs):
         removed_bldgs = self.read_removed_bldgs()
         removed_bldgs_mask = np.ma.array(removed_bldgs, mask=~removed_bldgs)
 
-        if include_elevated:
-            pufe = ProcessUpliftForcesElevated()
-            pufe.process()
-            fn = os.path.join(self.path_to_save_plot, "elevated_bldgs_failed.npy")
-            elevated_bldgs = np.load(fn)
-            elevated_bldgs = np.ma.array(elevated_bldgs, mask=(elevated_bldgs==0)) # (standing=1), (destroyed=2)
-
         model_dir = os.path.join(self.path_to_model, self.hotstart_runs[0])
         xgr, ygr, zgr = self.read_grid(model_dir)
         bldgs = self.read_buildings(model_dir)
@@ -108,12 +101,7 @@ class PlotRemovedBldgs(HelperFuncs):
         fig, ax = plt.subplots(1,1, figsize=figsize)
         ax.pcolormesh(xgr, ygr, zgr, vmin=-8.5, vmax=8.5, cmap="BrBG_r", zorder=0)
         pcm = ax.pcolormesh(xgr, ygr, bldg_map, cmap=cmap, zorder=1)
-        if include_elevated == True:
-            cmap = mpl.colors.ListedColormap(["darkseagreen", "red"])
-            cmap.set_bad(color="none")
-            ax.pcolormesh(xgr, ygr, elevated_bldgs, cmap=cmap, zorder=2, alpha=0.2)
-        # ax.imshow(H_plot, cmap=cmap, origin="lower")
-
+        
         # plt.colorbar(pcm, ax=ax, extend="max", label=labl, aspect=40)
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
