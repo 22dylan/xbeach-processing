@@ -4,9 +4,9 @@ import pandas as pd
 import geopandas as gpd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import scipy.ndimage as ndi
 
 from helpers.helpers import HelperFuncs
+from process_uplift_forces_elevated.process_uplift_forces_elevated import ProcessUpliftForcesElevated
 
 class PlotRemovedBldgs(HelperFuncs):
     """docstring for plot_wave_heights"""
@@ -46,7 +46,7 @@ class PlotRemovedBldgs(HelperFuncs):
         # -- rotate geodataframe
         fn_params = os.path.join(self.path_to_model, "params.txt")
         if os.path.exists(fn_params):
-                    model_dir = self.path_to_model
+            model_dir = self.path_to_model
         else:
             hs0 = self.set_hotstart_runs()[0]
             model_dir = os.path.join(self.path_to_model, hs0)
@@ -73,12 +73,17 @@ class PlotRemovedBldgs(HelperFuncs):
         
         self.save_fig(fig, fname, transparent=True, dpi=1000)
 
-
-
-    def plot(self, domain_size="estero", grey_background=False, cmap=None, fname=None):
+    def plot(self, domain_size="estero", include_elevated=False, grey_background=False, cmap=None, fname=None):
         # H = self.read_npy(stat)
         removed_bldgs = self.read_removed_bldgs()
         removed_bldgs_mask = np.ma.array(removed_bldgs, mask=~removed_bldgs)
+
+        if include_elevated:
+            pufe = ProcessUpliftForcesElevated()
+            pufe.process()
+            fn = os.path.join(self.path_to_save_plot, "elevated_bldgs_failed.npy")
+            elevated_bldgs = np.load(fn)
+            elevated_bldgs = np.ma.array(elevated_bldgs, mask=(elevated_bldgs==0)) # (standing=1), (destroyed=2)
 
         model_dir = os.path.join(self.path_to_model, self.hotstart_runs[0])
         xgr, ygr, zgr = self.read_grid(model_dir)
@@ -101,6 +106,10 @@ class PlotRemovedBldgs(HelperFuncs):
         fig, ax = plt.subplots(1,1, figsize=figsize)
         ax.pcolormesh(xgr, ygr, zgr, vmin=-8.5, vmax=8.5, cmap="BrBG_r", zorder=0)
         pcm = ax.pcolormesh(xgr, ygr, bldg_map, cmap=cmap, zorder=1)
+        if include_elevated == True:
+            cmap = mpl.colors.ListedColormap(["darkseagreen", "red"])
+            cmap.set_bad(color="none")
+            ax.pcolormesh(xgr, ygr, elevated_bldgs, cmap=cmap, zorder=2, alpha=0.2)
         # ax.imshow(H_plot, cmap=cmap, origin="lower")
 
         # plt.colorbar(pcm, ax=ax, extend="max", label=labl, aspect=40)

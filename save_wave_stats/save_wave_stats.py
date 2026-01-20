@@ -347,7 +347,6 @@ class SaveWaveStats(HelperFuncs):
                 if "dy" in line:
                     l_ = [i.strip() for i in line.split()]
                     dy = float(l_[-1])
-
         
         fn_out = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat))
         Hs = self.read_npy(stat)

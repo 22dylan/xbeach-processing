@@ -20,6 +20,7 @@ from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
 from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
 from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
+from process_uplift_forces_elevated.process_uplift_forces_elevated import ProcessUpliftForcesElevated
 
 from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
@@ -188,8 +189,8 @@ if __name__ == "__main__":
 
 
     # -- PlotBldgDmg
-    pbd = PlotBldgDmg()
-    pbd.plot(domain_size="micro", remove_elevated=True) #, remove_DSs=["DS6"], fname="bldg_dmg_binary_all")
+    # pbd = PlotBldgDmg()
+    # pbd.plot(domain_size="micro", remove_elevated=True) #, remove_DSs=["DS6"], fname="bldg_dmg_binary_all")
 
     
     # # # -- PlotViolinDmg
@@ -206,18 +207,26 @@ if __name__ == "__main__":
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # # -- PlotRemoveBldgs
-    # prb = PlotRemovedBldgs()
-    # prb.plot(
-    #          grey_background=False, 
-    #          domain_size="micro",
-    #          fname="removed-bldgs"
-    #          )
+    prb = PlotRemovedBldgs()
+    prb.plot(
+             grey_background=False, 
+             domain_size="micro",
+             include_elevated=True,
+             # fname="removed-bldgs"
+             )
     # prb.plot_geopandas(remove_elevated=False) #, fname="removed-bldgs-geopandas")
 
     # -- PlotCurrentQuiver
     # pcq = PlotCurrentQuiver()
     # pcq.plot()
     
+
+    # -- ProcessUpliftForcesElevated
+    # pufe = ProcessUpliftForcesElevated()
+    # pufe.process()
+    # pufe.plot(grey_background=True, domain_size="micro")
+
+
     plt.show()
 
 

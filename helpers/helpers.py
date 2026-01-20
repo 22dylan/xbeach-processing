@@ -119,8 +119,10 @@ class HelperFuncs():
         ny = ds.sizes["ny"]
         return (ny, nx)
     
-    def get_resolution(self):
-        fn_params = os.path.join(self.path_to_model, "params.txt")
+    def get_resolution(self, model_dir=None):
+        if model_dir == None:
+            model_dir = self.path_to_model
+        fn_params = os.path.join(model_dir, "params.txt")
         with open(fn_params,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 if "dx" in line:
@@ -626,6 +628,8 @@ class HelperFuncs():
         return np.sqrt(((predictions - targets) ** 2).mean())
     def mae(self, predictions, targets):
         return np.mean(np.abs(predictions - targets))
+
+
 
 if __name__ == '__main__':
     hf = HelperFuncs()
