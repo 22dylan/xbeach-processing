@@ -5,15 +5,17 @@ import rasterio
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-from helpers.helpers import HelperFuncs
 import concurrent
 import threading
-
 import scipy.ndimage as ndi
+
+from helpers.helpers import HelperFuncs
+from process_uplift_forces_elevated.process_uplift_forces_elevated import ProcessUpliftForcesElevated
 
 from typing import SupportsIndex
 import numpy as np
 from numpy._typing._array_like import _ArrayLikeComplex_co, _ArrayLikeTD64_co, _ArrayLikeObject_co
+
 
 class SaveWaveStats(HelperFuncs):
     """docstring for plot_wave_heights"""
@@ -26,6 +28,9 @@ class SaveWaveStats(HelperFuncs):
         bldgs = self.read_removed_bldgs()
         fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.npy")
         np.save(fn_out, bldgs)
+
+        pufe = ProcessUpliftForcesElevated()
+        pufe.process()
 
     def get_all_stats(self):
         stats = [
@@ -356,9 +361,15 @@ class SaveWaveStats(HelperFuncs):
         self.create_rotated_raster(Hs, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
                                    theta=theta, output_filepath=fn_out)
 
+    def merge_remove_bldgs(self):
+        fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        df = pd.read_csv(fn)
+        df["removed_bldgs"] = (df["removed_bldgs_non_elevated"]==1) | (df["removed_bldgs_elevated"]==1)
+        df.to_csv(fn, index=False)
+
     def assign_to_bldgs(self, stats, runs=None, col_names=None, fname=None):
         bldgs = gpd.read_file(self.path_to_bldgs)
-        
+        bldgs.set_index("VDA_id", inplace=True)
         if runs != None:
             runs.insert(0, self.path_to_save_plot)
         else:
@@ -391,14 +402,19 @@ class SaveWaveStats(HelperFuncs):
         bldgs["centroid"] = bldgs["centroid"].to_crs("epsg:4326")
         bldgs["lon"] = bldgs["centroid"].x
         bldgs["lat"] = bldgs["centroid"].y
+        bldgs_ffe = pd.read_csv(self.path_to_dmg)
+        bldgs_ffe.set_index("VDA_id", inplace=True)
+        elevated_bldgs = (bldgs_ffe["FFE_elev_status"] == "elevated") & (bldgs_ffe["FFE_foundation"]=="Piles/Columns")
+        elevated_bldgs = pd.DataFrame(elevated_bldgs, columns=["elevated"])
+        
+        bldgs = pd.merge(bldgs, elevated_bldgs, left_index=True, right_index=True)
 
-        keep_cols = ["VDA_id", "TARGET_FID", "OBJECTID", "FolioID", "lon", "lat"] + col_names
+        keep_cols = ["lon", "lat", "elevated"] + col_names
         bldgs = bldgs[keep_cols]
         if fname == None:
             fname = "H_at_bldgs.csv"
         fn_out = os.path.join(self.path_to_save_plot, fname)
-        bldgs.to_csv(fn_out, index=False)
-
+        bldgs.to_csv(fn_out, index=True)
 
     def create_rotated_raster(self, H, crs, xo, yo, dx, dy, theta, output_filepath):
         """

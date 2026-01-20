@@ -215,22 +215,23 @@ class CompareDSwStats(HelperFuncs):
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
             sws.geolocate("removed_bldgs")
-            sws.assign_to_bldgs(stats=["removed_bldgs"],
-                            col_names=["removed_bldgs"],
+            sws.geolocate("removed_bldgs_elevated")
+            sws.assign_to_bldgs(stats=["removed_bldgs", "removed_bldgs_elevated"],
+                            col_names=["removed_bldgs_non_elevated", "removed_bldgs_elevated"],
                             runs=None,
                             fname="removed_bldgs.csv",
                             )
-        df_xbeach = pd.read_csv(fn)                         # read csv
-        df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
-        df_xbeach.set_index("VDA_id", inplace=True)         # set index
+            sws.merge_remove_bldgs()
 
-        df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
-        elevated_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
-        txt = "All buildings (including elevated)"
-        if count_elevated==False:
-            df_dmg = df_dmg.loc[~elevated_bldgs]
+        df_xbeach = pd.read_csv(fn)                         # read csv
+        df_xbeach.set_index("VDA_id", inplace=True)         # set index
+        if count_elevated:
+            txt = "All buildings (including elevated)"
+        else:
+            df_xbeach = df_xbeach.loc[df_xbeach["elevated"] == False]
             txt = "Ignore Elevated"
 
+        df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         # set column for remove
         df_dmg["removed_vda"] = 0

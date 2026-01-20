@@ -14,34 +14,27 @@ class PlotRemovedBldgs(HelperFuncs):
         super().__init__()
         self.hotstart_runs = self.set_hotstart_runs()
 
-    def plot_geopandas(self, remove_elevated=False, domain_size="estero", fname=None):
+    def plot_geopandas(self, count_elevated=False, domain_size="estero", fname=None):
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
         if os.path.exists(fn)==False:
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
             sws.geolocate("removed_bldgs")
-            sws.assign_to_bldgs(stats=["removed_bldgs"],
-                            col_names=["removed_bldgs"],
+            sws.geolocate("removed_bldgs_elevated")
+            sws.assign_to_bldgs(stats=["removed_bldgs", "removed_bldgs_elevated"],
+                            col_names=["removed_bldgs_non_elevated", "removed_bldgs_elevated"],
                             runs=None,
                             fname="removed_bldgs.csv",
                             )
+            sws.merge_remove_bldgs()
+
         df_xbeach = pd.read_csv(fn)
         df_xbeach.set_index("VDA_id", inplace=True)
 
         gdf_bldgs = gpd.read_file(self.path_to_bldgs)
         gdf_bldgs.set_index("VDA_id", inplace=True)
 
-        df_bldgs = pd.read_csv(self.path_to_dmg)
-        df_bldgs.set_index("VDA_id", inplace=True)
-        remove_bldgs = (df_bldgs["FFE_elev_status"] == "elevated") & (df_bldgs["FFE_foundation"]=="Piles/Columns")
-        if remove_elevated:
-            remove_bldgs = pd.DataFrame(remove_bldgs)
-            df_xbeach = pd.merge(df_xbeach, remove_bldgs, left_index=True, right_index=True)
-        else:
-            df_remove = df_xbeach.loc[remove_bldgs]
-            gdf_remove = pd.merge(gdf_bldgs, df_remove, left_index = True, right_index=True)
-
-        gdf_bldgs = pd.merge(gdf_bldgs, df_xbeach["removed_bldgs"], left_index=True, right_index=True)
+        gdf_bldgs = pd.merge(gdf_bldgs, df_xbeach, left_index=True, right_index=True)
 
         # -- rotate geodataframe
         fn_params = os.path.join(self.path_to_model, "params.txt")
@@ -54,6 +47,16 @@ class PlotRemovedBldgs(HelperFuncs):
         xo, yo, theta = self.get_origin(model_dir=model_dir)
         gdf_bldgs["geometry"] = gdf_bldgs["geometry"].rotate(angle=-theta, origin=(xo, yo))
 
+        # -- new
+        if count_elevated:
+            gdf_elevated = gdf_bldgs.loc[gdf_bldgs["elevated"]==True]
+            txt = "All buildings (including elevated)"
+        else:
+            txt = "Ignore Elevated"
+            gdf_bldgs = gdf_bldgs.loc[gdf_bldgs["elevated"]==False]
+        # ---
+
+
         figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)
         cmap = mpl.colors.ListedColormap(["darkseagreen", "red"])
@@ -62,9 +65,8 @@ class PlotRemovedBldgs(HelperFuncs):
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
-        if remove_elevated == False:
-            gdf_remove["geometry"] = gdf_remove["geometry"].rotate(angle=-theta, origin=(xo, yo))
-            gdf_remove.plot(
+        if count_elevated == True:
+            gdf_elevated.plot(
                     ax=ax,
                     color="none",
                     edgecolor='k',
