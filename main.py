@@ -193,12 +193,12 @@ if __name__ == "__main__":
     
     # # # -- PlotViolinDmg
     cdws = CompareDSwStats()
-    cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=True) #, fname="confusion-remove-elevated")
+    cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=True) #, fname="confusion-count-elevated")
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
-    prb.plot_geopandas(count_elevated=True, domain_size="micro") #, fname="removed-bldgs-geopandas")
+    # prb = PlotRemovedBldgs()
+    # prb.plot_geopandas(count_elevated=True, domain_size="micro") #, fname="removed-bldgs-geopandas")
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",

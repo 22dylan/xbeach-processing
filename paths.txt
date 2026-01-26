@@ -1,6 +1,6 @@
 relative_path     = True
-path_to_model     = ../hotstart/models-test
-path_to_save_plot = ../processed-results/models-test
+path_to_model     = ../hotstart/model-test
+path_to_save_plot = ../processed-results/model-test
 
 path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
 
