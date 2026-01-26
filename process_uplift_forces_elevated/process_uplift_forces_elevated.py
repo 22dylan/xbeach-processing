@@ -15,7 +15,7 @@ class ProcessUpliftForcesElevated(HelperFuncs):
         super().__init__()
         self.rho = 1024
         self.g = 9.81
-        self.threshold = 10 # newtons per m^2
+        self.threshold = 20 # newtons per m^2
         # self.safety_factor = 1.0
 
     def process(self, ):

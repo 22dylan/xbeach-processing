@@ -286,6 +286,13 @@ class HelperFuncs():
             removed_bldgs = np.array(removed_bldgs, dtype=bool)
             return removed_bldgs
         
+        fn = os.path.join(self.path_to_model, "stat_removed_bldgs.dat")
+        if os.path.exists(fn):
+            removed_bldgs = np.loadtxt(fn)
+            removed_bldgs = np.array(removed_bldgs, dtype=bool)
+            return removed_bldgs
+        
+
         fn = os.path.join(self.path_to_model, "removed_bldgs.dat")
         if os.path.exists(fn):
             removed_bldgs = np.loadtxt(fn)
