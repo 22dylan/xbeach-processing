@@ -211,7 +211,7 @@ class CompareDSwStats(HelperFuncs):
 
     def plot_confusion(self, 
             damaged_DSs=["DS5", "DS6"], 
-            bldgs="both",
+            bldgs="all",
             elevated_kwds=None, 
             fname=None):
         """

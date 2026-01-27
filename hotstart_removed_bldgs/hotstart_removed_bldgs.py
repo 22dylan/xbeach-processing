@@ -6,7 +6,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 
 from helpers.helpers import HelperFuncs
-from process_uplift_forces_elevated.process_uplift_forces_elevated import ProcessUpliftForcesElevated
+from save_wave_stats.save_wave_stats import SaveWaveStats
 
 class PlotRemovedBldgs(HelperFuncs):
     """docstring for plot_wave_heights"""
@@ -14,7 +14,11 @@ class PlotRemovedBldgs(HelperFuncs):
         super().__init__()
         self.hotstart_runs = self.set_hotstart_runs()
 
-    def plot_geopandas(self, count_elevated=False, domain_size="estero", fname=None):
+    def plot_geopandas(self, 
+            bldgs="all", 
+            domain_size="estero", 
+            elevated_kwds=None,
+            fname=None):
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
@@ -42,12 +46,19 @@ class PlotRemovedBldgs(HelperFuncs):
         gdf_bldgs["geometry"] = gdf_bldgs["geometry"].rotate(angle=-theta, origin=(xo, yo))
 
         # -- new
-        if count_elevated:
-            gdf_elevated = gdf_bldgs.loc[gdf_bldgs["elevated"]==True]
+        if bldgs=="all":
             txt = "All buildings (including elevated)"
-        else:
-            txt = "Ignore Elevated"
+            gdf_elevated = gdf_bldgs.loc[gdf_bldgs["elevated"]==True]
+
+        elif bldgs=="non-elevated":
             gdf_bldgs = gdf_bldgs.loc[gdf_bldgs["elevated"]==False]
+            txt = "Ignore Elevated"
+        elif bldgs=="elevated":
+            gdf_bldgs = gdf_bldgs.loc[gdf_bldgs["elevated"]==True]
+            txt = "Elevated Only"
+        else:
+            raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
+
         # ---
 
 
@@ -59,7 +70,7 @@ class PlotRemovedBldgs(HelperFuncs):
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
-        if count_elevated == True:
+        if (bldgs == "all"):
             gdf_elevated.plot(
                     ax=ax,
                     color="none",
