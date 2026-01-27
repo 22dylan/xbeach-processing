@@ -26,11 +26,12 @@ class SaveWaveStats(HelperFuncs):
 
     def save_removed_bldgs(self):
         bldgs = self.read_removed_bldgs()
-        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.npy")
-        np.save(fn_out, bldgs)
+        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
+        np.savetxt(fn_out, bldgs)
 
+    def save_removed_elevated_bldgs(self, threshold=20):
         pufe = ProcessUpliftForcesElevated()
-        pufe.process()
+        pufe.process(threshold)
 
     def get_all_stats(self):
         stats = [
@@ -325,14 +326,8 @@ class SaveWaveStats(HelperFuncs):
         return h, z_trimmed, time_trimmed
 
     def geolocate(self, stat="Hs"):
-        fn_params = os.path.join(self.path_to_model, "params.txt")
-        if os.path.exists(fn_params):
-            model_dir = self.path_to_model
-        else:
-            hs0 = self.set_hotstart_runs()[0]
-            model_dir = os.path.join(self.path_to_model, hs0)
-            fn_params = os.path.join(model_dir, "params.txt")
-
+        model_dir = self.get_first_model_dir()
+        fn_params = os.path.join(model_dir, "params.txt")
         with open(fn_params,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 if "xo" in line:
@@ -354,11 +349,16 @@ class SaveWaveStats(HelperFuncs):
                     dy = float(l_[-1])
         
         fn_out = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat))
-        Hs = self.read_npy(stat)
-        bldgs = self.read_buildings(model_dir)
-        Hs_bldg = self.assign_max_to_bldgs(Hs, bldgs)
-        Hs = np.fmax(Hs, Hs_bldg)
-        self.create_rotated_raster(Hs, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
+        try:
+            data = self.read_npy(stat)
+        except:
+            data = self.read_dat(stat)
+
+
+        bldgs = self.read_buildings()
+        data_bldg = self.assign_max_to_bldgs(data, bldgs)
+        data = np.fmax(data, data_bldg)
+        self.create_rotated_raster(data, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
                                    theta=theta, output_filepath=fn_out)
 
     def merge_remove_bldgs(self):

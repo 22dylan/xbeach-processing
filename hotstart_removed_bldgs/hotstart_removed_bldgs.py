@@ -16,9 +16,10 @@ class PlotRemovedBldgs(HelperFuncs):
 
     def plot_geopandas(self, count_elevated=False, domain_size="estero", fname=None):
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
-        if os.path.exists(fn)==False:
+        if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
+            sws.save_removed_elevated_bldgs(threshold=elevated_kwds["removed_elevated_threshold"])
             sws.geolocate("removed_bldgs")
             sws.geolocate("removed_bldgs_elevated")
             sws.assign_to_bldgs(stats=["removed_bldgs", "removed_bldgs_elevated"],
@@ -37,14 +38,7 @@ class PlotRemovedBldgs(HelperFuncs):
         gdf_bldgs = pd.merge(gdf_bldgs, df_xbeach, left_index=True, right_index=True)
 
         # -- rotate geodataframe
-        fn_params = os.path.join(self.path_to_model, "params.txt")
-        if os.path.exists(fn_params):
-            model_dir = self.path_to_model
-        else:
-            hs0 = self.set_hotstart_runs()[0]
-            model_dir = os.path.join(self.path_to_model, hs0)
-            fn_params = os.path.join(model_dir, "params.txt")
-        xo, yo, theta = self.get_origin(model_dir=model_dir)
+        xo, yo, theta = self.get_origin()
         gdf_bldgs["geometry"] = gdf_bldgs["geometry"].rotate(angle=-theta, origin=(xo, yo))
 
         # -- new
@@ -80,9 +74,8 @@ class PlotRemovedBldgs(HelperFuncs):
         removed_bldgs = self.read_removed_bldgs()
         removed_bldgs_mask = np.ma.array(removed_bldgs, mask=~removed_bldgs)
 
-        model_dir = os.path.join(self.path_to_model, self.hotstart_runs[0])
-        xgr, ygr, zgr = self.read_grid(model_dir)
-        bldgs = self.read_buildings(model_dir)
+        xgr, ygr, zgr = self.read_grid()
+        bldgs = self.read_buildings()
         bldg_locs = ~np.ma.getmask(bldgs)
 
         # creating map to plot

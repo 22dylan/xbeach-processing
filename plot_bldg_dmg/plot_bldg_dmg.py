@@ -18,18 +18,9 @@ class PlotBldgDmg(HelperFuncs):
         if remove_elevated:
             remove_bldgs = (dmg["FFE_elev_status"] == "elevated") & (dmg["FFE_foundation"]=="Piles/Columns")
             dmg = dmg.loc[~remove_bldgs]
-
         bldgs = pd.merge(bldgs[["VDA_id", "geometry"]], dmg[["VDA_id", "VDA_DS_overall"]], left_on="VDA_id", right_on="VDA_id")
 
-        fn_params = os.path.join(self.path_to_model, "params.txt")
-        if os.path.exists(fn_params):
-            model_dir = self.path_to_model
-        else:
-            hs0 = self.set_hotstart_runs()[0]
-            model_dir = os.path.join(self.path_to_model, hs0)
-            fn_params = os.path.join(model_dir, "params.txt")
-
-        xo, yo, theta = self.get_origin(model_dir=model_dir)
+        xo, yo, theta = self.get_origin()
         bldgs["geometry"] = bldgs["geometry"].rotate(angle=-theta, origin=(xo, yo))
         
         figsize = self.get_figsize(domain_size)

@@ -209,11 +209,19 @@ class CompareDSwStats(HelperFuncs):
         plt.show()
 
 
-    def plot_confusion(self, damaged_DSs=["DS5", "DS6"], count_elevated=False, fname=None):
+    def plot_confusion(self, 
+            damaged_DSs=["DS5", "DS6"], 
+            bldgs="both",
+            elevated_kwds=None, 
+            fname=None):
+        """
+        plots confusion matrix
+        """
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
-        if os.path.exists(fn)==False:
+        if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
+            sws.save_removed_elevated_bldgs(threshold=elevated_kwds["removed_elevated_threshold"])
             sws.geolocate("removed_bldgs")
             sws.geolocate("removed_bldgs_elevated")
             sws.assign_to_bldgs(stats=["removed_bldgs", "removed_bldgs_elevated"],
@@ -225,11 +233,16 @@ class CompareDSwStats(HelperFuncs):
 
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
-        if count_elevated:
+        if bldgs=="all":
             txt = "All buildings (including elevated)"
-        else:
+        elif bldgs=="non-elevated":
             df_xbeach = df_xbeach.loc[df_xbeach["elevated"] == False]
             txt = "Ignore Elevated"
+        elif bldgs=="elevated":
+            df_xbeach = df_xbeach.loc[df_xbeach["elevated"]==True]
+            txt = "Elevated only"
+        else:
+            raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
 
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
         df_dmg.set_index("VDA_id", inplace=True)            # set index

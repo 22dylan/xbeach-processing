@@ -15,12 +15,16 @@ class ProcessUpliftForcesElevated(HelperFuncs):
         super().__init__()
         self.rho = 1024
         self.g = 9.81
-        self.threshold = 20 # (kN-hr)
         # self.safety_factor = 1.0
 
-    def process(self, ):
+    def process(self, threshold=20):
+        """
+        threshold: threshold to remove buildings (units: kN-hr)
+        """
         hsruns = self.set_hotstart_runs()
-        elevated_bldgs = np.loadtxt(os.path.join(self.path_to_model, hsruns[0], "elevated_bldgs.grd"))
+        model_dir = self.get_first_model_dir()
+        fn = os.path.join(model_dir, "elevated_bldgs.grd")
+        elevated_bldgs = np.loadtxt(fn)
         failed_bldgs = np.zeros(np.shape(elevated_bldgs), dtype=bool)
 
         labeled_mask, num_features = ndi.label(elevated_bldgs)
@@ -29,9 +33,9 @@ class ProcessUpliftForcesElevated(HelperFuncs):
             bldg_ = labeled_mask==i
             uplift_force_ = uplift_force[bldg_]
             # downward_force = self.down_pressure*floor_area
-            if uplift_force_[0]>self.threshold:
+            if uplift_force_[0]>threshold:
                 failed_bldgs[bldg_] = True
 
-        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs_elevated")
-        np.save(fn_out, failed_bldgs)
+        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs_elevated.dat")
+        np.savetxt(fn_out, failed_bldgs)
         

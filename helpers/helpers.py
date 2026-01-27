@@ -65,21 +65,34 @@ class HelperFuncs():
                     setattr(self, key, pth)
                     print("  successfully set {}" .format(key))
         self.model_runname = self.path_to_model.split(os.sep)[-1]
+        self.check_hotstart()
+
         print("paths set for {}" .format(self.model_runname))
 
-    def get_output_filename(self, model_dir=None):
+    def check_hotstart(self):
+        fn_params = os.path.join(self.path_to_model, "params.txt")
+        if os.path.exists(fn_params):
+            self.hotstart_run = False
+        else:
+            self.hotstart_run = True
+            self.hotstart_runs = self.set_hotstart_runs()
+
+    def get_first_model_dir(self):
+        if self.hotstart_run:
+            return os.path.join(self.path_to_model, self.hotstart_runs[0])
+        else:
+            return self.path_to_model
+
+    def get_output_filename(self):
         """
         Returns the output file name that is located in the `path_to_model` 
           directory.
         """
-        if model_dir == None:
-            model_dir = self.path_to_model
+        model_dir = self.get_first_model_dir()
         files = os.listdir(model_dir)        
         nc_files = [i for i in files if ".nc" in i]
         if len(nc_files) > 0:
-            # fn  = [i for i in files if ".nc" in i][0]
             fn = nc_files[0]
-
         else:
             fn = None
         return fn
@@ -119,9 +132,8 @@ class HelperFuncs():
         ny = ds.sizes["ny"]
         return (ny, nx)
     
-    def get_resolution(self, model_dir=None):
-        if model_dir == None:
-            model_dir = self.path_to_model
+    def get_resolution(self):
+        model_dir = self.get_first_model_dir()
         fn_params = os.path.join(model_dir, "params.txt")
         with open(fn_params,'r') as f:
             for cnt, line in enumerate(f.readlines()):
@@ -135,9 +147,8 @@ class HelperFuncs():
                     dy = float(l_[-1])
         return dx, dy
 
-    def get_origin(self, model_dir=None):
-        if model_dir == None:
-            model_dir = self.path_to_model
+    def get_origin(self):
+        model_dir = self.get_first_model_dir()
         fn_params = os.path.join(model_dir, "params.txt")
         with open(fn_params,'r') as f:
             for cnt, line in enumerate(f.readlines()):
@@ -196,7 +207,7 @@ class HelperFuncs():
         ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
         return ds[var][:,:,:]
 
-    def read_2d_data_xarray_timestep(self, var, t, model_dir=None):        
+    def read_2d_data_xarray_timestep(self, var, t):        
         """
         Reads xarray data for entire domain at specified time step.
         Inputs:
@@ -205,10 +216,8 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        if model_dir == None:
-            model_dir = self.path_to_model
-        xb_output = self.get_output_filename(model_dir)
-        fn = os.path.join(model_dir, xb_output)
+        model_dir = self.get_first_model_dir()
+        fn = os.path.join(model_dir, self.xboutput_filename)
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
 
         slice_data = ds[var].isel(globaltime=slice(t,t+1))
@@ -231,14 +240,22 @@ class HelperFuncs():
 
     def read_npy(self, stat, run=None):
         """
-        TODO: add docstring
+        reads .npy files from the directory where results are saved.
+        returns data
         """
         if run == None:
             fn = os.path.join(self.path_to_save_plot, "{}.npy" .format(stat))
         else:
             fn = os.path.join(self.path_to_save_plot, "..", run,  "{}.npy" .format(stat))
-        rmax = np.load(fn)
-        return rmax
+        return np.load(fn)
+
+    def read_dat(self, stat):
+        """
+        reads .npy files from the directory where results are saved.
+        returns data
+        """
+        fn = os.path.join(self.path_to_save_plot, "{}.dat" .format(stat))
+        return np.loadtxt(fn)
 
     def read_time_xarray(self):
         """
@@ -299,12 +316,11 @@ class HelperFuncs():
             removed_bldgs = np.array(removed_bldgs, dtype=bool)
             return removed_bldgs
 
-    def read_buildings(self, run_w_bldgs=None, model_dir=None):
+    def read_buildings(self, run_w_bldgs=None):
         """
         TODO: add docstring
         """
-        if model_dir == None:
-            model_dir = self.path_to_model
+        model_dir = self.get_first_model_dir()
         if run_w_bldgs == None:
             fn_zgrid = os.path.join(model_dir, "z.grd")
         else:
@@ -363,13 +379,12 @@ class HelperFuncs():
         df["t_hr"] = df["t_sec"]/3600
         return df
 
-    def read_grid(self, model_dir=None):
+    def read_grid(self):
         """
-        TODO: add docstring
+        reads the x, y, and z grids to three numpy matrices.
         """
         # -- reading xgrid
-        if model_dir == None:
-            model_dir = self.path_to_model
+        model_dir = self.get_first_model_dir()
         xgrid = os.path.join(model_dir, "x.grd")
         with open(xgrid,'r') as f:
             for cnt, line in enumerate(f.readlines()):
@@ -427,7 +442,6 @@ class HelperFuncs():
         t_idx = np.argmin(np.abs(time-time_wanted))
         return t_idx.item()
 
-
     def save_fig(self, fig, fn=None, **kwargs):
         """
         Saves figures
@@ -448,6 +462,15 @@ class HelperFuncs():
             plt.close()
 
     def get_H(self, z, detrend=True):
+        """
+        Returns an array of wave heights from a time series of water elevations.
+        Wave height defined as peak to trough; must cross through zero.
+        inputs:
+            z: 1d array of water elevations
+            detrend: boolean to detrend the water elevation data
+        returns: 
+            wave_heights: 1-d array of wave heights
+        """
         if detrend:
             z = z - np.mean(z)  # de-trend signal with mean
         
@@ -469,8 +492,18 @@ class HelperFuncs():
         wave_heights = np.array(crests) - np.array(troughs)
         return wave_heights
 
-
     def get_T(self, z, t, detrend=True):
+        """
+        Returns an array of periods from a time series of water elevations.
+        One wave is defined as up-crossing to up-crossing.
+        Period defined as time between up-crossings
+        inputs:
+            z: 1d array of water elevations
+            t: 1d array representing time
+            detrend: boolean to detrend the water elevation data
+        returns: 
+            T: 1-d array of wave periods
+        """
         if detrend:
             z = z - np.mean(z)  # de-trend signal with mean
         
@@ -485,8 +518,18 @@ class HelperFuncs():
         return T
 
     def assign_max_to_bldgs(self, data, bldgs):
-        max_H = np.empty(np.shape(data))
-        max_H[:] = np.nan
+        """
+        assigns maximum value to buildings;
+        considers one cell to left, right, above, and below each building (b/c actual buildings don't have data)
+        takes max of above and assigns this to the building
+        inputs:
+            data: 2d array representing max across domain
+            bldgs: building array
+        returns:
+            max_bldg: 2d array with maximum at each building
+        """
+        max_bldg = np.empty(np.shape(data))
+        max_bldg[:] = np.nan
         mask = np.ma.getmask(bldgs)
         labeled_mask, num_features = ndi.label(~mask)
         for i in range(num_features+1):
@@ -505,11 +548,14 @@ class HelperFuncs():
             offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
             offset_mask = ~offset_mask
 
-            max_H[labeled_mask==i] = np.nanmax(data[offset_mask])
+            max_bldg[labeled_mask==i] = np.nanmax(data[offset_mask])
 
-        return max_H
+        return max_bldg
         
     def compute_Hs(self, H):
+        """
+        computes significant wave height from array of wave heights
+        """
         if len(H) == 0:
             return 0
         H_one_third = np.quantile(H, q=2/3)
@@ -535,6 +581,9 @@ class HelperFuncs():
 
     def nautical_to_xbeach_angle(self, deg, alfa):
         """
+        converting from nautical to xbeach angle.
+        Nautical: waves traveling FROM North are zero and clockwise is positive. 
+        XBeach: waves traveling towards shore are ___.
         """
         deg = deg + alfa 
         if deg > 360:

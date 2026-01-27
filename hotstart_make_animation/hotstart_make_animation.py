@@ -12,7 +12,7 @@ from helpers.helpers import HelperFuncs
 
 
 
-class MakeAnimationHotstart(HelperFuncs):
+class HotstartMakeAnimation(HelperFuncs):
     """docstring for xb_plotting_large"""
     def __init__(self, var="H", tstart=None, 
                 tstop=None, domain_size="estero", xbeach_duration=12, vmax=1, 
@@ -100,9 +100,9 @@ class MakeAnimationHotstart(HelperFuncs):
         t_row = t_df.loc[t_df["t_idx"]==t_]
         t_idx = t_row["t_idx_run"].item()
         hot_start_name = t_row["run"].item()
-        model_dir = os.path.join(self.path_to_model, hot_start_name)
-        xgr, ygr, _ = self.read_grid(model_dir)                                     # reading grid data
-        data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx, model_dir=model_dir)        # reading xbeach output
+
+        xgr, ygr, _ = self.read_grid()                                     # reading grid data
+        data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)        # reading xbeach output
 
 
         # data_plot = data_plot - self.detrend_map
@@ -118,7 +118,7 @@ class MakeAnimationHotstart(HelperFuncs):
         fig, (ax0, ax1) = plt.subplots(2,1, figsize=figsize, height_ratios=[8,1])
 
         # -- drawing first plot
-        bldgs = self.read_buildings(model_dir)
+        bldgs = self.read_buildings()
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=self.vmin, vmax=self.vmax, cmap=cmap)
         plt.colorbar(pcm, ax=ax0, extend="both", label=cbar_s, aspect=40)
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)

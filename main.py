@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 from helpers.helpers import HelperFuncs
 
 from make_animation.make_animation import MakeAnimation
-from make_animation_hotstart.make_animation_hotstart import MakeAnimationHotstart
-# from compare_forcing_output.compare_forcing_output import CompareForcingOutput
+from hotstart_make_animation.hotstart_make_animation import HotstartMakeAnimation
+
+from compare_forcing_output.compare_forcing_output import CompareForcingOutput
 from plot_bldg_dmg.plot_bldg_dmg import PlotBldgDmg
 from plot_current_quiver.plot_current_quiver import PlotCurrentQuiver
 from plot_forcing.plot_forcing import PlotForcing
@@ -193,7 +194,11 @@ if __name__ == "__main__":
     
     # # # -- PlotViolinDmg
     cdws = CompareDSwStats()
-    cdws.plot_confusion(damaged_DSs=["DS6"], count_elevated=True) #, fname="confusion-count-elevated")
+    cdws.plot_confusion(damaged_DSs=["DS6"], 
+                        bldgs="all",       # "non-elevated", "elevated", "all"
+                        elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 10}
+                        # fname="confusion-count-elevated",
+                        )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # -- PlotRemoveBldgs
