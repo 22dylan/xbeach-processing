@@ -30,7 +30,7 @@ class PlotForcing(HelperFuncs):
 
         fig, ax = plt.subplots(1,1, figsize=figsize)
         # fig, ax = plt.subplots(1,1, figsize=(10,1.6))
-        
+        print(df_trnc)
         ls_full = "-"
         lw_full = 1.5
         if (t_start!=None) or (t_stop!=None):

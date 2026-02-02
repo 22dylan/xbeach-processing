@@ -29,7 +29,7 @@ if __name__ == "__main__":
     # sws = SaveWaveStats()
     # sws.save(var="zs",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
-    #          stats = ["impulse", "current_velocity", "current_direction"],
+    #          stats = ["cumulative_impulse", "current_velocity", "current_direction"],
     #          trim_beginning_seconds=500, 
     #          store_in_mem=False,
     #          chunk_size_min=15,
@@ -91,7 +91,7 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, figsize=(10,3), duration=8, fname="hs-2hr")
+    # pf.plot(var="el", savepoint=1, figsize=(6,3), duration=6)# fname="hs-8hr")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -193,19 +193,19 @@ if __name__ == "__main__":
 
     
     # # # -- PlotViolinDmg
-    # cdws = CompareDSwStats()
-    # cdws.plot_confusion(damaged_DSs=["DS6"], 
-    #                     bldgs="all",       # "non-elevated", "elevated", "all"
-    #                     elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 10}
+    cdws = CompareDSwStats()
+    cdws.plot_confusion(damaged_DSs=["DS6"], 
+                        bldgs="elevated",       # "non-elevated", "elevated", "all"
+                        elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 10}
     #                     # fname="confusion-count-elevated",
-    #                     )
+                        )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # -- PlotRemoveBldgs
     prb = PlotRemovedBldgs()
-    prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
+    prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
                        domain_size="micro",
-                       elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 10}
+                       elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 5}
                        # fname="removed-bldgs-geopandas"
                        )
     # prb.plot(

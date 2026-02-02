@@ -240,7 +240,7 @@ class CompareDSwStats(HelperFuncs):
             txt = "Ignore Elevated"
         elif bldgs=="elevated":
             df_xbeach = df_xbeach.loc[df_xbeach["elevated"]==True]
-            txt = "Elevated only"
+            txt = "Elevated Only"
         else:
             raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
 

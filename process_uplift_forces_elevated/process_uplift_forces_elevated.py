@@ -28,14 +28,17 @@ class ProcessUpliftForcesElevated(HelperFuncs):
         failed_bldgs = np.zeros(np.shape(elevated_bldgs), dtype=bool)
 
         labeled_mask, num_features = ndi.label(elevated_bldgs)
+        dx, dy = self.get_resolution()
         uplift_force = np.loadtxt(os.path.join(self.path_to_model, hsruns[-1], "stat_cumulative_uplift_impulse.dat"))
         for i in range(1, num_features):
             bldg_ = labeled_mask==i
+            floor_area = np.sum(bldg_)*dx*dy
+            downward_force_ = threshold*floor_area
             uplift_force_ = uplift_force[bldg_]
             # downward_force = self.down_pressure*floor_area
-            if uplift_force_[0]>threshold:
+            if uplift_force_[0]>downward_force_:
                 failed_bldgs[bldg_] = True
-
+        
         fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs_elevated.dat")
         np.savetxt(fn_out, failed_bldgs)
         
