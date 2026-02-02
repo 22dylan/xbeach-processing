@@ -49,13 +49,15 @@ class PlotRemovedBldgs(HelperFuncs):
         if bldgs=="all":
             txt = "All buildings (including elevated)"
             gdf_elevated = gdf_bldgs.loc[gdf_bldgs["elevated"]==True]
-
+            edgecolor = "none"
         elif bldgs=="non-elevated":
             gdf_bldgs = gdf_bldgs.loc[gdf_bldgs["elevated"]==False]
             txt = "Ignore Elevated"
+            edgecolor = "none"
         elif bldgs=="elevated":
             gdf_bldgs = gdf_bldgs.loc[gdf_bldgs["elevated"]==True]
             txt = "Elevated Only"
+            edgecolor = "k"
         else:
             raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
 
@@ -66,7 +68,7 @@ class PlotRemovedBldgs(HelperFuncs):
         fig, ax = plt.subplots(1,1, figsize=figsize)
         cmap = mpl.colors.ListedColormap(["darkseagreen", "red"])
         
-        gdf_bldgs.plot(ax=ax, column="removed_bldgs", cmap=cmap)
+        gdf_bldgs.plot(ax=ax, column="removed_bldgs", cmap=cmap, edgecolor=edgecolor)
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
