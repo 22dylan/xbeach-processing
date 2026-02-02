@@ -188,26 +188,29 @@ if __name__ == "__main__":
 
 
     # -- PlotBldgDmg
-    # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="micro", remove_elevated=True) #, remove_DSs=["DS6"], fname="bldg_dmg_binary_all")
-
+    pbd = PlotBldgDmg()
+    pbd.plot(domain_size="micro", 
+            bldgs="elevated",       # "non-elevated", "elevated", "all"
+            remove_DSs=["DS6"], 
+            fname="bldg_dmg_binary_elevated"
+            )
     
     # # # -- PlotViolinDmg
-    cdws = CompareDSwStats()
-    cdws.plot_confusion(damaged_DSs=["DS6"], 
-                        bldgs="elevated",       # "non-elevated", "elevated", "all"
-                        elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 10}
-    #                     # fname="confusion-count-elevated",
-                        )
+    # cdws = CompareDSwStats()
+    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
+    #                     elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 10}
+    # #                     # fname="confusion-count-elevated",
+    #                     )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
-    prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
-                       domain_size="micro",
-                       elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 5}
-                       # fname="removed-bldgs-geopandas"
-                       )
+    # prb = PlotRemovedBldgs()
+    # prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
+    #                    domain_size="micro",
+    #                    elevated_kwds={"compute_removed_elevated": True, "removed_elevated_threshold": 5}
+    #                    # fname="removed-bldgs-geopandas"
+    #                    )
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",
