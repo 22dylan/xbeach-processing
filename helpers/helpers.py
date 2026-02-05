@@ -685,6 +685,17 @@ class HelperFuncs():
     def mae(self, predictions, targets):
         return np.mean(np.abs(predictions - targets))
 
+    def get_elevated_bldgs(self, bldgs_df):
+        if bldgs_df.index.name != "VDA_id":
+            bldgs_df.set_index("VDA_id", inplace=True)
+
+        elevated = (bldgs_df["FFE_elev_status"] == "elevated") & (bldgs_df["FFE_foundation"]=="Piles/Columns")
+        elevated = pd.DataFrame(elevated, columns=["elevated"])        
+        bldgs_df = pd.merge(bldgs_df, elevated, left_index=True, right_index=True)
+
+        elevated_bldgs = bldgs_df.loc[bldgs_df["elevated"]==True]
+        not_elevated = bldgs_df.loc[bldgs_df["elevated"]==False]
+        return elevated_bldgs, not_elevated
 
 
 if __name__ == '__main__':

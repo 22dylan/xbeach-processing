@@ -1,4 +1,5 @@
 import os
+import shutil
 import math
 from tqdm import tqdm
 import rasterio
@@ -29,9 +30,23 @@ class SaveWaveStats(HelperFuncs):
         fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
         np.savetxt(fn_out, bldgs)
 
-    def save_removed_elevated_bldgs(self, threshold=20):
+    def save_removed_elevated_bldgs(self):
+        self.copy_cumulative_uplift_impulse()
+        self.geolocate("stat_cumulative_uplift_impulse")
+        self.assign_to_bldgs(stats=["stat_cumulative_uplift_impulse"],
+                col_names=["uplift_impulse"],
+                fname="temp.csv",
+                )
+        df = pd.read_csv(os.path.join(self.path_to_save_plot, "temp.csv"))
         pufe = ProcessUpliftForcesElevated()
-        pufe.process(threshold)
+        pufe.process2(df)
+        os.remove(os.path.join(self.path_to_save_plot, "temp.csv"))
+
+    def copy_cumulative_uplift_impulse(self):
+        hsruns = self.set_hotstart_runs()
+        fn_src = os.path.join(self.path_to_model, hsruns[-1], "stat_cumulative_uplift_impulse.dat")
+        fn_dst = os.path.join(self.path_to_save_plot, "stat_cumulative_uplift_impulse.dat")
+        shutil.copyfile(fn_src, fn_dst)
 
     def get_all_stats(self):
         stats = [
@@ -362,10 +377,26 @@ class SaveWaveStats(HelperFuncs):
                                    theta=theta, output_filepath=fn_out)
 
     def merge_remove_bldgs(self):
+        fn_nelev = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        df_nelev = pd.read_csv(fn_nelev)
+        df_nelev = df_nelev.loc[df_nelev["elevated"]==False]
+        df_nelev.set_index("VDA_id", inplace=True)
+        df_nelev["remove"] = df_nelev["removed_bldgs_non_elevated"].astype(bool)
+        df_nelev = df_nelev[["elevated", "remove"]]
+
+        fn_elev  = os.path.join(self.path_to_save_plot, "removed_bldgs_elevated.csv")
+        df_elev = pd.read_csv(fn_elev)
+        df_elev.set_index("VDA_id", inplace=True)
+        df_elev["remove"] = df_elev["remove_elevated"]
+        df_elev = df_elev[["elevated", "remove"]]
+
+
+        df_bldgs = pd.concat([df_nelev,df_elev],ignore_index=False)
+
         fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
-        df = pd.read_csv(fn)
-        df["removed_bldgs"] = (df["removed_bldgs_non_elevated"]==1) | (df["removed_bldgs_elevated"]==1)
-        df.to_csv(fn, index=False)
+        df_bldgs.to_csv(fn, index=True)
+        os.remove(fn_elev)
+
 
     def assign_to_bldgs(self, stats, runs=None, col_names=None, fname=None):
         bldgs = gpd.read_file(self.path_to_bldgs)
@@ -404,6 +435,8 @@ class SaveWaveStats(HelperFuncs):
         bldgs["lat"] = bldgs["centroid"].y
         bldgs_ffe = pd.read_csv(self.path_to_dmg)
         bldgs_ffe.set_index("VDA_id", inplace=True)
+        # elevated_bldgs, _ = self.get_elevated_bldgs(bldgs_ffe)
+        # elevated_bldgs = elevated_bldgs["elevated"]
         elevated_bldgs = (bldgs_ffe["FFE_elev_status"] == "elevated") & (bldgs_ffe["FFE_foundation"]=="Piles/Columns")
         elevated_bldgs = pd.DataFrame(elevated_bldgs, columns=["elevated"])
         

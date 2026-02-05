@@ -23,15 +23,15 @@ class PlotRemovedBldgs(HelperFuncs):
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
-            sws.save_removed_elevated_bldgs(threshold=elevated_kwds["removed_elevated_threshold"])
             sws.geolocate("removed_bldgs")
-            sws.geolocate("removed_bldgs_elevated")
-            sws.assign_to_bldgs(stats=["removed_bldgs", "removed_bldgs_elevated"],
-                            col_names=["removed_bldgs_non_elevated", "removed_bldgs_elevated"],
+            sws.assign_to_bldgs(stats=["removed_bldgs"],
+                            col_names=["removed_bldgs_non_elevated"],
                             runs=None,
                             fname="removed_bldgs.csv",
                             )
+            sws.save_removed_elevated_bldgs()
             sws.merge_remove_bldgs()
+
 
         df_xbeach = pd.read_csv(fn)
         df_xbeach.set_index("VDA_id", inplace=True)
@@ -40,7 +40,7 @@ class PlotRemovedBldgs(HelperFuncs):
         gdf_bldgs.set_index("VDA_id", inplace=True)
 
         gdf_bldgs = pd.merge(gdf_bldgs, df_xbeach, left_index=True, right_index=True)
-
+        
         # -- rotate geodataframe
         xo, yo, theta = self.get_origin()
         gdf_bldgs["geometry"] = gdf_bldgs["geometry"].rotate(angle=-theta, origin=(xo, yo))
@@ -60,15 +60,12 @@ class PlotRemovedBldgs(HelperFuncs):
             edgecolor = "k"
         else:
             raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
-
         # ---
-
 
         figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)
         cmap = mpl.colors.ListedColormap(["darkseagreen", "red"])
-        
-        gdf_bldgs.plot(ax=ax, column="removed_bldgs", cmap=cmap, edgecolor=edgecolor)
+        gdf_bldgs.plot(ax=ax, column="remove", cmap=cmap, edgecolor=edgecolor)
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 

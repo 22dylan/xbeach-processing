@@ -208,7 +208,6 @@ class CompareDSwStats(HelperFuncs):
         # self.save_fig(fig2, "confusion-{}" .format(col), dpi=1000)
         plt.show()
 
-
     def plot_confusion(self, 
             damaged_DSs=["DS5", "DS6"], 
             bldgs="all",
@@ -221,14 +220,13 @@ class CompareDSwStats(HelperFuncs):
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_removed_bldgs()
-            sws.save_removed_elevated_bldgs(threshold=elevated_kwds["removed_elevated_threshold"])
             sws.geolocate("removed_bldgs")
-            sws.geolocate("removed_bldgs_elevated")
-            sws.assign_to_bldgs(stats=["removed_bldgs", "removed_bldgs_elevated"],
-                            col_names=["removed_bldgs_non_elevated", "removed_bldgs_elevated"],
+            sws.assign_to_bldgs(stats=["removed_bldgs"],
+                            col_names=["removed_bldgs_non_elevated"],
                             runs=None,
                             fname="removed_bldgs.csv",
                             )
+            sws.save_removed_elevated_bldgs()
             sws.merge_remove_bldgs()
 
         df_xbeach = pd.read_csv(fn)                         # read csv
@@ -251,12 +249,12 @@ class CompareDSwStats(HelperFuncs):
         df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
         
         # merge two dataframes
-        df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
+        df = pd.merge(df_xbeach["remove"], df_dmg["removed_vda"], left_index=True, right_index=True)
 
         # -- now create confusion matrix
         # Calculate the confusion matrix
         labels = [0,1]
-        cm = confusion_matrix(df["removed_vda"], df["removed_bldgs"], labels=labels)
+        cm = confusion_matrix(df["removed_vda"], df["remove"], labels=labels)
         score = (cm[0,0]+cm[1,1])/(np.sum(cm))
         score = "Percent Correct: {:0.3f}" .format(score)
         
