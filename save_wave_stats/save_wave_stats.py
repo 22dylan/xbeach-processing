@@ -25,7 +25,7 @@ class SaveWaveStats(HelperFuncs):
         self.rho = 1025     # density of salt (kg/m^3)
         self.g = 9.81       # gravity (m/s^2)
 
-    def save_forces_at_bldg_to_csv(self, fname=None):
+    def save_forces_at_bldg_to_csv(self, fname="forces_at_bldgs.csv"):
         self.save_removed_non_elevated_bldgs()
         self.save_removed_elevated_bldgs()
         self.merge_remove_bldgs(fname)
@@ -398,7 +398,7 @@ class SaveWaveStats(HelperFuncs):
         self.create_rotated_raster(data, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
                                    theta=theta, output_filepath=fn_out)
 
-    def merge_remove_bldgs(self, fname="forces_at_bldgs.csv"):
+    def merge_remove_bldgs(self, fname):
         fn_nelev = os.path.join(self.path_to_save_plot, "removed_non_elevated_bldgs.csv")
         df_nelev = pd.read_csv(fn_nelev)
         df_nelev = df_nelev.loc[df_nelev["elevated"]==False]
@@ -414,7 +414,7 @@ class SaveWaveStats(HelperFuncs):
         df_elev = df_elev[["elevated", "remove", "uplift_impulse"]]
 
         df_bldgs = pd.concat([df_nelev,df_elev],ignore_index=False)
-
+        
         fn = os.path.join(self.path_to_save_plot, fname)
         df_bldgs.to_csv(fn, index=True)
         os.remove(fn_elev)

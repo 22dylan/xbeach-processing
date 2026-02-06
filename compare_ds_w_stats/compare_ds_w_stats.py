@@ -134,7 +134,7 @@ class CompareDSwStats(HelperFuncs):
         
     def explore_confusion(self, damaged_DSs=["DS5", "DS6"]):
 
-        fn = os.path.join(self.path_to_save_plot, "forces_at_bldg.csv")
+        fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
@@ -215,11 +215,11 @@ class CompareDSwStats(HelperFuncs):
         """
         plots confusion matrix
         """
-        fn = os.path.join(self.path_to_save_plot, "forces_at_bldg.csv")
+        fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_forces_at_bldg_to_csv()
-
+        print(fn)
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
         if bldgs=="all":
