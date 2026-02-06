@@ -55,7 +55,7 @@ class SaveWaveStats(HelperFuncs):
                 )
         df = pd.read_csv(os.path.join(self.path_to_save_plot, "temp.csv"))
         pufe = ProcessUpliftForcesElevated()
-        pufe.process2(df)
+        pufe.process(df)
         os.remove(os.path.join(self.path_to_save_plot, "temp.csv"))
 
     def copy_cumulative_horizontal_impulse(self):

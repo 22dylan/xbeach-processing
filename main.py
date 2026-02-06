@@ -26,20 +26,8 @@ from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 
 if __name__ == "__main__":
     # -- save wave stats
-
     sws = SaveWaveStats()
     sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
-    fsd
-
-    # sws = SaveWaveStats()
-    # sws.save(var="zs",
-    #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
-    #          stats = ["cumulative_impulse", "current_velocity", "current_direction"],
-    #          trim_beginning_seconds=500, 
-    #          store_in_mem=False,
-    #          chunk_size_min=15,
-    #          max_workers=100,
-    #          )
 
     # for stat in ["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", 
     #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]:

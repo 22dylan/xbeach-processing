@@ -124,7 +124,6 @@ class CompareDSwStats(HelperFuncs):
         X = df[x_cols].values
         y = df[y_col].values
         y = np.ravel(y)
-        print(len(y))
         clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=3)
         clf = clf.fit(X, y)
         fig, ax = plt.subplots(1,1,figsize=(15,8))
@@ -135,7 +134,7 @@ class CompareDSwStats(HelperFuncs):
         
     def explore_confusion(self, damaged_DSs=["DS5", "DS6"]):
 
-        fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        fn = os.path.join(self.path_to_save_plot, "forces_at_bldg.csv")
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
@@ -216,18 +215,10 @@ class CompareDSwStats(HelperFuncs):
         """
         plots confusion matrix
         """
-        fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        fn = os.path.join(self.path_to_save_plot, "forces_at_bldg.csv")
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
-            sws.save_removed_bldgs()
-            sws.geolocate("removed_bldgs")
-            sws.assign_to_bldgs(stats=["removed_bldgs"],
-                            col_names=["removed_bldgs_non_elevated"],
-                            runs=None,
-                            fname="removed_bldgs.csv",
-                            )
-            sws.save_removed_elevated_bldgs()
-            sws.merge_remove_bldgs()
+            sws.save_forces_at_bldg_to_csv()
 
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach.set_index("VDA_id", inplace=True)         # set index

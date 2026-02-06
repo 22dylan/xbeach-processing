@@ -19,19 +19,10 @@ class PlotRemovedBldgs(HelperFuncs):
             domain_size="estero", 
             elevated_kwds=None,
             fname=None):
-        fn = os.path.join(self.path_to_save_plot, "removed_bldgs.csv")
+        fn = os.path.join(self.path_to_save_plot, "forces_at_bldg.csv")
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
-            sws.save_removed_bldgs()
-            sws.geolocate("removed_bldgs")
-            sws.assign_to_bldgs(stats=["removed_bldgs"],
-                            col_names=["removed_bldgs_non_elevated"],
-                            runs=None,
-                            fname="removed_bldgs.csv",
-                            )
-            sws.save_removed_elevated_bldgs()
-            sws.merge_remove_bldgs()
-
+            sws.save_forces_at_bldg_to_csv()
 
         df_xbeach = pd.read_csv(fn)
         df_xbeach.set_index("VDA_id", inplace=True)
