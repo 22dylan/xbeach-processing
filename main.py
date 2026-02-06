@@ -26,6 +26,11 @@ from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 
 if __name__ == "__main__":
     # -- save wave stats
+
+    sws = SaveWaveStats()
+    sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
+    fsd
+
     # sws = SaveWaveStats()
     # sws.save(var="zs",
     #          # stats=["Hmax", "Hs_max", "Hs_tot", "zs_max", "t_Hs_1m", "t_Hs_2m", "t_Hs_3m"],
@@ -198,18 +203,18 @@ if __name__ == "__main__":
     # # # -- PlotViolinDmg
     cdws = CompareDSwStats()
     cdws.plot_confusion(damaged_DSs=["DS6"], 
-                        bldgs="elevated",       # "non-elevated", "elevated", "all"
-                        elevated_kwds={"compute_removed_elevated": True}
-    #                     # fname="confusion-count-elevated",
+                        bldgs="all",       # "non-elevated", "elevated", "all"
+                        elevated_kwds={"compute_removed_elevated": True},
+                        fname="confusion-count-all",
                         )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
-    # # -- PlotRemoveBldgs
+    # -- PlotRemoveBldgs
     # prb = PlotRemovedBldgs()
-    # prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
+    # prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
     #                    domain_size="micro",
-    #                    elevated_kwds={"compute_removed_elevated": True}
-    #                    # fname="removed-bldgs-geopandas"
+    #                    elevated_kwds={"compute_removed_elevated": True},
+    #                    fname="removed-bldgs-geopandas-all"
     #                    )
     # prb.plot(
     #          grey_background=False, 
