@@ -189,21 +189,21 @@ if __name__ == "__main__":
     #         )
     
     # # # -- PlotViolinDmg
-    cdws = CompareDSwStats()
-    cdws.plot_confusion(damaged_DSs=["DS6"], 
-                        bldgs="all",       # "non-elevated", "elevated", "all"
-                        elevated_kwds={"compute_removed_elevated": True},
-                        fname="confusion-count-all",
-                        )
+    # cdws = CompareDSwStats()
+    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    #                     bldgs="all",       # "non-elevated", "elevated", "all"
+    #                     elevated_kwds={"compute_removed_elevated": True},
+    #                     fname="confusion-count-all",
+    #                     )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # -- PlotRemoveBldgs
-    # prb = PlotRemovedBldgs()
-    # prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
-    #                    domain_size="micro",
-    #                    elevated_kwds={"compute_removed_elevated": True},
-    #                    fname="removed-bldgs-geopandas-all"
-    #                    )
+    prb = PlotRemovedBldgs()
+    prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
+                       domain_size="micro",
+                       elevated_kwds={"compute_removed_elevated": True},
+                       fname="removed-bldgs-geopandas-all"
+                       )
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",

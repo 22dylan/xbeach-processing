@@ -19,7 +19,7 @@ class PlotRemovedBldgs(HelperFuncs):
             domain_size="estero", 
             elevated_kwds=None,
             fname=None):
-        fn = os.path.join(self.path_to_save_plot, "forces_at_bldg.csv")
+        fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_forces_at_bldg_to_csv()
