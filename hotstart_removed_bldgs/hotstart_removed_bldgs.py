@@ -52,6 +52,10 @@ class PlotRemovedBldgs(HelperFuncs):
         else:
             raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
         # ---
+        if domain_size == "estero":
+            lw = 0.1
+        elif domain_size == "micro":
+            lw = 0.7
 
         figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)
@@ -65,10 +69,11 @@ class PlotRemovedBldgs(HelperFuncs):
                     ax=ax,
                     color="none",
                     edgecolor='k',
+                    linewidth=lw,
                     legend_kwds={"labels":["Elevated"]}
                     )
-        
-        self.save_fig(fig, fname, transparent=True, dpi=1000)
+        self.remove_frame(ax)
+        self.save_fig(fig, fname, transparent=True, dpi=3000)
 
     def plot(self, domain_size="estero", include_elevated=False, grey_background=False, cmap=None, fname=None):
         # H = self.read_npy(stat)

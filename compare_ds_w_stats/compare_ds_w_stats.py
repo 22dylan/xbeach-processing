@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import pandas as pd
+import panas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -136,7 +136,7 @@ class CompareDSwStats(HelperFuncs):
 
         fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
         df_xbeach = pd.read_csv(fn)                         # read csv
-        df_xbeach = df_xbeach.loc[df_xbeach["removed_bldgs"]!=-9999]    # remove buildings outside domain
+        df_xbeach = df_xbeach.loc[df_xbeach["remove"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
 
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
@@ -161,46 +161,64 @@ class CompareDSwStats(HelperFuncs):
         # col = "LC_occupancy_type"     # [ALL] manufactured homes destroyed | [MICRO] -
         # col = "VDA_breakaway_walls"   # [ALL] -                            | [MICRO] breakaway walls result in standing building ***
         # col = "TA_BldgUseTyp"         # [ALL] destroyed mobile homes       | [MICRO] -  
-        col="TA_ActYearBuilt_pre1970" # [ALL] before 1970, more destroyed  | [MICRO] before 1970, more destroyed ***
+        # col="TA_ActYearBuilt_pre1970" # [ALL] before 1970, more destroyed  | [MICRO] before 1970, more destroyed ***
         # col = "TA_EffYearBuilt"       # [ALL] -                            | [MICRO] before 1990, more destroyed
         # col = "FEC_Building_Use"      # [ALL] -                            | [MICRO] - 
         # col = "FFE_bldg_diagram"      # [ALL] "8" results in destroyed     | [MICRO] 1a (slab on grade) result in destroyed buildings
+        # col = "TA_ShapeSTArea_Sqft"
+        col = "horizontal_impulse"
+
+        df_dmg = pd.merge(df_xbeach, df_dmg[["removed_vda", "TA_ShapeSTArea_Sqft", "TA_ActYearBuilt"]], left_index=True, right_index=True)
+        
 
         # -- two plots
         df_dmg = df_dmg.dropna(subset=[col])
         x_vals = df_dmg[col].unique().tolist()
-        df_observed_destroyd = df_dmg.loc[df_dmg["removed_vda"] == 1]
-        df_observed_standing = df_dmg.loc[df_dmg["removed_vda"] == 0]
         
-        fig1, ax = plt.subplots(1,2, figsize=(10,4))
+        # -- plot #1; two subplots
+
+        # df_observed_destroyd = df_dmg.loc[df_dmg["removed_vda"] == 1]
+        # df_observed_standing = df_dmg.loc[df_dmg["removed_vda"] == 0]
         
-        # df_observed_destroyd[col].hist(ax=ax[0], grid=False, xrot=45)
-        # df_observed_standing[col].hist(ax=ax[1], grid=False, xrot=45)
-        ax[0].set_title("destroyed")
-        ax[1].set_title("standing")
-        df_observed_destroyd[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[0], grid=False, title="destroyed")
-        df_observed_standing[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[1], grid=False, title="standing")
+        # fig1, ax = plt.subplots(1,2, figsize=(10,4))
+        # ax[0].set_title("destroyed")
+        # ax[1].set_title("standing")
+        # df_observed_destroyd[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[0], grid=False, title="destroyed")
+        # df_observed_standing[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[1], grid=False, title="standing")
         
         # self.save_fig(fig1, "all-{}" .format(col), dpi=1000)
 
-        # -- four plots
-        df = pd.merge(df_xbeach["removed_bldgs"], df_dmg["removed_vda"], left_index=True, right_index=True)
+        # -- plot #2; four subplots
+        # df = pd.merge(df_xbeach[["remove", "horizontal_impulse"]], df_dmg["removed_vda"], left_index=True, right_index=True)
 
-        df_true_standing = df.loc[(df["removed_bldgs"]==0) & (df["removed_vda"]==0)].index.to_list()
-        df_true_destroyd = df.loc[(df["removed_bldgs"]==1) & (df["removed_vda"]==1)].index.to_list()
-        df_false_standing = df.loc[(df["removed_bldgs"]==0) & (df["removed_vda"]==1)].index.to_list()
-        df_false_destroyd = df.loc[(df["removed_bldgs"]==1) & (df["removed_vda"]==0)].index.to_list()
-        
+        df_true_standing = df_dmg.loc[(df_dmg["remove"]==0) & (df_dmg["removed_vda"]==0)].index.to_list()
+        df_true_destroyd = df_dmg.loc[(df_dmg["remove"]==1) & (df_dmg["removed_vda"]==1)].index.to_list()
+        df_false_standing = df_dmg.loc[(df_dmg["remove"]==0) & (df_dmg["removed_vda"]==1)].index.to_list()
+        df_false_destroyd = df_dmg.loc[(df_dmg["remove"]==1) & (df_dmg["removed_vda"]==0)].index.to_list()
+
         df_true_standing = df_dmg.loc[df_true_standing]
         df_true_destroyd = df_dmg.loc[df_true_destroyd]
         df_false_standing = df_dmg.loc[df_false_standing]
         df_false_destroyd = df_dmg.loc[df_false_destroyd]
+
         
         fig2, ax = plt.subplots(2,2, figsize=(8,6))
-        df_true_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,0], grid=False, title="True Standing")
-        df_false_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,1], grid=False, title="False Destroyed")
-        df_false_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,0], grid=False, title="False Standing")
-        df_true_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,1], grid=False, title="True Destroyed")
+        df_true_standing[col].hist(ax=ax[0,0], grid=False, bins=20)
+        df_false_destroyd[col].hist(ax=ax[0,1], grid=False, bins=20)
+        df_false_standing[col].hist(ax=ax[1,0], grid=False, bins=20)
+        df_true_destroyd[col].hist(ax=ax[1,1], grid=False, bins=20)
+
+
+        df_true_destroyd.to_csv("lower-right.csv")
+        df_true_standing.to_csv("upper-left.csv")
+        df_false_destroyd.to_csv("upper-right.csv")
+        df_false_standing.to_csv("lower-left.csv")
+
+
+        # df_true_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,0], grid=False, title="True Standing")
+        # df_false_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,1], grid=False, title="False Destroyed")
+        # df_false_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,0], grid=False, title="False Standing")
+        # df_true_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,1], grid=False, title="True Destroyed")
 
 
         plt.tight_layout()
@@ -208,7 +226,7 @@ class CompareDSwStats(HelperFuncs):
         plt.show()
 
     def plot_confusion(self, 
-            damaged_DSs=["DS5", "DS6"], 
+            damaged_DSs=["DS6"], 
             bldgs="all",
             elevated_kwds=None, 
             fname=None):
@@ -219,7 +237,7 @@ class CompareDSwStats(HelperFuncs):
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
             sws.save_forces_at_bldg_to_csv()
-        print(fn)
+
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
         if bldgs=="all":

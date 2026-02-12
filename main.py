@@ -28,16 +28,16 @@ if __name__ == "__main__":
     # -- save wave stats
     # sws = SaveWaveStats()
     # sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
-
     # for stat in ["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", 
     #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]:
     #     sws.geolocate(stat=stat)
 
     # sws.assign_to_bldgs(stats=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"],
-    #                     # runs=["run62"],
-    #                     col_names=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]
-    #                     )
-    
+    #     col_names=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"])
+    # sws.save_to_csv(stats=["surge_max", "flood_depth", "velocity_magnitude", "velocity_direction", "bed_shear_magnitude"],
+    #     fname="xbeach_out.csv"
+    #     )
+
 
     # -- animation plots
     # ma = MakeAnimation(
@@ -83,8 +83,8 @@ if __name__ == "__main__":
     # cfo.compare_forcing2output()
 
     # # -- plot forcing
-    # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, figsize=(6,3), duration=6)# fname="hs-8hr")
+    pf = PlotForcing()
+    pf.plot(var="el", savepoint=1, figsize=(6,3), duration=7)# fname="hs-8hr")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -191,19 +191,19 @@ if __name__ == "__main__":
     # # # -- PlotViolinDmg
     # cdws = CompareDSwStats()
     # cdws.plot_confusion(damaged_DSs=["DS6"], 
-    #                     bldgs="all",       # "non-elevated", "elevated", "all"
+    #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": True},
-    #                     fname="confusion-count-all",
+    #                     # fname="confusion-count-all",
     #                     )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
-    prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
-                       domain_size="micro",
-                       elevated_kwds={"compute_removed_elevated": True},
-                       fname="removed-bldgs-geopandas-all"
-                       )
+    # prb = PlotRemovedBldgs()
+    # prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
+    #                    domain_size="micro",
+    #                    elevated_kwds={"compute_removed_elevated": True},
+    #                    fname="removed-bldgs-geopandas-all"
+    #                    )
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",

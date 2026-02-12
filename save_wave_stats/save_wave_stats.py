@@ -40,7 +40,7 @@ class SaveWaveStats(HelperFuncs):
         self.geolocate("removed_bldgs")  # converting .dat file to .tiff
         self.copy_cumulative_horizontal_impulse()    # saving horizontal impulse to .dat file
         self.geolocate("stat_cumulative_horizontal_impulse") # converting .dat file to .tiff
-        self.assign_to_bldgs(stats=["removed_bldgs", "stat_cumulative_horizontal_impulse"],  # assigning 
+        self.assign_to_bldgs(stats=["removed_bldgs", "stat_cumulative_horizontal_impulse"],  # assigning
                         col_names=["removed_bldgs_non_elevated", "horizontal_impulse"],
                         runs=None,
                         fname="removed_non_elevated_bldgs.csv",
@@ -551,3 +551,64 @@ class SaveWaveStats(HelperFuncs):
         offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
         return ~offset_mask
 
+    def save_to_csv(self, stats, fname="temp.csv"):
+        df = pd.DataFrame()
+        xo, yo, theta_d = self.get_origin()
+        theta_r = np.deg2rad(theta_d)
+        dx, dy = self.get_resolution()
+        nx = self.read_from_params(var="nx")
+        ny = self.read_from_params(var="ny")
+        xgr, ygr, zgr = self.read_grid()
+
+        # -- setting up x and y as x-y points (0, 1, 2, 3)
+        x = np.arange(0, nx)
+        y = np.arange(0, ny)
+        
+        # -- setting up grid of indicies; flattening to put in grid_df
+        idx, idy = np.meshgrid(x, y)
+        idx, idy = idx.flatten().astype(int), idy.flatten().astype(int)
+
+        # -- setting up pt_x and pt_y; this is with XBeach resolution
+        pt_x = x*dx
+        pt_y = y*dy
+
+        # -- setting up grid of pt_x and pt_y; flattening to put in grid_df
+        pt_x, pt_y = np.meshgrid(pt_x, pt_y)
+        pt_x, pt_y = pt_x.flatten(), pt_y.flatten()
+
+        # -- setting x and y coordinates in real-world points; uses origin above which is in model crs
+        pt_x_wrld = xo + pt_x*np.cos(theta_r) - pt_y*np.sin(theta_r)
+        pt_y_wrld = yo + pt_x*np.sin(theta_r) + pt_y*np.cos(theta_r)
+
+
+        df["X"] = pt_x
+        df["Y"] = pt_y
+        df["idx"] = idx
+        df["idy"] = idy
+        df["UTMx"] = pt_x_wrld
+        df["UTMy"] = pt_y_wrld
+
+        bldgs = self.read_buildings()
+
+        for stat in stats:
+            if stat == "flood_depth":
+                compute_flood_depth = True
+                try:
+                    data = self.read_npy("surge_max")
+                except:
+                    data = self.read_dat("surge_max") - zgr
+                data = data - zgr
+
+            else:
+                try:
+                    data = self.read_npy(stat)
+                except:
+                    data = self.read_dat(stat)
+            
+            data_bldg = self.assign_max_to_bldgs(data, bldgs)
+            data = np.fmax(data, data_bldg)
+            df[stat] = data[df["idy"], df["idx"]]
+        del df["idx"]
+        del df["idy"]
+        fn = os.path.join(self.path_to_save_plot, fname)
+        df.to_csv(fn, index=False)
