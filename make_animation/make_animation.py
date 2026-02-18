@@ -18,7 +18,8 @@ class MakeAnimation(HelperFuncs):
     """docstring for xb_plotting_large"""
     def __init__(self, var="H", tstart=None, 
                 tstop=None, domain_size="estero", xbeach_duration=12, vmax=1, 
-                vmin=0, make_all_figs=True, dpi=300, fps=10, detrend=False):
+                vmin=0, make_all_figs=True, dpi=300, fps=10, detrend=False, 
+                plot_depth=False):
         super().__init__()
 
         self.file_dir = os.path.dirname(os.path.realpath(__file__))
@@ -35,6 +36,7 @@ class MakeAnimation(HelperFuncs):
         self.fps = fps
         self.detrend = detrend
         self.detrend_map = self.get_detrend_map()
+        self.plot_depth = plot_depth
 
 
     def plot_timestep_micro(self, t_hr=None, fname=None, t_start=None, t_stop=None):
@@ -44,8 +46,10 @@ class MakeAnimation(HelperFuncs):
         else:
             t_idx = -1
         
-        xgr, ygr, _ = self.read_grid()                                     # reading grid data
+        xgr, ygr, zgr = self.read_grid()                                     # reading grid data
         data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)        # reading xbeach output
+        if self.plot_depth:
+            data_plot = data_plot - zgr
         data_plot = data_plot - self.detrend_map
         mask = (data_plot < -99999)
         masked_array = np.ma.array(data_plot, mask=mask)
@@ -61,7 +65,7 @@ class MakeAnimation(HelperFuncs):
         # -- drawing first plot
         bldgs = self.read_buildings()
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=self.vmin, vmax=self.vmax, cmap=cmap)
-        plt.colorbar(pcm, ax=ax0, extend="both", label=cbar_s, aspect=40)
+        plt.colorbar(pcm, ax=ax0, extend="max", label=cbar_s, aspect=40)
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)
         ax0.set_title(s)
 
@@ -174,6 +178,9 @@ class MakeAnimation(HelperFuncs):
         elif self.var == "zs":
             s = "Time: {:2.1f}h ({:8.0f}s)" .format(time[t_idx]/3600, time[t_idx])
             cbar_s = "Water Elevation (m)"
+            if self.plot_depth:
+                cbar_s = "Water Depth (m)"
+
         elif self.var == "zs0":
             s = "Time {:2.1f}h ({:8.0f}s)" .format(time[t_idx]/3600, time[t_idx])
             cbar_s = "Water Elevation - Tide Alone (m)"
@@ -189,7 +196,7 @@ class MakeAnimation(HelperFuncs):
             cmap.set_bad('bisque')
         else:
             cmap = mpl.cm.plasma
-            # cmap = mpl.cm.Blues_r
+            cmap = mpl.cm.Blues
             # cmap = mpl.cm.berlin
             cmap.set_bad('bisque')
 

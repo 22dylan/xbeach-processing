@@ -10,7 +10,15 @@ class PlotOutputPoint(HelperFuncs):
     def __init__(self):
         super().__init__()
 
-    def plot_timeseries(self, var, xys, t_start=None, t_stop=None, drawdomain=False, fulldomain=True, savefig=False):
+    def plot_timeseries(self, 
+            var, 
+            xys, 
+            t_start=None, 
+            t_stop=None, 
+            x_units="hr",
+            drawdomain=False, 
+            fulldomain=True, 
+            savefig=False):
         xgr, ygr, zgr = self.read_grid()
 
         colors = sns.color_palette("husl")
@@ -26,11 +34,17 @@ class PlotOutputPoint(HelperFuncs):
             print("Hs at {}: {}" .format(xy, Hs))
 
             # -- plotting
-            ax.plot(t/3600, data_, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
+            if x_units == "hr":
+                ax.plot(t/3600, data_, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
+                xlbl = "Time (hrs)"
+            elif x_units == "sec":
+                ax.plot(t, data_, label="{}" .format(cnt), color=colors[cnt], lw=1.3)
+                xlbl = "Time (sec)"
+
  
             cnt += 1
 
-        ax.set_xlabel("Time (hrs)")
+        ax.set_xlabel(xlbl)
         s, _, _ = self.var2label(var)
         ax.set_ylabel(s)
         ax.legend()

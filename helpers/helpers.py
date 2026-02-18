@@ -339,7 +339,7 @@ class HelperFuncs():
         """
         TODO: add docstring
         """
-        t, el, wx, wy, hs, Tp, wavedir = [], [], [], [], [], [], [],
+        t, el, wx, wy, hs, Tp, wavedir, vx, vy = [], [], [], [], [], [], [], [], []
         with open(self.path_to_forcing,'r') as f:
             for cnt, line in enumerate(f.readlines()):
                 if cnt < n_header:
@@ -348,7 +348,11 @@ class HelperFuncs():
                         var = [i for i in var if i!="VARIABLES"]
                         var = [i for i in var if i!="="]
                     continue
-                t_, el_, wx_, wy_, hs_, Tp_, wavedir_ = [float(x.strip()) for x in line.split()]
+                try:
+                    t_, el_, wx_, wy_, hs_, Tp_, wavedir_ = [float(x.strip()) for x in line.split()]
+                except:
+                    t_, el_, wx_, wy_, hs_, Tp_, wavedir_, vx_, vy_ = [float(x.strip()) for x in line.split()]
+
                 t.append(t_)
                 el.append(el_)
                 wx.append(wx_)
@@ -633,7 +637,6 @@ class HelperFuncs():
                     3:   {"start": 65,    "stop":  68},
                     4:   {"start": 64,    "stop":  68},
                     6:   {"start": 63,    "stop":  69},
-                    7:   {"start": 63,    "stop":  70},
                     8:   {"start": 62,    "stop":  70},
                     10:  {"start": 61,    "stop":  71},
                     12:  {"start": 60,    "stop":  72},

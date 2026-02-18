@@ -12,16 +12,21 @@ class PlotWaveHeightDomain(HelperFuncs):
         super().__init__()
 
     def plot(self, stat, vmin=None, vmax=None, fname=None, prnt_read=False, 
-            single_frame=False, domain_size="estero", plt_bldgs=True, plt_offshore=False):
+            single_frame=False, domain_size="estero", plt_bldgs=True, plt_offshore=False, 
+            plot_depth=False):
         
         # read wave heights
         H = self.read_npy(stat)
+
 
         # read buildings and grid 
         xgr, ygr, zgr = self.read_grid()
         bldgs = self.read_buildings()
         mask = np.ma.getmask(bldgs)
         figsize = self.get_figsize(domain_size)
+        
+        if plot_depth:
+            H = H-zgr
 
         # fig, ax = plt.subplots(1,1, figsize=figsize)
         if single_frame:
@@ -46,8 +51,8 @@ class PlotWaveHeightDomain(HelperFuncs):
             cmap = mpl.cm.YlGnBu_r
         else:
             cmap = mpl.cm.plasma
+            cmap = mpl.cm.viridis
         cmap.set_bad('grey')
-
 
         # -- drawing first plot
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=vmin, vmax=vmax, cmap=cmap)
@@ -76,8 +81,12 @@ class PlotWaveHeightDomain(HelperFuncs):
             labl = "Impulse ((kN-hr)/m))"
         elif stat == "surge_max":
             labl = "Maximum Storm Surge (m)"
+        elif stat == "velocity_magnitude":
+            labl = "Maximum Velocity (m/s)"
         else:
             labl = "No label created yet"
+        if plot_depth:
+            labl = "Maximum Water Depth (m)"
 
         plt.colorbar(pcm, ax=ax_bar, extend="max", label=labl, aspect=40)
         if plt_bldgs:
