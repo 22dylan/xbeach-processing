@@ -1,8 +1,9 @@
 relative_path     = True
-path_to_model     = ../hotstart/hotstart28
-path_to_save_plot = ../processed-results/hotstart28
+path_to_model     = ../hotstart/hotstart29
+path_to_save_plot = ../processed-results/hotstart29
 
 path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
 
 path_to_bldgs     = ../data/buildings/amini-bldgs-estero-drs.geojson
 path_to_dmg       = ../data/mehrshad/data/Geoscience-collection--overall-dataset/data/FMB_VDA_FFE_Final.csv
+path_to_coast     = ../data/coast/coast.geojson

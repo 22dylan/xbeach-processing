@@ -53,14 +53,14 @@ class PlotRemovedBldgs(HelperFuncs):
             raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
         # ---
         if domain_size == "estero":
-            lw = 0.1
+            lw = 0.05
         elif domain_size == "micro":
             lw = 0.7
 
         figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)
         cmap = mpl.colors.ListedColormap(["darkseagreen", "red"])
-        gdf_bldgs.plot(ax=ax, column="remove", cmap=cmap, edgecolor=edgecolor)
+        gdf_bldgs.plot(ax=ax, column="remove", cmap=cmap, edgecolor=edgecolor, lw=lw)
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 

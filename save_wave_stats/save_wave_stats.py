@@ -362,7 +362,7 @@ class SaveWaveStats(HelperFuncs):
         z_trimmed = z[trim_start:trim_end]
         return h, z_trimmed, time_trimmed
 
-    def geolocate(self, stat="Hs"):
+    def geolocate(self, stat="Hs", verbose=True):
         model_dir = self.get_first_model_dir()
         fn_params = os.path.join(model_dir, "params.txt")
         with open(fn_params,'r') as f:
@@ -396,7 +396,7 @@ class SaveWaveStats(HelperFuncs):
         data_bldg = self.assign_max_to_bldgs(data, bldgs)
         data = np.fmax(data, data_bldg)
         self.create_rotated_raster(data, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
-                                   theta=theta, output_filepath=fn_out)
+                                   theta=theta, output_filepath=fn_out, verbose=verbose)
 
     def merge_remove_bldgs(self, fname):
         fn_nelev = os.path.join(self.path_to_save_plot, "removed_non_elevated_bldgs.csv")
@@ -420,6 +420,41 @@ class SaveWaveStats(HelperFuncs):
         os.remove(fn_elev)
         os.remove(fn_nelev)
 
+    def assign_to_bldgs_hotstart(self, fname=None):
+        bldgs = self.read_bldgs_geodataframe()
+        bldgs["centroid"] = bldgs["geometry"].centroid
+        bldgs["coords"] = [(x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)]
+        hsruns = self.set_hotstart_runs()
+
+        stats = os.listdir(os.path.join(self.get_first_model_dir()))
+        stats = [i for i in stats if "stat_" in i]
+        stats_ = [i.split(".dat")[0] for i in stats]
+        bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
+        for stat in stats:
+            df_stat = pd.DataFrame(columns=hsruns, index=bldgs.index)
+            stat_ = stat.split(".dat")[0]
+            print("Processing results for: {}" .format(stat))
+            for hs in hsruns:
+                print("  {}" .format(hs))
+
+                fn_tiff = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat_))    # tiff tile
+                fn_src = os.path.join(self.path_to_model, hs, stat)      # dat file source
+                fn_dst = os.path.join(self.path_to_save_plot, stat)      # dat file dst
+                shutil.copyfile(fn_src, fn_dst)
+                self.geolocate(stat_, verbose=False)
+
+
+                with rasterio.open(fn_tiff, "r") as r:
+                    df_stat[hs] = [x[0] for x in r.sample(bldgs["coords"].to_list())]
+
+                os.remove(fn_dst)
+                os.remove(fn_tiff)
+            bldgs_out[stat_] = df_stat.max(axis=1)
+            
+        if fname == None:
+            fname = "stats_at_bldgs.csv"
+        fn_out = os.path.join(self.path_to_save_plot, fname)
+        bldgs_out.to_csv(fn_out, index=True)
 
 
     def assign_to_bldgs(self, stats, runs=None, col_names=None, fname=None):
@@ -473,7 +508,7 @@ class SaveWaveStats(HelperFuncs):
         fn_out = os.path.join(self.path_to_save_plot, fname)
         bldgs.to_csv(fn_out, index=True)
 
-    def create_rotated_raster(self, H, crs, xo, yo, dx, dy, theta, output_filepath):
+    def create_rotated_raster(self, H, crs, xo, yo, dx, dy, theta, output_filepath, verbose=True):
         """
         Creates a GeoTIFF raster from a NumPy array with rotation.
 
@@ -509,8 +544,8 @@ class SaveWaveStats(HelperFuncs):
 
         # Create the transform
         transform = rasterio.transform.Affine(a, b, c, d, e, f)
-
-        print(f"Calculated Affine Transform:\n{transform}")
+        if verbose:
+            print(f"Calculated Affine Transform:\n{transform}")
 
         # 3. Define the raster metadata
         profile = {
@@ -532,8 +567,9 @@ class SaveWaveStats(HelperFuncs):
             with rasterio.open(output_filepath, 'w', **profile) as dst:
                 # Write the data. We write to band 1 (index 1)
                 dst.write(H, 1)
-            print(f"Successfully created raster at: {output_filepath}")
-            print(f"Raster CRS: {crs}")
+            if verbose:
+                print(f"Successfully created raster at: {output_filepath}")
+                print(f"Raster CRS: {crs}")
         except Exception as e:
             print(f"An error occurred during raster writing: {e}")
 

@@ -1,6 +1,6 @@
 import os
 import numpy as np
-import panas as pd
+import pandas as pd
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import seaborn as sns

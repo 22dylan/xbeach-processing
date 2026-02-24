@@ -1,6 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
+import geopandas as gpd
 import xarray as xr
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -207,7 +208,7 @@ class HelperFuncs():
         ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
         return ds[var][:,:,:]
 
-    def read_2d_data_xarray_timestep(self, var, t):        
+    def read_2d_data_xarray_timestep(self, var, t, hsrun=None):        
         """
         Reads xarray data for entire domain at specified time step.
         Inputs:
@@ -216,7 +217,10 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        model_dir = self.get_first_model_dir()
+        if hsrun == None:
+            model_dir = self.get_first_model_dir()
+        else:
+            model_dir = os.path.join(self.path_to_model, hsrun)
         fn = os.path.join(model_dir, self.xboutput_filename)
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
 
@@ -316,11 +320,14 @@ class HelperFuncs():
             removed_bldgs = np.array(removed_bldgs, dtype=bool)
             return removed_bldgs
 
-    def read_buildings(self, run_w_bldgs=None):
+    def read_buildings(self, run_w_bldgs=None, hsrun=None):
         """
         TODO: add docstring
         """
-        model_dir = self.get_first_model_dir()
+        if hsrun == None:
+            model_dir = self.get_first_model_dir()
+        else:
+            model_dir = os.path.join(self.path_to_model, hsrun)
         if run_w_bldgs == None:
             fn_zgrid = os.path.join(model_dir, "z.grd")
         else:
@@ -334,7 +341,7 @@ class HelperFuncs():
         mask = (zgr != 10)
         bldgs = np.ma.array(zgr, mask=mask)
         return bldgs
-
+        
     def frcing_to_dataframe(self, n_header=3, n_var=7):
         """
         TODO: add docstring
@@ -415,6 +422,15 @@ class HelperFuncs():
         # -- creating xgr, ygr mesh
         xgr, ygr = np.meshgrid(xs, ys)
         return xgr, ygr, zgr
+
+    def read_coast(self):
+        gdf = gpd.read_file(self.path_to_coast)
+        return gdf
+
+    def read_bldgs_geodataframe(self):
+        gdf = gpd.read_file(self.path_to_bldgs)
+        gdf.set_index("VDA_id", inplace=True)
+        return gdf
 
     def xy_to_grid_index(self, xgr, ygr, xy):
         """
@@ -637,6 +653,7 @@ class HelperFuncs():
                     3:   {"start": 65,    "stop":  68},
                     4:   {"start": 64,    "stop":  68},
                     6:   {"start": 63,    "stop":  69},
+                    7:   {"start": 63,    "stop":  70},
                     8:   {"start": 62,    "stop":  70},
                     10:  {"start": 61,    "stop":  71},
                     12:  {"start": 60,    "stop":  72},

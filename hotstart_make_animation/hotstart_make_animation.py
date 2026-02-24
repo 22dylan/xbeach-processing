@@ -102,8 +102,8 @@ class HotstartMakeAnimation(HelperFuncs):
         hot_start_name = t_row["run"].item()
 
         xgr, ygr, _ = self.read_grid()                                     # reading grid data
-        data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx)        # reading xbeach output
-
+        data_plot = self.read_2d_data_xarray_timestep(var=self.var, t=t_idx, hsrun=hot_start_name)        # reading xbeach output
+        
 
         # data_plot = data_plot - self.detrend_map
         mask = (data_plot < -99999)
@@ -118,7 +118,7 @@ class HotstartMakeAnimation(HelperFuncs):
         fig, (ax0, ax1) = plt.subplots(2,1, figsize=figsize, height_ratios=[8,1])
 
         # -- drawing first plot
-        bldgs = self.read_buildings()
+        bldgs = self.read_buildings(hsrun=hot_start_name)
         pcm = ax0.pcolormesh(xgr, ygr, masked_array, vmin=self.vmin, vmax=self.vmax, cmap=cmap)
         plt.colorbar(pcm, ax=ax0, extend="both", label=cbar_s, aspect=40)
         ax0.pcolormesh(xgr, ygr, bldgs, cmap=cmap_bldg)

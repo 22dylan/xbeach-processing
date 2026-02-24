@@ -15,8 +15,13 @@ class PlotWaveHeightDomain(HelperFuncs):
             single_frame=False, domain_size="estero", plt_bldgs=True, plt_offshore=False, 
             plot_depth=False):
         
+        
         # read wave heights
-        H = self.read_npy(stat)
+        try:
+            H = self.read_npy(stat)
+        except:
+            H = self.read_dat(stat)
+
 
 
         # read buildings and grid 

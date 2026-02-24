@@ -20,6 +20,8 @@ from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
 from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
 from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
+from plot_stats_v_dcoast.plot_stats_v_dcoast import PlotStatsVDCoast
+
 
 from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
@@ -27,13 +29,14 @@ from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 if __name__ == "__main__":
     # -- save wave stats
     # sws = SaveWaveStats()
+    # sws.geolocate("stat_cumulative_horizontal_impulse")
     # sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
-    # for stat in ["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", 
-    #              "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"]:
-    #     sws.geolocate(stat=stat)
+    
+    # -- save wave stats at buildings in csv form. used for hotstart runs
+    # sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
+    
 
-    # sws.assign_to_bldgs(stats=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"],
-    #     col_names=["Hmax", "Hs_max", "Hs_tot", "impulse", "surge_max", "t_Hs_0.5m", "t_Hs_1m", "t_Hs_2m", "zs_max"])
+    # # -- save to csv for work with Erick
     # sws.save_to_csv(stats=["surge_max", "flood_depth", "velocity_magnitude", "velocity_direction", "bed_shear_magnitude"],
     #     fname="xbeach_out.csv"
     #     )
@@ -72,7 +75,7 @@ if __name__ == "__main__":
     #             dpi              = 100,                         # image resolution (dpi = dots per inch)
     #             fps              = 10,
     #             detrend          = False,                       # detrend the elevation data
-    #             dt_video         = 2,
+    #             dt_video         = 112,
     #             )
     # mah.make_animation_hotstart()
     # mah.plot_frame(t_hr=0.4)
@@ -83,8 +86,8 @@ if __name__ == "__main__":
     # cfo.compare_forcing2output()
 
     # # -- plot forcing
-    pf = PlotForcing()
-    pf.plot(var="el", savepoint=1, figsize=(6,3), duration=7)# fname="hs-8hr")
+    # pf = PlotForcing()
+    # pf.plot(var="el", savepoint=1, figsize=(6,3), duration=7)# fname="hs-8hr")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -139,14 +142,14 @@ if __name__ == "__main__":
     
     # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="impulse",
+    # pwhd.plot(stat="stat_cumulative_horizontal_impulse",
     #         vmin=0,
     #         vmax=60,
     #         single_frame=True,
     #         domain_size="estero",
     #         plt_bldgs=True,
     #         plt_offshore=True,
-    #         fname="impulse-domain.png"
+    #         # fname="impulse-domain.png"
     #         )
 
     # pwhd.plot_diff(stat="Hs",
@@ -158,13 +161,20 @@ if __name__ == "__main__":
 
     # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
+    # pwhb.plot_geopandas(stat="stat_cumulative_horizontal_impulse", 
+    #     which_bldgs="non-elevated",
+    #     vmin=0, 
+    #     vmax=100, 
+    #     cmap="Blues",
+    #     fname="impulse.png"
+    #     )
     # pwhb.plot(stat="impulse",
     #         model_runname_w_bldgs=None,
     #         vmin=0,
     #         vmax=60,
     #         domain_size="estero", 
     #         grey_background=False, 
-    #         fname="impulse-bldg.png"
+    #         # fname="impulse-bldg.png"
     #         )
 
     # -- PlotWaveHeightScatter
@@ -193,17 +203,17 @@ if __name__ == "__main__":
     # cdws.plot_confusion(damaged_DSs=["DS6"], 
     #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": True},
-    #                     # fname="confusion-count-all",
+    #                     # fname="confusion-count-elevated-update",
     #                     )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # -- PlotRemoveBldgs
-    # prb = PlotRemovedBldgs()
-    # prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
-    #                    domain_size="micro",
-    #                    elevated_kwds={"compute_removed_elevated": True},
-    #                    fname="removed-bldgs-geopandas-all"
-    #                    )
+    prb = PlotRemovedBldgs()
+    prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
+                       domain_size="estero",
+                       elevated_kwds={"compute_removed_elevated": False},
+                       fname="removed-bldgs-geopandas-elevated-update"
+                       )
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",
@@ -214,6 +224,27 @@ if __name__ == "__main__":
     # pcq = PlotCurrentQuiver()
     # pcq.plot()
     
+
+    # -- Plot Stats vs. Dist to Coast
+    # PSVD = PlotStatsVDCoast()
+    # PSVD.plot(
+    #     stats_plot=
+    #         [
+    #         "stat_uplift_impulse",
+    #         "stat_cumulative_uplift_impulse", 
+    #         "stat_horizontal_impulse", 
+    #         "stat_cumulative_horizontal_impulse", 
+    #         "stat_max_zs", 
+    #         "stat_water_elev_out", 
+    #         "stat_Hs", 
+    #         "stat_Hmax"
+    #         ], 
+    #     which_bldgs="elevated",
+    #     fname="stats-at-elev-bldgs.png"
+    #     )
+
+
+
 
     plt.show()
 
