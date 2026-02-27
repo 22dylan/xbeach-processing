@@ -160,22 +160,22 @@ if __name__ == "__main__":
     #         )
 
     # # -- plot wave height building
-    # pwhb = PlotWaveHeightBldg()
+    pwhb = PlotWaveHeightBldg()
     # pwhb.plot_geopandas(stat="stat_cumulative_horizontal_impulse", 
     #     which_bldgs="non-elevated",
     #     vmin=0, 
-    #     vmax=100, 
+    #     vmax=30, 
     #     cmap="Blues",
-    #     fname="impulse.png"
+    #     # fname="impulse.png"
     #     )
-    # pwhb.plot(stat="impulse",
-    #         model_runname_w_bldgs=None,
-    #         vmin=0,
-    #         vmax=60,
-    #         domain_size="estero", 
-    #         grey_background=False, 
-    #         # fname="impulse-bldg.png"
-    #         )
+    pwhb.plot(stat="stat_cumulative_horizontal_impulse",
+            model_runname_w_bldgs=None,
+            vmin=0,
+            vmax=30,
+            domain_size="micro", 
+            grey_background=True, 
+            # fname="impulse-bldg.png"
+            )
 
     # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
@@ -203,17 +203,17 @@ if __name__ == "__main__":
     # cdws.plot_confusion(damaged_DSs=["DS6"], 
     #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": True},
-    #                     # fname="confusion-count-elevated-update",
+    #                     # fname="confusion-count-elevated-update-no1974",
     #                     )
     # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # -- PlotRemoveBldgs
-    prb = PlotRemovedBldgs()
-    prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
-                       domain_size="estero",
-                       elevated_kwds={"compute_removed_elevated": False},
-                       fname="removed-bldgs-geopandas-elevated-update"
-                       )
+    # prb = PlotRemovedBldgs()
+    # prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
+    #                    domain_size="estero",
+    #                    elevated_kwds={"compute_removed_elevated": False},
+    #                    fname="removed-bldgs-geopandas-elevated-update"
+    #                    )
     # prb.plot(
     #          grey_background=False, 
     #          domain_size="micro",

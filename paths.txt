@@ -1,6 +1,6 @@
 relative_path     = True
-path_to_model     = ../hotstart/hotstart29
-path_to_save_plot = ../processed-results/hotstart29
+path_to_model     = ../hotstart/hotstart32-micro
+path_to_save_plot = ../processed-results/hotstart32-micro
 
 path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
 

@@ -58,6 +58,11 @@ class ProcessUpliftForcesElevated(HelperFuncs):
             if bldg["TA_ActYearBuilt"]>=1974:
                 remove_bldg.append(False)
                 continue
+                # if bldg["freeboard_surge_wave"]<99999999:
+                #     remove_bldg.append(False)
+                # else:
+                #     remove_bldg.append(True)
+                # continue
 
             else:
                 if bldg["freeboard_surge_wave"]<2.25:

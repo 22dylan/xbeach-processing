@@ -17,7 +17,11 @@ class PlotWaveHeightBldg(HelperFuncs):
     def plot(self, stat, model_runname_w_bldgs=None, vmax=1, vmin=0, 
             domain_size="estero", grey_background=False, cmap=None, fname=None):
         # read wave heights
-        H = self.read_npy(stat)
+        try:
+            H = self.read_npy(stat)
+        except:
+            H = self.read_dat(stat)
+
         
         xgr, ygr, zgr = self.read_grid()
         bldgs = self.read_buildings()
@@ -37,11 +41,21 @@ class PlotWaveHeightBldg(HelperFuncs):
 
         figsize = self.get_figsize(domain_size)
         fig, ax = plt.subplots(1,1, figsize=figsize)
+        # -- original code
         ax.pcolormesh(xgr, ygr, zgr, vmin=-8.5, vmax=8.5, cmap="BrBG_r", zorder=0)
         pcm = ax.pcolormesh(xgr, ygr, bldg_H, vmin=vmin, vmax=vmax, cmap=cmap, zorder=1)
-
-
         plt.colorbar(pcm, ax=ax, extend="max", label=labl, aspect=40)
+        # -- 
+
+        # # -- temporary
+        # # print(bldg_H[bldg_H!=np.nan]>12)
+        # # bldg_H[bldg_H!=np.nan] = bldg_H[bldg_H!=np.nan]>12
+        # # print(bldg_H)
+        # bldg_H = (bldg_H>13)
+        # # ax.imshow(bldg_H, origin="lower", vmin=vmin, vmax=vmax, cmap=cmap)
+        # ax.imshow(bldg_H, origin="lower", cmap=cmap)
+        # # -- 
+
         ax.set_xlabel("x (m)")
         ax.set_ylabel("y (m)")
         ax.set_aspect("equal")
@@ -64,7 +78,6 @@ class PlotWaveHeightBldg(HelperFuncs):
         stats.set_index("VDA_id", inplace=True)
 
         bldgs = pd.merge(bldgs["geometry"], stats,  left_index=True, right_index=True)
-        print(list(bldgs.columns))
 
 
         fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
@@ -74,7 +87,6 @@ class PlotWaveHeightBldg(HelperFuncs):
         df_xbeach = pd.read_csv(fn)
         df_xbeach.set_index("VDA_id", inplace=True)
         bldgs = pd.merge(bldgs, df_xbeach["elevated"], left_index=True, right_index=True)
-        print(bldgs)
 
         if which_bldgs=="non-elevated":
             bldgs = bldgs.loc[bldgs["elevated"]==False]
