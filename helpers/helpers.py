@@ -116,8 +116,12 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        if self.hotstart_run:
+            fns = [os.path.join(self.path_to_model, run, self.xboutput_filename) for run in self.hotstart_runs]
+            ds = xr.open_mfdataset(fns, combine='nested', concat_dim='globaltime')
+        else:
+            fn = os.path.join(self.path_to_model, self.xboutput_filename)
+            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         
         max_vals = ds[var].max(dim="globaltime").values[:,:]
         return max_vals
@@ -126,7 +130,8 @@ class HelperFuncs():
         """
         reads the dimensions of the xbeach output:
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
+        model_dir = self.get_first_model_dir()
+        fn = os.path.join(model_dir, self.xboutput_filename)
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         
         nx = ds.sizes["nx"]
@@ -179,8 +184,12 @@ class HelperFuncs():
         """
         reads a transect from the xarray output dataset
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        if self.hotstart_run:
+            fns = [os.path.join(self.path_to_model, run, self.xboutput_filename) for run in self.hotstart_runs]
+            ds = xr.open_mfdataset(fns, combine='nested', concat_dim='globaltime')
+        else:
+            fn = os.path.join(self.path_to_model, self.xboutput_filename)
+            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         slice_data = ds[var][t_idx,idy,:]
         return slice_data.values
 
@@ -192,8 +201,12 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        if self.hotstart_run:
+            fns = [os.path.join(self.path_to_model, run, self.xboutput_filename) for run in self.hotstart_runs]
+            ds = xr.open_mfdataset(fns, combine='nested', concat_dim='globaltime')
+        else:
+            fn = os.path.join(self.path_to_model, self.xboutput_filename)
+            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         return ds[var][:,:,:].values
 
     def read_3d_data_xarray_nonmem(self, var):
@@ -204,8 +217,12 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
+        if self.hotstart_run:
+            fns = [os.path.join(self.path_to_model, run, self.xboutput_filename) for run in self.hotstart_runs]
+            ds = xr.open_mfdataset(fns, combine='nested', concat_dim='globaltime', chunks={"globaltime": -1, "x": -1, "y": 400})
+        else:
+            fn = os.path.join(self.path_to_model, self.xboutput_filename)
+            ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
         return ds[var][:,:,:]
 
     def read_2d_data_xarray_timestep(self, var, t, hsrun=None):        
@@ -237,8 +254,12 @@ class HelperFuncs():
         Returns:
             time series of data at the point idx, idy. 
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})        
+        if self.hotstart_run:
+            fns = [os.path.join(self.path_to_model, run, self.xboutput_filename) for run in self.hotstart_runs]
+            ds = xr.open_mfdataset(fns, combine='nested', concat_dim='globaltime')
+        else:
+            fn = os.path.join(self.path_to_model, self.xboutput_filename)
+            ds = xr.open_dataset(fn, chunks={"globaltime": 100})        
         slice_data = ds[var][:,idy,idx]
         return slice_data.values
 
@@ -267,8 +288,12 @@ class HelperFuncs():
         Returns:
             time: an array representing time steps
         """
-        fn = os.path.join(self.path_to_model, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        if self.hotstart_run:
+            fns = [os.path.join(self.path_to_model, run, self.xboutput_filename) for run in self.hotstart_runs]
+            ds = xr.open_mfdataset(fns, combine='nested', concat_dim='globaltime')
+        else:
+            fn = os.path.join(self.path_to_model, self.xboutput_filename)
+            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         time = ds["globaltime"].values
         return time
 
@@ -698,7 +723,9 @@ class HelperFuncs():
         return run1_max, run2_max
 
     def set_hotstart_runs(self):
-        hotstart_runs = [i for i in os.listdir(self.path_to_model) if os.path.isdir(os.path.join(self.path_to_model, i))]
+        hotstart_runs = [i for i in os.listdir(self.path_to_model) 
+                         if os.path.isdir(os.path.join(self.path_to_model, i)) 
+                         and i.startswith("hotstart_")]
         return sorted(hotstart_runs)
 
     def rmse(self, predictions, targets):
