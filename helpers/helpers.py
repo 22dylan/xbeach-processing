@@ -683,6 +683,7 @@ class HelperFuncs():
                 "zs": "Water Elevation",
                 "zs0": "Surge Level",
                 "zs1": "Water Elevation Above Surge",
+                "current": "Current Velocity",
         }
         v2y = { "el": "Water Elevation (m)",
                 "hs": "Sig. Wave Height (m)",
@@ -691,14 +692,16 @@ class HelperFuncs():
                 "zs": "Water Elevation (m)",
                 "zs0": "Surge Level (m)",
                 "zs1": "Water Elevation Above Surge (m)",
+                "current": "Current Velocity (m/s)",
         }
         
-        c = {"el": 0, "hs": 1, "Tp": 2, "wavedir": 3, "zs": 4, "zs0": 5, "zs1": 6}
+        c = {"el": 0, "hs": 1, "Tp": 2, "wavedir": 3, "zs": 4, "zs0": 5, "zs1": 6, "current": 7}
         colors = sns.color_palette("crest", n_colors=len(c.keys()))
         color = colors[c[var]]
 
         return v2l[var], v2y[var], color
     
+
 
     def xbeach_duration_to_start_stop(self, duration):
         duration_to_start_stop = {
@@ -775,11 +778,14 @@ class HelperFuncs():
         not_elevated = bldgs_df.loc[bldgs_df["elevated"]==False]
         return elevated_bldgs, not_elevated
 
-    def compute_velocity_mag(self, ue, ve):        
+    def compute_velocity_mag(self, ue, ve, return_max=True):        
         mag = np.sqrt(np.square(ue) + np.square(ve))
         if np.all(np.isnan(mag)):
             return np.nan
-        return np.nanmax(mag).item()
+        elif return_max:
+            return np.nanmax(mag).item()
+        else:
+            return mag
 
     def compute_velocity_dir(self, ue, ve):
         mag = np.sqrt(np.square(ue) + np.square(ve))

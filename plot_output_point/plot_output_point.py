@@ -30,13 +30,14 @@ class PlotOutputPoint(HelperFuncs):
             if var == "current":
                 ue = self.read_pt_data_xarray("ue", idx, idy)
                 ve = self.read_pt_data_xarray("ve", idx, idy)
-                data_ = compute_velocity_mag(ue, ve)
+                data_ = self.compute_velocity_mag(ue, ve, return_max=False)
             else:
                 data_ = self.read_pt_data_xarray(var, idx, idy)
 
-            H = self.get_H(data_)
-            Hs = self.compute_Hs(H)
-            print("Hs at {}: {}" .format(xy, Hs))
+            if var == "zs":
+                H = self.get_H(data_)
+                Hs = self.compute_Hs(H)
+                print("Hs at {}: {}" .format(xy, Hs))
 
             # -- plotting
             if x_units == "hr":
