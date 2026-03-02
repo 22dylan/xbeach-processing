@@ -27,7 +27,12 @@ class PlotOutputPoint(HelperFuncs):
         t = self.read_time_xarray()
         for xy in xys:
             idx, idy = self.xy_to_grid_index(xgr, ygr, xy)
-            data_ = self.read_pt_data_xarray(var, idx, idy)
+            if var == "current":
+                ue = self.read_pt_data_xarray("ue", idx, idy)
+                ve = self.read_pt_data_xarray("ve", idx, idy)
+                data_ = compute_velocity_mag(ue, ve)
+            else:
+                data_ = self.read_pt_data_xarray(var, idx, idy)
 
             H = self.get_H(data_)
             Hs = self.compute_Hs(H)

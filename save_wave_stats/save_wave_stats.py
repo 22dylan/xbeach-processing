@@ -236,19 +236,6 @@ class SaveWaveStats(HelperFuncs):
 
         return y2_, x2_ # Return for tracking/tqdm update
 
-    def compute_velocity_mag(self, ue, ve):        
-        mag = np.sqrt(np.square(ue) + np.square(ve))
-        if np.all(np.isnan(mag)):
-            return np.nan
-        return np.nanmax(mag).item()
-
-    def compute_velocity_dir(self, ue, ve):
-        mag = np.sqrt(np.square(ue) + np.square(ve))
-        if np.all(np.isnan(mag)):
-            return np.nan
-        max_idx = np.nanargmax(np.sqrt(np.square(ue) + np.square(ve))).item()
-        ue, ve = ue[max_idx], ve[max_idx]
-        return self.compute_angle(ue, ve)
 
     def compute_angle(self, x_vec, y_vec):
         """

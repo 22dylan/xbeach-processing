@@ -101,13 +101,13 @@ if __name__ == "__main__":
     # phwm.plot_scatter(fname="hwm.png")
 
     # # -- plot output point
-    # pop = PlotOutputPoint()
-    # pop.plot_timeseries(var="zs",
-    #         xys=[[200,400]], 
-    #         drawdomain=True,
-    #         fulldomain=False, 
-    #         savefig=True
-    #         )
+    pop = PlotOutputPoint()
+    pop.plot_timeseries(var="current",
+            xys=[[200,400]], 
+            drawdomain=True,
+            fulldomain=False, 
+            savefig=True
+            )
     # pop.plot_Hs(var="zs",
     #         xys=[[200,400]], 
     #         chunk_size_min=15,
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     #         )
 
     # # -- plot wave height building
-    pwhb = PlotWaveHeightBldg()
+    # pwhb = PlotWaveHeightBldg()
     # pwhb.plot_geopandas(stat="stat_cumulative_horizontal_impulse", 
     #     which_bldgs="non-elevated",
     #     vmin=0, 
@@ -168,14 +168,14 @@ if __name__ == "__main__":
     #     cmap="Blues",
     #     # fname="impulse.png"
     #     )
-    pwhb.plot(stat="stat_cumulative_horizontal_impulse",
-            model_runname_w_bldgs=None,
-            vmin=0,
-            vmax=30,
-            domain_size="micro", 
-            grey_background=True, 
-            # fname="impulse-bldg.png"
-            )
+    # pwhb.plot(stat="stat_cumulative_horizontal_impulse",
+    #         model_runname_w_bldgs=None,
+    #         vmin=0,
+    #         vmax=30,
+    #         domain_size="micro", 
+    #         grey_background=True, 
+    #         # fname="impulse-bldg.png"
+    #         )
 
     # -- PlotWaveHeightScatter
     # pwhs = PlotWaveHeightScatter()
