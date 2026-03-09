@@ -22,6 +22,8 @@ from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
 from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 from plot_stats_v_dcoast.plot_stats_v_dcoast import PlotStatsVDCoast
 
+from extract_stats_point.extract_stats_point import ExtractStatsPoint
+
 
 from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
@@ -29,18 +31,12 @@ from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 if __name__ == "__main__":
     # -- save wave stats
     # sws = SaveWaveStats()
-    # sws.geolocate("stat_cumulative_horizontal_impulse")
+    # # sws.geolocate("stat_cumulative_horizontal_impulse")
     # sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
     
     # -- save wave stats at buildings in csv form. used for hotstart runs
     # sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
     
-
-    # # -- save to csv for work with Erick
-    # sws.save_to_csv(stats=["surge_max", "flood_depth", "velocity_magnitude", "velocity_direction", "bed_shear_magnitude"],
-    #     fname="xbeach_out.csv"
-    #     )
-
 
     # -- animation plots
     # ma = MakeAnimation(
@@ -63,21 +59,21 @@ if __name__ == "__main__":
 
 
     # -- animation for hotsttart runs
-    # mah = MakeAnimationHotstart(
-    #             var              = "zs",                        # variable to plot (H=wave height; zs=water level)
-    #             tstart           = 29/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-    #             tstop            = 31/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-    #             domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-    #             xbeach_duration  = 8,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-    #             vmin             = 0,                           # vmin for plotting
-    #             vmax             = 5,                           # vmax for plotting
-    #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
-    #             dpi              = 100,                         # image resolution (dpi = dots per inch)
-    #             fps              = 10,
-    #             detrend          = False,                       # detrend the elevation data
-    #             dt_video         = 112,
-    #             )
-    # mah.make_animation_hotstart()
+    mah = HotstartMakeAnimation(
+                var              = "zs",                        # variable to plot (H=wave height; zs=water level)
+                tstart           = 14/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+                tstop            = 16/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+                domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+                xbeach_duration  = 8,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+                vmin             = 0,                           # vmin for plotting
+                vmax             = 5,                           # vmax for plotting
+                make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
+                dpi              = 100,                         # image resolution (dpi = dots per inch)
+                fps              = 10,
+                detrend          = False,                       # detrend the elevation data
+                dt_video         = 2,
+                )
+    mah.make_animation_hotstart()
     # mah.plot_frame(t_hr=0.4)
 
 
@@ -101,13 +97,26 @@ if __name__ == "__main__":
     # phwm.plot_scatter(fname="hwm.png")
 
     # # -- plot output point
-    pop = PlotOutputPoint()
-    pop.plot_timeseries(var="current",
-            xys=[[200,400]], 
-            drawdomain=True,
-            fulldomain=False, 
-            savefig=True
-            )
+    # pop = PlotOutputPoint()
+    # pop.plot_timeseries(var="zs",
+    #         xys=[[200,400]], 
+    #         x_units="sec",
+    #         drawdomain=False,
+    #         fulldomain=False, 
+    #         savefig=True
+    #         )
+    # pop.plot_timeseries(var="vv",
+    #         xys=[[200,400]], 
+    #         drawdomain=False,
+    #         fulldomain=False, 
+    #         savefig=True
+    #         )
+    # pop.plot_timeseries(var="uu",
+    #         xys=[[200,400]], 
+    #         drawdomain=False,
+    #         fulldomain=False, 
+    #         savefig=True
+    #         )
     # pop.plot_Hs(var="zs",
     #         xys=[[200,400]], 
     #         chunk_size_min=15,
@@ -239,9 +248,41 @@ if __name__ == "__main__":
     #         "stat_Hs", 
     #         "stat_Hmax"
     #         ], 
-    #     which_bldgs="elevated",
-    #     fname="stats-at-elev-bldgs.png"
+    #     which_bldgs="non-elevated",
+    #     # fname="stats-at-elev-bldgs.png"
     #     )
+
+
+    # ##########################################################################
+    # routines for work with Erick
+    # sws = SaveWaveStats()
+    # sws.save_to_csv(stats=["surge_max", "flood_depth", "velocity_magnitude", "velocity_direction", "bed_shear_magnitude"],
+    #     fname="xbeach_out.csv"
+    #     )
+
+    # # -- extract stat point
+    # ESP = ExtractStatsPoint()
+    # ESP.extract(
+    #         var="current",
+
+    #         xys=[
+    #         [350, 200], [490, 270], [630, 340], [770, 410], [910, 480],
+    #         [350, 524], [490, 524], [630, 524], [770, 524], [910, 524],
+    #         [350, 800], [490, 800], [630, 800], [770, 800], [910, 800]],
+    #         # pt_names = [
+    #         #     "t1-p1", "t1-p2", "t1-p3", "t1-p4", "t1-p5",
+    #         #     "t2-p1", "t2-p2", "t2-p3", "t2-p4", "t2-p5",
+    #         #     "t3-p1", "t3-p2", "t3-p3", "t3-p4", "t3-p5",
+    #         # ],
+    #         pt_names = [
+    #             "a1", "a2", "a3", "a4", "a5",
+    #             "b1", "b2", "b3", "b4", "b5",
+    #             "c1", "c2", "c3", "c4", "c5",
+    #         ],
+    #         drawdomain=True,
+    #         domain_size="micro",
+    #         savefig=False
+    #         )
 
 
 

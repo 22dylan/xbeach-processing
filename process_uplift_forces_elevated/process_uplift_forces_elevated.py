@@ -52,6 +52,8 @@ class ProcessUpliftForcesElevated(HelperFuncs):
 
         # -- new
         bldg_df["freeboard_surge_wave"] = bldg_df["stat_max_zs"] - (bldg_df["FFE_ffe_ft"]*0.3048)
+        bldg_df["max_uplift_pressure"] = bldg_df["freeboard_surge_wave"]*self.rho*self.g
+
         threshold = []
         remove_bldg = []
         for bldg_i, bldg in bldg_df.iterrows():
@@ -65,7 +67,7 @@ class ProcessUpliftForcesElevated(HelperFuncs):
                 # continue
 
             else:
-                if bldg["freeboard_surge_wave"]<2.25:
+                if bldg["max_uplift_pressure"]<22624:
                     remove_bldg.append(False)
                 else:
                     remove_bldg.append(True)

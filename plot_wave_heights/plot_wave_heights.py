@@ -58,38 +58,6 @@ class PlotWaveHeights(HelperFuncs):
         # ---
         self.save_fig(fname, transparent=True, dpi=300)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     def plot_wave_height_bldg_scatter(self, runs, model_runname_w_bldgs, 
                             readlocal=True, plt_same_axis=True, fname=None):
 

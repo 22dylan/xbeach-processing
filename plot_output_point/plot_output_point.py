@@ -28,10 +28,17 @@ class PlotOutputPoint(HelperFuncs):
         for xy in xys:
             idx, idy = self.xy_to_grid_index(xgr, ygr, xy)
             if var == "current":
-                ue = self.read_pt_data_xarray("ue", idx, idy)
-                ve = self.read_pt_data_xarray("ve", idx, idy)
+                try:
+                    ue = self.read_pt_data_xarray("uu", idx, idy)
+                    ve = self.read_pt_data_xarray("vv", idx, idy)
+                except:
+                    ue = self.read_pt_data_xarray("umwci", idx, idy)
+                    ve = self.read_pt_data_xarray("vmwci", idx, idy)
+                    fds
+
                 data_ = self.compute_velocity_mag(ue, ve, return_max=False)
             else:
+                print(var)
                 data_ = self.read_pt_data_xarray(var, idx, idy)
 
             if var == "zs":

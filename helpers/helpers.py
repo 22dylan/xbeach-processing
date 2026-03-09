@@ -139,7 +139,7 @@ class HelperFuncs():
             
             cumulative_time = ds["globaltime"][-1].values + dt
             
-        return xr.concat(datasets, dim="globaltime")
+        return xr.concat(datasets, dim="globaltime", data_vars="all")
 
     def read_max_xarray(self, var):
         """
@@ -684,6 +684,8 @@ class HelperFuncs():
                 "zs0": "Surge Level",
                 "zs1": "Water Elevation Above Surge",
                 "current": "Current Velocity",
+                "uu": "current x",
+                "vv": "current y",
         }
         v2y = { "el": "Water Elevation (m)",
                 "hs": "Sig. Wave Height (m)",
@@ -693,9 +695,13 @@ class HelperFuncs():
                 "zs0": "Surge Level (m)",
                 "zs1": "Water Elevation Above Surge (m)",
                 "current": "Current Velocity (m/s)",
+                "uu": "current x",
+                "vv": "current y",
+                
+
         }
         
-        c = {"el": 0, "hs": 1, "Tp": 2, "wavedir": 3, "zs": 4, "zs0": 5, "zs1": 6, "current": 7}
+        c = {"el": 0, "hs": 1, "Tp": 2, "wavedir": 3, "zs": 4, "zs0": 5, "zs1": 6, "current": 7, "uu": 8, "vv": 9}
         colors = sns.color_palette("crest", n_colors=len(c.keys()))
         color = colors[c[var]]
 
