@@ -18,28 +18,26 @@ class PlotOutputPoint(HelperFuncs):
             x_units="hr",
             drawdomain=False, 
             fulldomain=True, 
-            savefig=False):
+            plot_depth=False,
+            savefig=False
+            ):
         xgr, ygr, zgr = self.read_grid()
 
-        colors = sns.color_palette("husl")
+        colors = sns.color_palette("husl", len(xys))
         fig0, ax = plt.subplots(1,1,figsize=(6,4))
         cnt = 0
         t = self.read_time_xarray()
         for xy in xys:
             idx, idy = self.xy_to_grid_index(xgr, ygr, xy)
             if var == "current":
-                try:
-                    ue = self.read_pt_data_xarray("uu", idx, idy)
-                    ve = self.read_pt_data_xarray("vv", idx, idy)
-                except:
-                    ue = self.read_pt_data_xarray("umwci", idx, idy)
-                    ve = self.read_pt_data_xarray("vmwci", idx, idy)
-                    fds
-
+                ue = self.read_pt_data_xarray("uu", idx, idy)
+                ve = self.read_pt_data_xarray("vv", idx, idy)
                 data_ = self.compute_velocity_mag(ue, ve, return_max=False)
             else:
-                print(var)
                 data_ = self.read_pt_data_xarray(var, idx, idy)
+                if plot_depth:
+                    data_ = data_ - zgr[idy, idx]
+                    data_[data_<0] = 0
 
             if var == "zs":
                 H = self.get_H(data_)
@@ -59,6 +57,8 @@ class PlotOutputPoint(HelperFuncs):
 
         ax.set_xlabel(xlbl)
         s, _, _ = self.var2label(var)
+        if plot_depth:
+            s = "Water Depth (m)"
         ax.set_ylabel(s)
         ax.legend()
 

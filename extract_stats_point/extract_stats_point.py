@@ -16,6 +16,7 @@ class ExtractStatsPoint(HelperFuncs):
             var, 
             xys, 
             pt_names,
+            save_depth=False,
             t_start=None, 
             t_stop=None,
             drawdomain=False, 
@@ -31,12 +32,19 @@ class ExtractStatsPoint(HelperFuncs):
         for xy in xys:
             idx, idy = self.xy_to_grid_index(xgr, ygr, xy)
             if var == "current":
-                ue = self.read_pt_data_xarray("ue", idx, idy)
-                ve = self.read_pt_data_xarray("ve", idx, idy)
+                try:
+                    ue = self.read_pt_data_xarray("uu", idx, idy)
+                    ve = self.read_pt_data_xarray("vv", idx, idy)
+                except:
+                    ue = self.read_pt_data_xarray("ue", idx, idy)
+                    ve = self.read_pt_data_xarray("ve", idx, idy)
                 data_ = self.compute_velocity_mag(ue, ve, return_max=False)
             else:
                 data_ = self.read_pt_data_xarray(var, idx, idy)
-            
+                if save_depth:
+                    data_ = data_ - zgr[idy, idx]
+                    data_[data_<0] = 0
+
             # colname = "x{}-y{}" .format(xy[0], xy[1])
             # colnames.append(colname)
             df[pt_names[cnt]] = data_
@@ -47,6 +55,9 @@ class ExtractStatsPoint(HelperFuncs):
         if t_stop == None:
             t_stop = t[-1]
         df = df.loc[t_start:t_stop]
+
+        if save_depth:
+            var = "water-depth"
 
         fn_out = os.path.join(self.path_to_save_plot, "{}-timeseries.csv" .format(var))
         df.to_csv(fn_out)
