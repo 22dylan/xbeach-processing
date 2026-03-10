@@ -38,6 +38,7 @@ class PlotOutputPoint(HelperFuncs):
                 if plot_depth:
                     data_ = data_ - zgr[idy, idx]
                     data_[data_<0] = 0
+                    data_ = np.nan_to_num(data_)
 
             if var == "zs":
                 H = self.get_H(data_)

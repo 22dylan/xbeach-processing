@@ -44,6 +44,7 @@ class ExtractStatsPoint(HelperFuncs):
                 if save_depth:
                     data_ = data_ - zgr[idy, idx]
                     data_[data_<0] = 0
+                    data_ = np.nan_to_num(data_)
 
             # colname = "x{}-y{}" .format(xy[0], xy[1])
             # colnames.append(colname)

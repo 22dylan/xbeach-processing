@@ -256,6 +256,7 @@ if __name__ == "__main__":
     # ##########################################################################
     # routines for work with Erick
     # sws = SaveWaveStats()
+    # sws.save(var="zs", stats=["surge_max", "flood_depth", "velocity_magnitude", "velocity_direction", "bed_shear_magnitude"], store_in_mem=True)
     # sws.save_to_csv(stats=["surge_max", "flood_depth", "velocity_magnitude", "velocity_direction", "bed_shear_magnitude"],
     #     fname="xbeach_out.csv"
     #     )
