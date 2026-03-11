@@ -137,6 +137,8 @@ class PlotWaveHeightBldg(HelperFuncs):
             labl = "Mean Period (s)"
         elif "horizontal_impulse" in stat:
             labl = "Impulse ((KN-hr)/m)"
+        else:
+            labl = "No label created yet"
         return labl
 
 

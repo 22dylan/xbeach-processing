@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # -- save wave stats
     # sws = SaveWaveStats()
     # # # sws.geolocate("stat_cumulative_horizontal_impulse")
-    # # sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
+    # # sws.save_forces_at_bldg_to_csv()
     # sws.save_max_stats()
     
     # -- save wave stats at buildings in csv form. used for hotstart runs

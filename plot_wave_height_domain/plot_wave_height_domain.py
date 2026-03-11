@@ -22,8 +22,6 @@ class PlotWaveHeightDomain(HelperFuncs):
         except:
             H = self.read_dat(stat)
 
-
-        print(H)
         # read buildings and grid 
         xgr, ygr, zgr = self.read_grid()
         bldgs = self.read_buildings()
