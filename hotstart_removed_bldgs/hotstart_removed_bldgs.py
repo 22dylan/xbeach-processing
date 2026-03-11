@@ -53,7 +53,7 @@ class PlotRemovedBldgs(HelperFuncs):
             raise ValueError("bldgs keyword must be: `all`, `elevated` or `non-elevated`")
         # ---
         if domain_size == "estero":
-            lw = 0.05
+            lw = 0.09
         elif domain_size == "micro":
             lw = 0.7
 

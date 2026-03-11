@@ -23,7 +23,7 @@ class PlotWaveHeightDomain(HelperFuncs):
             H = self.read_dat(stat)
 
 
-
+        print(H)
         # read buildings and grid 
         xgr, ygr, zgr = self.read_grid()
         bldgs = self.read_buildings()
@@ -48,9 +48,9 @@ class PlotWaveHeightDomain(HelperFuncs):
 
         if (stat=="Hs") or (stat=="Hs_max") or (stat=="Hs_tot") or (stat=="Hs") or (stat=="Hmax"):
             cmap = mpl.cm.plasma
-        elif "t_Hs" in stat:
-            cmap = mpl.cm.BuPu
-            masked_array = masked_array/3600
+        # elif "t_Hs" in stat:
+            # cmap = mpl.cm.BuPu
+            # masked_array = masked_array/3600
         elif "zs" in stat:
             # cmap = mpl.cm.Blues
             cmap = mpl.cm.YlGnBu_r
@@ -76,8 +76,8 @@ class PlotWaveHeightDomain(HelperFuncs):
             labl = "Maximum Water Elevation (m)"
         elif stat == "zs_mean":
             labl = "Mean Water Elevation (m)"    
-        elif "t_Hs" in stat:
-            labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
+        # elif "t_Hs" in stat:
+        #     labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
         elif stat == "Hmax":
             labl = "Max. Wave Height (m)"
         elif stat == "Tm":

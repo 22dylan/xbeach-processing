@@ -31,8 +31,9 @@ from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 if __name__ == "__main__":
     # -- save wave stats
     # sws = SaveWaveStats()
-    # # sws.geolocate("stat_cumulative_horizontal_impulse")
-    # sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
+    # # # sws.geolocate("stat_cumulative_horizontal_impulse")
+    # # sws.save_forces_at_bldg_to_csv(fname="forces_at_bldg.csv")
+    # sws.save_max_stats()
     
     # -- save wave stats at buildings in csv form. used for hotstart runs
     # sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
@@ -59,21 +60,21 @@ if __name__ == "__main__":
 
 
     # -- animation for hotsttart runs
-    mah = HotstartMakeAnimation(
-                var              = "zs",                        # variable to plot (H=wave height; zs=water level)
-                tstart           = 14/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
-                tstop            = 16/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
-                domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
-                xbeach_duration  = 8,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
-                vmin             = 0,                           # vmin for plotting
-                vmax             = 5,                           # vmax for plotting
-                make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
-                dpi              = 100,                         # image resolution (dpi = dots per inch)
-                fps              = 10,
-                detrend          = False,                       # detrend the elevation data
-                dt_video         = 2,
-                )
-    mah.make_animation_hotstart()
+    # mah = HotstartMakeAnimation(
+    #             var              = "zs",                        # variable to plot (H=wave height; zs=water level)
+    #             tstart           = 14/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+    #             tstop            = 16/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
+    #             domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
+    #             xbeach_duration  = 8,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
+    #             vmin             = 0,                           # vmin for plotting
+    #             vmax             = 5,                           # vmax for plotting
+    #             make_all_figs    = True,                        # create all frames, or read from existing `temp` dir
+    #             dpi              = 100,                         # image resolution (dpi = dots per inch)
+    #             fps              = 10,
+    #             detrend          = False,                       # detrend the elevation data
+    #             dt_video         = 2,
+    #             )
+    # mah.make_animation_hotstart()
     # mah.plot_frame(t_hr=0.4)
 
 
@@ -150,16 +151,16 @@ if __name__ == "__main__":
 
     
     # # -- plot wave height domain
-    # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="stat_cumulative_horizontal_impulse",
-    #         vmin=0,
-    #         vmax=60,
-    #         single_frame=True,
-    #         domain_size="estero",
-    #         plt_bldgs=True,
-    #         plt_offshore=True,
-    #         # fname="impulse-domain.png"
-    #         )
+    pwhd = PlotWaveHeightDomain()
+    pwhd.plot(stat="max_stat_horizontal_impulse",
+            vmin=0,
+            vmax=3,
+            single_frame=True,
+            domain_size="micro",
+            plt_bldgs=True,
+            plt_offshore=True,
+            # fname="impulse-domain.png"
+            )
 
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run64-nowind",
@@ -221,7 +222,7 @@ if __name__ == "__main__":
     # prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
     #                    domain_size="estero",
     #                    elevated_kwds={"compute_removed_elevated": False},
-    #                    fname="removed-bldgs-geopandas-elevated-update"
+    #                    fname="removed-bldgs-geopandas-elevated"
     #                    )
     # prb.plot(
     #          grey_background=False, 

@@ -86,6 +86,23 @@ class SaveWaveStats(HelperFuncs):
                 "velocity_direction",
                 ]
         return stats
+    def save_max_stats(self):
+        hsruns = self.set_hotstart_runs() 
+        stats = os.listdir(os.path.join(self.path_to_model, hsruns[0]))
+        stats = [i for i in stats if "stat_" in i]
+        print("saving stats: ")
+        for stat in stats:
+            print("   {}" .format(stat.split(".")[0]))
+            for hsrun_i, hsrun in enumerate(hsruns):
+                fn = os.path.join(self.path_to_model, hsrun, stat)
+                data_ = np.loadtxt(fn)
+                if hsrun_i == 0:
+                    max_vals = np.zeros(np.shape(data_))
+                else:
+                    max_vals = np.maximum(max_vals, data_)
+            fn_out = os.path.join(self.path_to_save_plot, "max_{}" .format(stat))
+            np.savetxt(fn_out, max_vals)
+        
 
     def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, 
             store_in_mem=False, chunk_size_min=15, avg_window_min=2, max_workers=None):
