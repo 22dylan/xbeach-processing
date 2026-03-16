@@ -27,7 +27,7 @@ mutable struct XBProcessStats
         # path_to_model = joinpath(file_dir, path_to_model)
         # path_to_output = joinpath(file_dir, "..", "..", "processed-results", "test-comp-run8")
         
-        # check_threads(num_cpu)
+        check_threads(num_cpu)
         domain_size = read_domain_size(path_to_model)
 
         # Initialize constants
@@ -97,6 +97,8 @@ end
 function process!(r::XBProcessStats)
     println("Processing results for: ")
     println("  $(r.path_to_model)")
+    println("Writing to: ")
+    println("  $(r.path_to_output)")
     flush(stdout)
 
     start = time_ns()           # start time
