@@ -30,13 +30,13 @@ from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 
 if __name__ == "__main__":
     # -- save wave stats
-    # sws = SaveWaveStats()
+    sws = SaveWaveStats()
     # # # sws.geolocate("stat_cumulative_horizontal_impulse")
     # # sws.save_forces_at_bldg_to_csv()
     # sws.save_max_stats()
     
     # -- save wave stats at buildings in csv form. used for hotstart runs
-    # sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
+    sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
     
 
     # -- animation plots

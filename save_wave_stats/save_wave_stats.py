@@ -130,8 +130,12 @@ class SaveWaveStats(HelperFuncs):
             data_all = self.read_3d_data_xarray_nonmem(var)
 
         if any(["velocity" in i for i in stats]):
-            self.ue_data = self.read_3d_data_xarray_nonmem("ue")
-            self.ve_data = self.read_3d_data_xarray_nonmem("ve")
+            try:
+                self.ue_data = self.read_3d_data_xarray_nonmem("ue")
+                self.ve_data = self.read_3d_data_xarray_nonmem("ve")
+            except:
+                self.ue_data = self.read_3d_data_xarray_nonmem("uu")
+                self.ve_data = self.read_3d_data_xarray_nonmem("vv")
 
         data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims)
         
