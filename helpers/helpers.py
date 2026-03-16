@@ -801,6 +801,18 @@ class HelperFuncs():
         ue, ve = ue[max_idx], ve[max_idx]
         return self.compute_angle(ue, ve)
 
+    def compute_angle(self, x_vec, y_vec):
+        """
+        Calculates the angle of a 2D vector from the x-axis in a counter-clockwise direction
+        and returns it in the range [0, 360) degrees.
+        """
+        angles_rad = np.arctan2(y_vec, x_vec)
+        angles_deg = np.degrees(angles_rad)
+        # Convert negative angles to the [0, 360) range
+        if angles_deg < 0:
+            angles_deg += 360
+        # angles_deg[angles_deg < 0] += 360
+        return angles_deg
 
 
 if __name__ == '__main__':

@@ -258,18 +258,6 @@ class SaveWaveStats(HelperFuncs):
         return y2_, x2_ # Return for tracking/tqdm update
 
 
-    def compute_angle(self, x_vec, y_vec):
-        """
-        Calculates the angle of a 2D vector from the x-axis in a counter-clockwise direction
-        and returns it in the range [0, 360) degrees.
-        """
-        angles_rad = np.arctan2(y_vec, x_vec)
-        angles_deg = np.degrees(angles_rad)
-        # Convert negative angles to the [0, 360) range
-        if angles_deg < 0:
-            angles_deg += 360
-        # angles_deg[angles_deg < 0] += 360
-        return angles_deg
 
     def compute_impulse(self, z, t, dt, avg_window_sec):
         h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
