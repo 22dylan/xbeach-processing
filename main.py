@@ -33,7 +33,7 @@ if __name__ == "__main__":
     sws = SaveWaveStats()
     # # # sws.geolocate("stat_cumulative_horizontal_impulse")
     # # sws.save_forces_at_bldg_to_csv()
-    # sws.save_max_stats()
+    sws.save_max_stats()
     
     # -- save wave stats at buildings in csv form. used for hotstart runs
     sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
@@ -151,16 +151,16 @@ if __name__ == "__main__":
 
     
     # # -- plot wave height domain
-    pwhd = PlotWaveHeightDomain()
-    pwhd.plot(stat="max_stat_horizontal_impulse",
-            vmin=0,
-            vmax=3,
-            single_frame=True,
-            domain_size="micro",
-            plt_bldgs=True,
-            plt_offshore=True,
-            # fname="impulse-domain.png"
-            )
+    # pwhd = PlotWaveHeightDomain()
+    # pwhd.plot(stat="max_stat_horizontal_impulse",
+    #         vmin=0,
+    #         vmax=3,
+    #         single_frame=True,
+    #         domain_size="micro",
+    #         plt_bldgs=True,
+    #         plt_offshore=True,
+    #         # fname="impulse-domain.png"
+    #         )
 
     # pwhd.plot_diff(stat="Hs",
     #         comparison_run="run64-nowind",

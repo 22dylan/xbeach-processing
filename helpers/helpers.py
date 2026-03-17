@@ -814,6 +814,39 @@ class HelperFuncs():
         # angles_deg[angles_deg < 0] += 360
         return angles_deg
 
+    def calculate_running_avg(self, time_sec, values, window_sec, new_step_sec=None):
+        """
+        Calculates a running average of time series data and optionally 
+        resamples the output to a new time increment.
+        
+        Parameters:
+        time_sec: array-like of time steps in seconds
+        values: array-like of your data values
+        window_sec: the size of the running average window in seconds
+        new_step_sec: (optional) the new time increment for the output in seconds
+        """
+        
+        # 1. Convert to a Pandas Series with a Timedelta index
+        # This makes time-based math incredibly easy and robust
+        time_index = pd.to_timedelta(time_sec, unit='s')
+        ts = pd.Series(values, index=time_index)
+
+        # 2. Calculate the rolling average
+        # min_periods=1 ensures you get data at the very beginning of the array 
+        # instead of NaNs while the window "fills up"
+        rolling_avg = ts.rolling(window=f'{window_sec}s', min_periods=1).mean()
+
+        # 3. Resample to a new time increment if requested
+        if new_step_sec is not None:
+            # .nearest() grabs the closest rolling average value to the new time step
+            # You could also use .mean() here if you want to average the averages!
+            rolling_avg = rolling_avg.resample(f'{new_step_sec}s').nearest()
+
+        # 4. Convert back to standard numpy arrays
+        new_times = rolling_avg.index.total_seconds().to_numpy()
+        new_values = rolling_avg.to_numpy()
+
+        return new_times, new_values
 
 if __name__ == '__main__':
     hf = HelperFuncs()

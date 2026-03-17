@@ -21,6 +21,9 @@ class ExtractStatsPoint(HelperFuncs):
             t_stop=None,
             drawdomain=False, 
             domain_size="estero", 
+            moving_avg=False,
+            window_sec=120,
+            new_sec_step=120,
             savefig=False):
 
         xgr, ygr, zgr = self.read_grid()
@@ -46,10 +49,19 @@ class ExtractStatsPoint(HelperFuncs):
                     data_[data_<0] = 0
                     data_ = np.nan_to_num(data_)
 
-            # colname = "x{}-y{}" .format(xy[0], xy[1])
-            # colnames.append(colname)
             df[pt_names[cnt]] = data_
+    
+
             cnt += 1
+
+        if moving_avg:
+            df_new = pd.DataFrame()
+            for col in pt_names:
+                
+                t, df_new[col] = self.calculate_running_avg(df["t"], df[col], window_sec, new_sec_step)
+            df_new["t"] = t
+            df_new.set_index("t", inplace=True)
+            df = df_new.copy()
 
         if t_start == None:
             t_start = t[0]
