@@ -59,8 +59,6 @@ class ExtractStatsPoint(HelperFuncs):
             for col in pt_names:
                 t, df_new[col] = self.calculate_running_avg(df.index, df[col].values, window_sec, new_sec_step)
             df_new["t"] = t            
-            print(df_new)
-            fds
             df_new.set_index("t", inplace=True)
             df = df_new.copy()
 
