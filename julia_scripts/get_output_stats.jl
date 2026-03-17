@@ -27,7 +27,7 @@ mutable struct XBProcessStats
         # path_to_model = joinpath(file_dir, path_to_model)
         # path_to_output = joinpath(file_dir, "..", "..", "processed-results", "test-comp-run8")
         
-        check_threads(num_cpu)
+        # check_threads(num_cpu)
         domain_size = read_domain_size(path_to_model)
 
         # Initialize constants
@@ -97,8 +97,6 @@ end
 function process!(r::XBProcessStats)
     println("Processing results for: ")
     println("  $(r.path_to_model)")
-    println("Writing to: ")
-    println("  $(r.path_to_output)")
     flush(stdout)
 
     start = time_ns()           # start time
@@ -165,7 +163,7 @@ function compute_output_stats!(r::XBProcessStats)
                     Hs[y_, x_idx]         = compute_Hs(H)                   # compute significant wave height
                     Hmax[y_,x_idx]        = compute_Hmax(H)                 # compute max wave height
                     impulse[y_, x_idx]    = compute_impulse(h, t, dt, r)    # compute impulse
-                    water_elev[y_, x_idx] = compute_water_elev(z)           # compute water elevation (e.g., surge, no waves)
+                    water_elev[y_, x_idx] = compute_water_elev(z, dt)           # compute water elevation (e.g., surge, no waves)
                     flood_depth[y_, x_idx] = water_elev[y_, x_idx] - zgr[y_, x_idx] # flood depth above ground
                     max_zs[y_, x_idx]     = compute_max_zs(z)               # compute max water elevation (e.g. surge + waves)
 
@@ -229,17 +227,10 @@ function check_h_for_negative_values!(h::Vector{<:Union{Missing, Float32}})
     end
 end
 compute_max_zs(z::SubArray{<:Union{Missing, Float32}}) = maximum(filter(!isnan, skipmissing(z)); init=0)
-function compute_water_elev(z::SubArray{<:Union{Missing, Float32}})
-    total = 0.0f0
-    count = 0
-    
-    for x in z
-        if !ismissing(x) && !isnan(x)
-            total += x
-            count += 1
-        end
-    end
-    return count == 0 ? NaN32 : total / count
+function compute_water_elev(z::SubArray{<:Union{Missing, Float32}}, dt::Float32)
+    h_rm = running_mean(z,dt)
+    surge_max = maximum(filter(!isnan, skipmissing(h_rm)); init=0)
+    return surge_max
 end
 function compute_impulse(
                         # z::SubArray{<:Union{Missing, Float32}}, 

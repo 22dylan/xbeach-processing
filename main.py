@@ -263,31 +263,31 @@ if __name__ == "__main__":
     #     )
 
     # # -- extract stat point
-    ESP = ExtractStatsPoint()
-    ESP.extract(
-            var="current",
+    # ESP = ExtractStatsPoint()
+    # ESP.extract(
+    #         var="current",
 
-            xys=[
-            [350, 200], [490, 270], [630, 340], [770, 410], [910, 480],
-            [350, 524], [490, 524], [630, 524], [770, 524], [910, 524],
-            [350, 800], [490, 800], [630, 800], [770, 800], [910, 800]],
-            # pt_names = [
-            #     "t1-p1", "t1-p2", "t1-p3", "t1-p4", "t1-p5",
-            #     "t2-p1", "t2-p2", "t2-p3", "t2-p4", "t2-p5",
-            #     "t3-p1", "t3-p2", "t3-p3", "t3-p4", "t3-p5",
-            # ],
-            pt_names = [
-                "a1", "a2", "a3", "a4", "a5",
-                "b1", "b2", "b3", "b4", "b5",
-                "c1", "c2", "c3", "c4", "c5",
-            ],
-            moving_avg=True,
-            window_sec=7200,
-            new_sec_step=7200,
-            drawdomain=False,
-            domain_size="micro",
-            savefig=False
-            )
+    #         xys=[
+    #         [350, 200], [490, 270], [630, 340], [770, 410], [910, 480],
+    #         [350, 524], [490, 524], [630, 524], [770, 524], [910, 524],
+    #         [350, 800], [490, 800], [630, 800], [770, 800], [910, 800]],
+    #         # pt_names = [
+    #         #     "t1-p1", "t1-p2", "t1-p3", "t1-p4", "t1-p5",
+    #         #     "t2-p1", "t2-p2", "t2-p3", "t2-p4", "t2-p5",
+    #         #     "t3-p1", "t3-p2", "t3-p3", "t3-p4", "t3-p5",
+    #         # ],
+    #         pt_names = [
+    #             "a1", "a2", "a3", "a4", "a5",
+    #             "b1", "b2", "b3", "b4", "b5",
+    #             "c1", "c2", "c3", "c4", "c5",
+    #         ],
+    #         moving_avg=True,
+    #         window_sec=7200,
+    #         new_sec_step=7200,
+    #         drawdomain=False,
+    #         domain_size="micro",
+    #         savefig=False
+    #         )
 
 
 

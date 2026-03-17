@@ -1,8 +1,7 @@
 relative_path     = True
-path_to_model     : ../hotstart/hotstart31-nobldgs
-path_to_save_plot = ../processed-results/temp
+path_to_model     = ../hotstart/hotstart31-nobldgs
+path_to_save_plot = ../processed-results/hotstart31-nobldgs
 
-path_to_model     = ../../2025-10-01-model-comparison/xbeach/models/comp-run8/
 
 path_to_forcing   = ../data/forcing/2025-10-24-update/xbeach1.dat
 
