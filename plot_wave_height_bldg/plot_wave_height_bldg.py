@@ -129,16 +129,25 @@ class PlotWaveHeightBldg(HelperFuncs):
             labl = "Maximum Water Elevation (m)"
         elif stat == "zs_mean":
             labl = "Mean Water Elevation (m)"    
-        elif "t_Hs" in stat:
-            labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
+        # elif "t_Hs" in stat:
+        #     labl = "Time Sig. Wave Height exceeds {} m (hr)" .format(stat.split("_")[-1].split("m")[0])
         elif stat == "Hmax":
             labl = "Max. Wave Height (m)"
         elif stat == "Tm":
             labl = "Mean Period (s)"
-        elif "horizontal_impulse" in stat:
-            labl = "Impulse ((KN-hr)/m)"
+        elif stat == "impulse":
+            labl = "Impulse ((kN-hr)/m))"
+        elif stat == "surge_max":
+            labl = "Maximum Storm Surge (m)"
+        elif stat == "velocity_magnitude":
+            labl = "Maximum Velocity (m/s)"
+        elif stat == "stat_cumulative_horizontal_impulse":
+            labl = "Cumulative Wave Impulse (kN-hr/m)"
+        elif ("current" in stat) and ("impulse" in stat):
+            labl = "Cumulative Current Impulse (kN-hr/m)"
         else:
             labl = "No label created yet"
+
         return labl
 
 

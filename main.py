@@ -174,9 +174,10 @@ if __name__ == "__main__":
     # pwhb.plot_geopandas(stat="stat_cumulative_horizontal_impulse", 
     #     which_bldgs="non-elevated",
     #     vmin=0, 
-    #     vmax=30, 
-    #     cmap="Blues",
-    #     # fname="impulse.png"
+    #     vmax=10, 
+    #     domain_size="micro",
+    #     cmap="viridis",
+    #     fname="wave_impulse.png"
     #     )
     # pwhb.plot(stat="stat_cumulative_horizontal_impulse",
     #         model_runname_w_bldgs=None,
@@ -252,6 +253,66 @@ if __name__ == "__main__":
     #     which_bldgs="non-elevated",
     #     # fname="stats-at-elev-bldgs.png"
     #     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    # ##########################################################################
+    # -- routines for processing runs to check number of removed buildings ---
+    # # -- save stats at bldgs
+    sws = SaveWaveStats()
+    # sws.save_max_stats()                # save max stats across hotstart runs; saved to .dat file.
+    sws.assign_to_bldgs_hotstart(max_stats_saved=True)      # save wave stats at buildings in csv form. used for hotstart runs
+    
+    # # -- confusion matrices
+    # cdws = CompareDSwStats()
+    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    #                     bldgs="all",       # "non-elevated", "elevated", "all"
+    #                     elevated_kwds={"compute_removed_elevated": True},
+    #                     fname="confusion-all",
+    #                     )
+    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
+    #                     elevated_kwds={"compute_removed_elevated": False},
+    #                     fname="confusion-elevated",
+    #                     )
+    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    #                     bldgs="non-elevated",       # "non-elevated", "elevated", "all"
+    #                     elevated_kwds={"compute_removed_elevated": False},
+    #                     fname="confusion-non-elevated",
+    #                     )
+
+
+    # # -- spatial results
+    # prb = PlotRemovedBldgs()
+    # prb.plot_geopandas(bldgs="all",         # "non-elevated", "elevated", "all"
+    #                    domain_size="estero",
+    #                    elevated_kwds={"compute_removed_elevated": False},
+    #                    fname="removed-bldgs-geopandas-all"
+    #                    )
+    # prb.plot_geopandas(bldgs="elevated",         # "non-elevated", "elevated", "all"
+    #                    domain_size="estero",
+    #                    elevated_kwds={"compute_removed_elevated": False},
+    #                    fname="removed-bldgs-geopandas-elevated"
+    #                    )
+    # prb.plot_geopandas(bldgs="non-elevated",         # "non-elevated", "elevated", "all"
+    #                    domain_size="estero",
+    #                    elevated_kwds={"compute_removed_elevated": False},
+    #                    fname="removed-bldgs-geopandas-non-elevated"
+    #                    )
+
 
 
     # ##########################################################################

@@ -87,7 +87,9 @@ class PlotWaveHeightDomain(HelperFuncs):
         elif stat == "velocity_magnitude":
             labl = "Maximum Velocity (m/s)"
         elif stat == "stat_cumulative_horizontal_impulse":
-            labl = "Cumulative Horizontal Impulse (kN-hr/m)"
+            labl = "Cumulative Wave Impulse (kN-hr/m)"
+        elif ("current" in stat) and ("impulse" in stat):
+            labl = "Cumulative Current Impulse (kN-hr/m)"
         else:
             labl = "No label created yet"
         if plot_depth:

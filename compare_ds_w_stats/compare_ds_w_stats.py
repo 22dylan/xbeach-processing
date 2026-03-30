@@ -138,18 +138,21 @@ class CompareDSwStats(HelperFuncs):
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach = df_xbeach.loc[df_xbeach["remove"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
+        df_xbeach = df_xbeach.loc[df_xbeach["elevated"]==False] # get non-elevated buildings
 
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
-        remove_bldgs = (df_dmg["FFE_elev_status"] == "elevated") & (df_dmg["FFE_foundation"]=="Piles/Columns")
-        df_dmg = df_dmg.loc[~remove_bldgs]
 
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         df_dmg["removed_vda"] = 0
         df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
+        # df_xbeach = pd.merge(df_xbeach, df_dmg, left_index=)
+
         
-        df_dmg['TA_ActYearBuilt_pre1970'] = False
-        df_dmg.loc[df_dmg["TA_ActYearBuilt"]<1998, "TA_ActYearBuilt_pre1970"] = True
-        # df_dmg.loc[df_dmg["TA_ActYearBuilt"]<1974, "TA_ActYearBuilt_pre1970"] = True
+        df_dmg['TA_ActYearBuilt_pre1974'] = False
+        df_dmg.loc[df_dmg["TA_ActYearBuilt"]<=1974, "TA_ActYearBuilt_pre1974"] = True
+        df_dmg = df_dmg.loc[df_dmg["TA_ActYearBuilt_pre1974"]==True]
+        df_dmg = df_dmg.loc[df_dmg["TA_ShapeSTArea_Sqft"]<4000]
+        df_dmg = df_dmg.loc[df_dmg["TA_BldgUseTyp"] != "mobile home"]
 
         # ---
 
@@ -167,30 +170,10 @@ class CompareDSwStats(HelperFuncs):
         # col = "FFE_bldg_diagram"      # [ALL] "8" results in destroyed     | [MICRO] 1a (slab on grade) result in destroyed buildings
         # col = "TA_ShapeSTArea_Sqft"
         col = "horizontal_impulse"
-
         df_dmg = pd.merge(df_xbeach, df_dmg[["removed_vda", "TA_ShapeSTArea_Sqft", "TA_ActYearBuilt"]], left_index=True, right_index=True)
-        
-
-        # -- two plots
         df_dmg = df_dmg.dropna(subset=[col])
-        x_vals = df_dmg[col].unique().tolist()
-        
-        # -- plot #1; two subplots
 
-        # df_observed_destroyd = df_dmg.loc[df_dmg["removed_vda"] == 1]
-        # df_observed_standing = df_dmg.loc[df_dmg["removed_vda"] == 0]
-        
-        # fig1, ax = plt.subplots(1,2, figsize=(10,4))
-        # ax[0].set_title("destroyed")
-        # ax[1].set_title("standing")
-        # df_observed_destroyd[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[0], grid=False, title="destroyed")
-        # df_observed_standing[col].value_counts().reindex(x_vals,fill_value=0).plot.bar(ax=ax[1], grid=False, title="standing")
-        
-        # self.save_fig(fig1, "all-{}" .format(col), dpi=1000)
-
-        # -- plot #2; four subplots
-        # df = pd.merge(df_xbeach[["remove", "horizontal_impulse"]], df_dmg["removed_vda"], left_index=True, right_index=True)
-
+        # -- four subplots; one for each corner of confusion matrix
         df_true_standing = df_dmg.loc[(df_dmg["remove"]==0) & (df_dmg["removed_vda"]==0)].index.to_list()
         df_true_destroyd = df_dmg.loc[(df_dmg["remove"]==1) & (df_dmg["removed_vda"]==1)].index.to_list()
         df_false_standing = df_dmg.loc[(df_dmg["remove"]==0) & (df_dmg["removed_vda"]==1)].index.to_list()
@@ -201,6 +184,8 @@ class CompareDSwStats(HelperFuncs):
         df_false_standing = df_dmg.loc[df_false_standing]
         df_false_destroyd = df_dmg.loc[df_false_destroyd]
 
+        print(len(df_false_destroyd.loc[df_false_destroyd[col]<15]))
+        print(len(df_true_destroyd.loc[df_true_destroyd[col]<15]))
         
         fig2, ax = plt.subplots(2,2, figsize=(8,6))
         df_true_standing[col].hist(ax=ax[0,0], grid=False, bins=20)
@@ -208,17 +193,10 @@ class CompareDSwStats(HelperFuncs):
         df_false_standing[col].hist(ax=ax[1,0], grid=False, bins=20)
         df_true_destroyd[col].hist(ax=ax[1,1], grid=False, bins=20)
 
-
-        df_true_destroyd.to_csv("lower-right.csv")
-        df_true_standing.to_csv("upper-left.csv")
-        df_false_destroyd.to_csv("upper-right.csv")
-        df_false_standing.to_csv("lower-left.csv")
-
-
-        # df_true_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,0], grid=False, title="True Standing")
-        # df_false_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[0,1], grid=False, title="False Destroyed")
-        # df_false_standing[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,0], grid=False, title="False Standing")
-        # df_true_destroyd[col].value_counts().reindex(x_vals, fill_value=0).plot.bar(ax=ax[1,1], grid=False, title="True Destroyed")
+        ax[0,0].text(s=len(df_true_standing), x=0.1, y=0.8, transform=ax[0,0].transAxes)
+        ax[0,1].text(s=len(df_false_destroyd), x=0.1, y=0.8, transform=ax[0,1].transAxes)
+        ax[1,0].text(s=len(df_false_standing), x=0.1, y=0.8, transform=ax[1,0].transAxes)
+        ax[1,1].text(s=len(df_true_destroyd), x=0.1, y=0.8, transform=ax[1,1].transAxes)
 
 
         plt.tight_layout()

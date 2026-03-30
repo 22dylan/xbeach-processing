@@ -416,36 +416,56 @@ class SaveWaveStats(HelperFuncs):
         os.remove(fn_elev)
         os.remove(fn_nelev)
 
-    def assign_to_bldgs_hotstart(self, fname=None):
+    def assign_to_bldgs_hotstart(self, max_stats_saved=False, fname=None):
         bldgs = self.read_bldgs_geodataframe()
         bldgs["centroid"] = bldgs["geometry"].centroid
         bldgs["coords"] = [(x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)]
         hsruns = self.set_hotstart_runs()
 
-        stats = os.listdir(os.path.join(self.get_first_model_dir()))
-        stats = [i for i in stats if "stat_" in i]
-        stats_ = [i.split(".dat")[0] for i in stats]
-        bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
-        for stat in stats:
-            df_stat = pd.DataFrame(columns=hsruns, index=bldgs.index)
-            stat_ = stat.split(".dat")[0]
-            print("Processing results for: {}" .format(stat))
-            for hs in hsruns:
-                print("  {}" .format(hs))
-
+        if max_stats_saved == True:
+            stats = os.listdir(os.path.join(self.path_to_save_plot))
+            stats = [i for i in stats if "max_stat_" in i]
+            stats_ = [i.split(".dat")[0] for i in stats]
+            bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
+            for stat in stats:
+                stat_ = stat.split(".dat")[0]
+                print("Processing results for: {}" .format(stat))
                 fn_tiff = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat_))    # tiff tile
-                fn_src = os.path.join(self.path_to_model, hs, stat)      # dat file source
-                fn_dst = os.path.join(self.path_to_save_plot, stat)      # dat file dst
-                shutil.copyfile(fn_src, fn_dst)
                 self.geolocate(stat_, verbose=False)
 
-
                 with rasterio.open(fn_tiff, "r") as r:
-                    df_stat[hs] = [x[0] for x in r.sample(bldgs["coords"].to_list())]
-
-                os.remove(fn_dst)
+                    bldgs_out[stat_] = [x[0] for x in r.sample(bldgs["coords"].to_list())]
+                if "max_stat_cumulative_current_impulse" in stat:
+                    continue
                 os.remove(fn_tiff)
-            bldgs_out[stat_] = df_stat.max(axis=1)
+                # bldgs_out[stat_] = df_stat.max(axis=1)
+
+
+        elif max_stats_saved == False:
+            stats = os.listdir(os.path.join(self.get_first_model_dir()))
+            stats = [i for i in stats if "stat_" in i]
+            stats_ = [i.split(".dat")[0] for i in stats]
+            bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
+            for stat in stats:
+                df_stat = pd.DataFrame(columns=hsruns, index=bldgs.index)
+                stat_ = stat.split(".dat")[0]
+                print("Processing results for: {}" .format(stat))
+                for hs in hsruns:
+                    print("  {}" .format(hs))
+
+                    fn_tiff = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat_))    # tiff tile
+                    fn_src = os.path.join(self.path_to_model, hs, stat)      # dat file source
+                    fn_dst = os.path.join(self.path_to_save_plot, stat)      # dat file dst
+                    shutil.copyfile(fn_src, fn_dst)
+                    self.geolocate(stat_, verbose=False)
+
+
+                    with rasterio.open(fn_tiff, "r") as r:
+                        df_stat[hs] = [x[0] for x in r.sample(bldgs["coords"].to_list())]
+
+                    os.remove(fn_dst)
+                    os.remove(fn_tiff)
+                bldgs_out[stat_] = df_stat.max(axis=1)
             
         if fname == None:
             fname = "stats_at_bldgs.csv"

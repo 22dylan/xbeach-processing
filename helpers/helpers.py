@@ -393,7 +393,8 @@ class HelperFuncs():
                 z_ = [float(i.strip()) for i in line.split()]
                 zs.append(z_)
         zgr = np.array(zs)
-        mask = (zgr != 10)
+        # mask = (zgr != 10)
+        mask = (zgr < 10)
         bldgs = np.ma.array(zgr, mask=mask)
         return bldgs
         

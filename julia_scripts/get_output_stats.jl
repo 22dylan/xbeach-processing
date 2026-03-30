@@ -34,7 +34,7 @@ mutable struct XBProcessStats
         rho = 1025.0
         g = 9.81
         io_lock = ReentrantLock()
-        processing_step_size = 10   # number of x-slices to hold in RAM at once
+        processing_step_size = 1   # number of x-slices to hold in RAM at once
         
 
         new(
@@ -139,8 +139,6 @@ function compute_output_stats!(r::XBProcessStats)
             ue_raw = ds["uu"]
             ve_raw = ds["vv"]
         end
-
-        # Configuration
         nx, ny, nt = size(zs_raw)   # size of zs
         for x_start in 1:r.processing_step_size:nx  # loop through domain in chunks
             x_end = min(x_start + r.processing_step_size - 1, nx)    # getting x_end; 
@@ -170,9 +168,9 @@ function compute_output_stats!(r::XBProcessStats)
                     if r.load_current
                         ue = @view ue_slab[x_local, y_,:]
                         ve = @view ve_slab[x_local, y_,:]
-                        max_curr[y_, x_idx] = compute_current(ue, ve)
-                        max_curr_dir[y_, x_idx] = compute_current_dir(ue, ve)
-                        max_curr_impulse[y_, x_idx] = compute_current_force(ue, ve, h, t, r)
+                        max_curr[y_, x_idx] = compute_current(ue, ve, dt)
+                        max_curr_dir[y_, x_idx] = compute_current_dir(ue, ve, dt)
+                        max_curr_impulse[y_, x_idx] = compute_current_force(ue, ve, h, t, dt, r)
                     end
                 end
             end
@@ -199,7 +197,6 @@ function compute_output_stats!(r::XBProcessStats)
     # writing out results. 
     write_fortran(fn_we, water_elev)
     write_fortran(fn_wd, flood_depth)
-    
     write_fortran(fn_hs, Hs)
     write_fortran(fn_hmx, Hmax)
     write_fortran(fn_ip, impulse)
@@ -251,17 +248,19 @@ function compute_impulse(
 end
 
 """ compute maximum current velocity """
-function compute_current(ue::SubArray{<:Union{Missing, Float32}}, ve::SubArray{<:Union{Missing, Float32}})
+function compute_current(ue::SubArray{<:Union{Missing, Float32}}, ve::SubArray{<:Union{Missing, Float32}}, dt::Float32)
     current_mag = hypot.(ue, ve)
+    current_mag = running_mean(current_mag, dt)
     max_curr = maximum(filter(!isnan, skipmissing(current_mag)); init=0)
     return max_curr
 end
 
-function compute_current_dir(ue::SubArray{<:Union{Missing, Float32}}, ve::SubArray{<:Union{Missing, Float32}})
+function compute_current_dir(ue::SubArray{<:Union{Missing, Float32}}, ve::SubArray{<:Union{Missing, Float32}}, dt::Float32)
     # Calculate magnitudes. `hypot.` is idiomatic Julia and safer than sqrt(u^2 + v^2) 
     # as it prevents overflow/underflow.
     mag = hypot.(ue, ve)
-    
+    mag = running_mean(mag, dt)
+
     # Check if the entire array consists of NaNs
     if all(isnan, mag)
         return NaN
@@ -300,10 +299,13 @@ function compute_current_force(
         ve::SubArray{<:Union{Missing, Float32}}, 
         h::Vector{<:Union{Missing, Float32}},
         t::Vector{Float32}, 
+        dt::Float32,
         r::XBProcessStats)
     if all(ismissing, h) return 0.0 end # if data is missing, impulse = 0
     
     current_mag = hypot.(ue, ve)
+    current_mag = running_mean(current_mag, dt)
+
     force = h .* (current_mag.^2) .* (r.rho*0.5)     # units: N/m
     I = nantrapz(force, t)                          # units: (N-s)/m
     I = I/3600                                      # units: (N-hr)/m
@@ -422,7 +424,7 @@ function write_fortran(fn, data)
 end
 
 # --- Main Execution ---
-processor = XBProcessStats(num_cpu=1)
+processor = XBProcessStats(num_cpu=2)
 process!(processor)
 
 
