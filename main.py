@@ -152,22 +152,22 @@ if __name__ == "__main__":
     
     # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
-    # pwhd.plot(stat="max_stat_horizontal_impulse",
-    #         vmin=0,
-    #         vmax=3,
+    # pwhd.plot(stat="max_stat_water_elev_out",
+    #         vmin=2,
+    #         vmax=5,
     #         single_frame=True,
-    #         domain_size="micro",
+    #         domain_size="estero",
     #         plt_bldgs=True,
-    #         plt_offshore=True,
-    #         # fname="impulse-domain.png"
+    #         plt_offshore=False,
+    #         # fname="hs_domain_2m.png"
     #         )
 
     # pwhd.plot_diff(stat="Hs",
-    #         comparison_run="run64-nowind",
+    #         comparison_run="temp",
     #         domain_size="estero",
     #         vmax=0.5,
-    #         fname="Hs-diff-windnowind"
-    #         )
+    #         # fname="Hs-diff-windnowind"
+            # )
 
     # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
@@ -272,9 +272,9 @@ if __name__ == "__main__":
     # ##########################################################################
     # -- routines for processing runs to check number of removed buildings ---
     # # -- save stats at bldgs
-    sws = SaveWaveStats()
+    # sws = SaveWaveStats()
     # sws.save_max_stats()                # save max stats across hotstart runs; saved to .dat file.
-    sws.assign_to_bldgs_hotstart(max_stats_saved=True)      # save wave stats at buildings in csv form. used for hotstart runs
+    # sws.assign_to_bldgs_hotstart(max_stats_saved=True)      # save wave stats at buildings in csv form. used for hotstart runs
     
     # # -- confusion matrices
     # cdws = CompareDSwStats()

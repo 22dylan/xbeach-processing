@@ -64,8 +64,11 @@ class PlotWaveHeightDomain(HelperFuncs):
         else:
             ax_bar = ax1
         
-        if stat == "Hs_max":
+        if "Hs_max" in stat:
             labl = "Maximum Sig. Wave Height (m)"
+        elif stat == "max_stat_Hs":
+            labl = "Maximum Sig. Wave Height (m)"
+            
         elif stat == "Hs":
             labl = "Sig. Wave Height (m)"
         elif stat == "Hs_tot":
@@ -145,6 +148,7 @@ class PlotWaveHeightDomain(HelperFuncs):
         run2_max = self.read_npy(stat, comparison_run)
         run1_max, run2_max = self.check_domain_size_wave_stat(run1_max, run2_max)
 
+
         mask = np.isnan(run1_max) & np.isnan(run2_max)
         run1_max = np.ma.array(run1_max, mask=mask) # here mask tells numpy which cells to ignore.
         run2_max = np.ma.array(run2_max, mask=mask) # here mask tells numpy which cells to ignore.
@@ -154,9 +158,9 @@ class PlotWaveHeightDomain(HelperFuncs):
             diff = ((run1_max - run2_max)/denom)
         else:
             diff = run1_max - run2_max
-
         # -- read in grid
         xgr, ygr, zgr = self.read_grid()
+
         bldgs = self.read_buildings()
 
         figsize = self.get_figsize(domain_size)
