@@ -24,7 +24,6 @@ from plot_stats_v_dcoast.plot_stats_v_dcoast import PlotStatsVDCoast
 
 from extract_stats_point.extract_stats_point import ExtractStatsPoint
 
-
 from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
 
