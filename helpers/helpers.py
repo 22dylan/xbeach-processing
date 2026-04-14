@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+from typing import Optional, Tuple, List, Dict, Union, Any
+
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -11,137 +14,166 @@ from rasterio.warp import calculate_default_transform, reproject, Resampling
 
 class HelperFuncs():
     """
-    Helper functions for plotting codes.
-    Uses `paths.txt` to set a few variables. The following must be in paths.txt:
-        • relative_path
-        • path_to_model
-        • path_to_forcing
+    Helper functions for plotting and processing XBeach model output.
+    Uses `paths.txt` to set model and data paths.
     """
     def __init__(self):
-        self.file_dir = os.path.dirname(os.path.realpath(__file__))
-        self.project_dir = os.path.abspath(os.path.join(self.file_dir, ".."))
+        self.file_path = Path(__file__).resolve()
+        self.project_dir = self.file_path.parent.parent
         self.read_paths()
         self.xboutput_filename = self.get_output_filename()
-        self.make_directory(self.path_to_save_plot)
-
-    def hello(self):
-        print("hello world")
+        
+        if hasattr(self, 'path_to_save_plot'):
+            self.make_directory(self.path_to_save_plot)
 
     def read_paths(self):
         """
         Reads paths from the file `paths.txt`.
         The paths specified in `paths.txt` are used in the plotting scripts.
-        This function returns the paths as variables that are then accessible within 
-          this helper function as instance variables.
-        For example, if paths.txt consists of:
-            path_to_model = "../models"
-            path_to_buildings = "../buildings"
-        then the following varialbes will be created: self.path_to_model, and
-          self.path_to_buildings. 
-        The keyword "relative_path" in `paths.txt` sets whether the current
-          file path of this helpers.py file is appended to the path provided. 
+        Each line in paths.txt should be in the format: key = value
         """
-        # TODO: add check for required variables
+        paths_fn = self.project_dir / "paths.txt"
+        if not paths_fn.exists():
+            print(f"Warning: {paths_fn} not found.")
+            return
+
+        config = {}
         relative_path = False
-        fn = os.path.join(self.project_dir, "paths.txt")
-        with open(fn,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
+        
+        with open(paths_fn, 'r') as f:
+            for line in f:
                 line = line.strip()
-                if "relative_path" in line:
-                    exec(line, globals())
-                    if line.split("=")[1].strip() == "False":
-                        relative_path = False
-                    elif line.split("=")[1].strip() == "True":
-                        relative_path = True
-                if line and '=' in line:
-                    key, value = line.split('=', 1)
-                    key = key.strip()
-                    value = value.strip()
-                    value = value.split("/")
-                    if relative_path==True:
-                        pth = os.path.join(self.project_dir, *value)                
-                    else:
-                        value.insert(0, "/")
-                        pth = os.path.join(*value)
-                    setattr(self, key, pth)
-                    print("  successfully set {}" .format(key))
-        self.model_runname = self.path_to_model.split(os.sep)[-1]
-        self.check_hotstart()
+                if not line or line.startswith('#') or '=' not in line:
+                    continue
+                
+                key, value = line.split('=', 1)
+                key = key.strip()
+                value = value.strip()
+                
+                if key == "relative_path":
+                    relative_path = value.lower() == "true"
+                    continue
+                
+                config[key] = value
 
-        print("paths set for {}" .format(self.model_runname))
+        for key, value in config.items():
+            if relative_path:
+                pth = self.project_dir / value
+            else:
+                # Handle absolute paths or paths starting from root
+                if value.startswith('/'):
+                    pth = Path(value)
+                else:
+                    pth = Path('/') / value
+            
+            setattr(self, key, str(pth))
+            print(f"  successfully set {key}")
 
-    def check_hotstart(self):
-        fn_params = os.path.join(self.path_to_model, "params.txt")
-        if os.path.exists(fn_params):
+        if hasattr(self, 'path_to_model'):
+            self.model_runname = Path(self.path_to_model).name
+            self.check_hotstart()
+            print(f"paths set for {self.model_runname}")
+        else:
+            print("Warning: path_to_model not set in paths.txt")
+
+    def check_hotstart(self) -> None:
+        """
+        Checks if the model run is a hotstart run by looking for params.txt 
+        in the model directory.
+        """
+        params_fn = Path(self.path_to_model) / "params.txt"
+        if params_fn.exists():
             self.hotstart_run = False
         else:
             self.hotstart_run = True
             self.hotstart_runs = self.set_hotstart_runs()
 
-    def get_first_model_dir(self):
+    def get_first_model_dir(self) -> str:
+        """
+        Returns the path to the first model directory (useful for hotstart runs).
+        """
         if self.hotstart_run:
-            return os.path.join(self.path_to_model, self.hotstart_runs[0])
+            if not hasattr(self, 'hotstart_runs') or not self.hotstart_runs:
+                return self.path_to_model
+            return str(Path(self.path_to_model) / self.hotstart_runs[0])
         else:
             return self.path_to_model
 
-    def get_output_filename(self):
+    def get_output_filename(self) -> Optional[str]:
         """
-        Returns the output file name that is located in the `path_to_model` 
-          directory.
+        Returns the output file name (.nc) that is located in the model directory.
         """
-        model_dir = self.get_first_model_dir()
-        files = os.listdir(model_dir)        
-        nc_files = [i for i in files if ".nc" in i]
-        if len(nc_files) > 0:
-            fn = nc_files[0]
-        else:
-            fn = None
-        return fn
+        model_dir = Path(self.get_first_model_dir())
+        if not model_dir.exists():
+            return None
+        
+        nc_files = list(model_dir.glob("*.nc"))
+        if nc_files:
+            return nc_files[0].name
+        return None
 
-    def get_figsize(self, domain_size):
+    def get_dataset(self, chunks: Optional[Dict[str, int]] = None) -> xr.Dataset:
+        """
+        Returns an xarray dataset for the model run, handling hotstarts automatically.
+        """
+        if chunks is None:
+            chunks = {"globaltime": 100}
+            
+        if self.hotstart_run:
+            return self.get_hotstart_ds(chunks=chunks)
+        else:
+            fn = Path(self.path_to_model) / self.xboutput_filename
+            if not fn.exists():
+                raise FileNotFoundError(f"Output file {fn} not found.")
+            return xr.open_dataset(fn, chunks=chunks)
+
+    def get_figsize(self, domain_size: str) -> Tuple[int, int]:
         """
         Returns figure size based on the domain being considered. 
         """
-        if domain_size=="micro":
-            figsize=(7,5)
+        if domain_size == "micro":
+            return (7, 5)
         else:
-            figsize=(3,8)
-        return figsize
+            return (3, 8)
 
-    def get_hotstart_ds(self, chunks={"globaltime": 100}):
+    def get_hotstart_ds(self, chunks: Optional[Dict[str, int]] = None) -> xr.Dataset:
         """
         Opens multiple hotstart NetCDF files and corrects the resetting 'globaltime'.
         """
+        if chunks is None:
+            chunks = {"globaltime": 100}
+            
         datasets = []
-        cumulative_time = 0
+        cumulative_time = 0.0
+        
         for run in self.hotstart_runs:
-            fn = os.path.join(self.path_to_model, run, self.xboutput_filename)
+            fn = Path(self.path_to_model) / run / self.xboutput_filename
+            if not fn.exists():
+                print(f"Warning: {fn} not found, skipping.")
+                continue
+                
             ds = xr.open_dataset(fn, chunks=chunks)
             
-            # -- update globaltime
-            # assume globaltime starts at 0 or relative in each file
-            # add the cumulative_time from previous runs
+            # Update globaltime: add the cumulative_time from previous runs
             ds["globaltime"] = ds["globaltime"] + cumulative_time
-            
             datasets.append(ds)
             
-            # update cumulative_time using the last time step of the current file 
-            # plus the time step (tintg or similar). 
-            # Or simply use the duration of the run.
-            # Since we have the ds, let's use the difference between last and second-to-last 
-            # to estimate the next start time if it's not starting exactly at last_time.
-            # But usually it's last_time + dt.
+            # Update cumulative_time using the last time step plus dt
             if len(ds["globaltime"]) > 1:
                 dt = ds["globaltime"][1].values - ds["globaltime"][0].values
             else:
-                # fall back to params if only one time step
-                dt = self.read_from_params(fn_params=os.path.join(self.path_to_model, run, "params.txt"), var="tintg")
+                # Fall back to params if only one time step
+                params_fn = Path(self.path_to_model) / run / "params.txt"
+                dt = float(self.read_from_params(fn_params=str(params_fn), var="tintg"))
             
-            cumulative_time = ds["globaltime"][-1].values + dt
+            cumulative_time = float(ds["globaltime"][-1].values) + dt
+            
+        if not datasets:
+            raise FileNotFoundError(f"No hotstart datasets found in {self.path_to_model}")
             
         return xr.concat(datasets, dim="globaltime", data_vars="all")
 
-    def read_max_xarray(self, var):
+    def read_max_xarray(self, var: str) -> np.ndarray:
         """
         Reads the maximum value from the xarray dataset.
         Inputs:
@@ -149,192 +181,148 @@ class HelperFuncs():
         Returns: 
             data: 2D numpy array.
         """
-        if self.hotstart_run:
-            ds = self.get_hotstart_ds()
-        else:
-            fn = os.path.join(self.path_to_model, self.xboutput_filename)
-            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
-        
-        max_vals = ds[var].max(dim="globaltime").values[:,:]
-        return max_vals
-    
-    def read_dims_xarray(self):
+        ds = self.get_dataset()
+        return ds[var].max(dim="globaltime").values
+
+    def read_dims_xarray(self) -> Tuple[int, int]:
         """
-        reads the dimensions of the xbeach output:
+        Reads the dimensions of the xbeach output.
+        Returns:
+            (ny, nx): tuple of dimensions
         """
-        model_dir = self.get_first_model_dir()
-        fn = os.path.join(model_dir, self.xboutput_filename)
-        ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        ds = self.get_dataset()
+        return (ds.sizes["ny"], ds.sizes["nx"])
+
+    def get_resolution(self) -> Tuple[float, float]:
+        """
+        Reads dx and dy from params.txt.
+        """
+        model_dir = Path(self.get_first_model_dir())
+        params_fn = model_dir / "params.txt"
         
-        nx = ds.sizes["nx"]
-        ny = ds.sizes["ny"]
-        return (ny, nx)
-    
-    def get_resolution(self):
-        model_dir = self.get_first_model_dir()
-        fn_params = os.path.join(model_dir, "params.txt")
-        with open(fn_params,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                if "dx" in line:
-                    if "vardx" in line:
-                        continue
-                    l_ = [i.strip() for i in line.split()]
-                    dx = float(l_[-1])
+        dx, dy = 0.0, 0.0
+        with open(params_fn, 'r') as f:
+            for line in f:
+                if "dx" in line and "vardx" not in line:
+                    dx = float(line.split()[-1])
                 if "dy" in line:
-                    l_ = [i.strip() for i in line.split()]
-                    dy = float(l_[-1])
+                    dy = float(line.split()[-1])
         return dx, dy
 
-    def get_origin(self):
-        model_dir = self.get_first_model_dir()
-        fn_params = os.path.join(model_dir, "params.txt")
-        with open(fn_params,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
+    def get_origin(self) -> Tuple[float, float, float]:
+        """
+        Reads xo, yo, and theta from params.txt.
+        """
+        model_dir = Path(self.get_first_model_dir())
+        params_fn = model_dir / "params.txt"
+        
+        xo, yo, theta = 0.0, 0.0, 0.0
+        with open(params_fn, 'r') as f:
+            for line in f:
+                parts = line.split()
+                if not parts: continue
                 if "xo" in line:
-                    l_ = [i.strip() for i in line.split()]
-                    xo = float(l_[-1])
+                    xo = float(parts[-1])
                 if "yo" in line:
-                    l_ = [i.strip() for i in line.split()]
-                    yo = float(l_[-1])
+                    yo = float(parts[-1])
                 if "theta" in line:
-                    l_ = [i.strip() for i in line.split()]
-                    theta = float(l_[-1])
+                    theta = float(parts[-1])
         return xo, yo, theta
     
-    def read_from_params(self, fn_params=None, var=None):
-        if fn_params == None:
-            fn_params = os.path.join(self.path_to_model, "params.txt")
-        with open(fn_params,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
+    def read_from_params(self, fn_params: Optional[str] = None, var: Optional[str] = None) -> Any:
+        """
+        Reads a specific variable from params.txt.
+        """
+        if fn_params is None:
+            fn_params = str(Path(self.path_to_model) / "params.txt")
+        
+        if var is None:
+            return None
+
+        val = None
+        with open(fn_params, 'r') as f:
+            for line in f:
                 if var in line:
-                    l_ = [i.strip() for i in line.split()]
+                    parts = line.split()
                     try:
-                        val = float(l_[-1])
-                    except:
-                        val = l_[-1]
+                        val = float(parts[-1])
+                    except ValueError:
+                        val = parts[-1]
                     break
         return val
 
-    def read_transect_data_xarray(self, var, idy, t_idx):
+    def read_transect_data_xarray(self, var: str, idy: int, t_idx: int) -> np.ndarray:
         """
-        reads a transect from the xarray output dataset
+        Reads a transect from the xarray output dataset.
         """
-        if self.hotstart_run:
-            ds = self.get_hotstart_ds()
-        else:
-            fn = os.path.join(self.path_to_model, self.xboutput_filename)
-            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
-        slice_data = ds[var][t_idx,idy,:]
-        return slice_data.values
+        ds = self.get_dataset()
+        return ds[var][t_idx, idy, :].values
 
-    def read_3d_data_xarray(self, var):
+    def read_3d_data_xarray(self, var: str) -> np.ndarray:
         """
-        reads the full 3D array (x,y, time) from the netcdf output file
-        Inputs:
-            var: variable to read, e.g., zs1
-        Returns: 
-            data: 2D numpy array.
+        Reads the full 3D array (time, y, x) from the netcdf output file.
         """
-        if self.hotstart_run:
-            ds = self.get_hotstart_ds()
-        else:
-            fn = os.path.join(self.path_to_model, self.xboutput_filename)
-            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
-        return ds[var][:,:,:].values
+        ds = self.get_dataset()
+        return ds[var].values
 
-    def read_3d_data_xarray_nonmem(self, var):
+    def read_3d_data_xarray_nonmem(self, var: str) -> xr.DataArray:
         """
-        reads the full 3D array (x,y, time) from the netcdf output file
-        Inputs:
-            var: variable to read, e.g., zs1
-        Returns: 
-            data: 2D numpy array.
+        Reads the full 3D DataArray without loading all into memory.
         """
-        if self.hotstart_run:
-            ds = self.get_hotstart_ds(chunks={"globaltime": -1, "x": -1, "y": 400})
-        else:
-            fn = os.path.join(self.path_to_model, self.xboutput_filename)
-            ds = xr.open_dataset(fn, chunks={"globaltime": -1, "x": -1, "y": 400})
-        return ds[var][:,:,:]
+        ds = self.get_dataset(chunks={"globaltime": -1, "nx": -1, "ny": 400})
+        return ds[var]
 
-    def read_2d_data_xarray_timestep(self, var, t, hsrun=None):        
+    def read_2d_data_xarray_timestep(self, var: str, t: int, hsrun: Optional[str] = None) -> np.ndarray:        
         """
         Reads xarray data for entire domain at specified time step.
-        Inputs:
-            var: variable to read, e.g., zs1
-            t: time step to read
-        Returns: 
-            data: 2D numpy array.
         """
-        if hsrun == None:
-            model_dir = self.get_first_model_dir()
+        if hsrun is None:
+            model_dir = Path(self.get_first_model_dir())
         else:
-            model_dir = os.path.join(self.path_to_model, hsrun)
-        fn = os.path.join(model_dir, self.xboutput_filename)
+            model_dir = Path(self.path_to_model) / hsrun
+            
+        fn = model_dir / self.xboutput_filename
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
+        return ds[var].isel(globaltime=t).values
 
-        slice_data = ds[var].isel(globaltime=slice(t,t+1))
-        return slice_data.values[0,:,:]
-
-    def read_pt_data_xarray(self, var, idx, idy):
+    def read_pt_data_xarray(self, var: str, idx: int, idy: int) -> np.ndarray:
         """
         Reads xarray data at a specific point. 
-        Inputs: 
-            var: variable to read, e.g., zs1
-            idx: index in x-direction.
-            idy: index in y-direction.
-        Returns:
-            time series of data at the point idx, idy. 
         """
-        if self.hotstart_run:
-            ds = self.get_hotstart_ds()
-        else:
-            fn = os.path.join(self.path_to_model, self.xboutput_filename)
-            ds = xr.open_dataset(fn, chunks={"globaltime": 100})        
-        slice_data = ds[var][:,idy,idx]
-        return slice_data.values
+        ds = self.get_dataset()
+        return ds[var][:, idy, idx].values
 
-    def read_npy(self, stat, run=None):
+    def read_npy(self, stat: str, run: Optional[str] = None) -> np.ndarray:
         """
-        reads .npy files from the directory where results are saved.
-        returns data
+        Reads .npy files from the results directory.
         """
-        if run == None:
-            fn = os.path.join(self.path_to_save_plot, "{}.npy" .format(stat))
+        if run is None:
+            fn = Path(self.path_to_save_plot) / f"{stat}.npy"
         else:
-            fn = os.path.join(self.path_to_save_plot, "..", run,  "{}.npy" .format(stat))
+            fn = Path(self.path_to_save_plot).parent / run / f"{stat}.npy"
         return np.load(fn)
 
-    def read_dat(self, stat):
+    def read_dat(self, stat: str) -> np.ndarray:
         """
-        reads .npy files from the directory where results are saved.
-        returns data
+        Reads .dat files from the results directory.
         """
-        fn = os.path.join(self.path_to_save_plot, "{}.dat" .format(stat))
+        fn = Path(self.path_to_save_plot) / f"{stat}.dat"
         return np.loadtxt(fn)
 
-    def read_time_xarray(self):
+    def read_time_xarray(self) -> np.ndarray:
         """
         Reads time from the xbeach output.
-        Returns:
-            time: an array representing time steps
         """
-        if self.hotstart_run:
-            ds = self.get_hotstart_ds()
-        else:
-            fn = os.path.join(self.path_to_model, self.xboutput_filename)
-            ds = xr.open_dataset(fn, chunks={"globaltime": 100})
-        time = ds["globaltime"].values
-        return time
+        ds = self.get_dataset()
+        return ds["globaltime"].values
 
-    def reproject_raster(self, path_to_dem, epsg):
+    def reproject_raster(self, path_to_dem: str, epsg: Union[int, str]) -> None:
         """
-        function to reproject raster from current epsg to local utm epsg.
-        Note that a temporary tiff file is written to "temp.tiff". This file is
-        later removed when it is no longer needed.
+        Function to reproject raster from current epsg to local utm epsg.
+        Note that a temporary tiff file is written to "temp.tiff".
         """
         with rasterio.open(path_to_dem) as src:
-            transform, width, height = rasterio.warp.calculate_default_transform(
+            transform, width, height = calculate_default_transform(
                 src.crs, epsg, src.width, src.height, *src.bounds)
             kwargs = src.meta.copy()
             kwargs.update({
@@ -346,7 +334,7 @@ class HelperFuncs():
 
             with rasterio.open("temp.tiff", "w", **kwargs) as dst:
                 for i in range(1, src.count + 1):
-                    d = reproject(
+                    reproject(
                         source=rasterio.band(src, i),
                         destination=rasterio.band(dst, i),
                         src_transform=src.transform,
@@ -355,328 +343,296 @@ class HelperFuncs():
                         dst_crs=epsg,
                         resampling=Resampling.nearest)
 
-    def read_removed_bldgs(self):
-        fn = os.path.join(self.path_to_model, "removed_bldgs.npy")
-        if os.path.exists(fn):
-            removed_bldgs = np.load(fn)
-            removed_bldgs = np.array(removed_bldgs, dtype=bool)
-            return removed_bldgs
-        
-        fn = os.path.join(self.path_to_model, "stat_removed_bldgs.dat")
-        if os.path.exists(fn):
-            removed_bldgs = np.loadtxt(fn)
-            removed_bldgs = np.array(removed_bldgs, dtype=bool)
-            return removed_bldgs
-        
-
-        fn = os.path.join(self.path_to_model, "removed_bldgs.dat")
-        if os.path.exists(fn):
-            removed_bldgs = np.loadtxt(fn)
-            removed_bldgs = np.array(removed_bldgs, dtype=bool)
-            return removed_bldgs
-
-    def read_buildings(self, run_w_bldgs=None, hsrun=None):
+    def read_removed_bldgs(self) -> Optional[np.ndarray]:
         """
-        TODO: add docstring
+        Reads removed buildings mask from various possible files.
         """
-        if hsrun == None:
-            model_dir = self.get_first_model_dir()
+        model_dir = Path(self.path_to_model)
+        possible_files = [
+            "removed_bldgs.npy",
+            "stat_removed_bldgs.dat",
+            "removed_bldgs.dat"
+        ]
+        
+        for fn in possible_files:
+            file_path = model_dir / fn
+            if file_path.exists():
+                if file_path.suffix == ".npy":
+                    data = np.load(file_path)
+                else:
+                    data = np.loadtxt(file_path)
+                return data.astype(bool)
+        return None
+
+    def read_buildings(self, run_w_bldgs: Optional[str] = None, hsrun: Optional[str] = None) -> np.ma.MaskedArray:
+        """
+        Reads building grid (z.grd) and returns a masked array where buildings are present.
+        """
+        if hsrun is None:
+            model_dir = Path(self.get_first_model_dir())
         else:
-            model_dir = os.path.join(self.path_to_model, hsrun)
-        if run_w_bldgs == None:
-            fn_zgrid = os.path.join(model_dir, "z.grd")
+            model_dir = Path(self.path_to_model) / hsrun
+            
+        if run_w_bldgs is None:
+            fn_zgrid = model_dir / "z.grd"
         else:
-            fn_zgrid = os.path.join(model_dir, "..", run_w_bldgs, "z.grd")
-        zs = []
-        with open(fn_zgrid,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                z_ = [float(i.strip()) for i in line.split()]
-                zs.append(z_)
-        zgr = np.array(zs)
-        # mask = (zgr != 10)
+            fn_zgrid = Path(self.path_to_model) / run_w_bldgs / "z.grd"
+            
+        if not fn_zgrid.exists():
+            raise FileNotFoundError(f"Building grid file {fn_zgrid} not found.")
+
+        zgr = np.loadtxt(fn_zgrid)
+        # Buildings are usually represented by values >= 10 in z.grd
         mask = (zgr < 10)
-        bldgs = np.ma.array(zgr, mask=mask)
-        return bldgs
+        return np.ma.array(zgr, mask=mask)
         
-    def frcing_to_dataframe(self, n_header=3, n_var=7):
+    def frcing_to_dataframe(self, n_header: int = 3) -> pd.DataFrame:
         """
-        TODO: add docstring
+        Reads XBeach forcing file and returns a pandas DataFrame.
         """
-        t, el, wx, wy, hs, Tp, wavedir, vx, vy = [], [], [], [], [], [], [], [], []
-        with open(self.path_to_forcing,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                if cnt < n_header:
-                    if "VARIABLES" in line:
-                        var = [x.strip() for x in line.split()]
-                        var = [i for i in var if i!="VARIABLES"]
-                        var = [i for i in var if i!="="]
-                    continue
-                try:
-                    t_, el_, wx_, wy_, hs_, Tp_, wavedir_ = [float(x.strip()) for x in line.split()]
-                except:
-                    t_, el_, wx_, wy_, hs_, Tp_, wavedir_, vx_, vy_ = [float(x.strip()) for x in line.split()]
+        forcing_path = Path(self.path_to_forcing)
+        if not forcing_path.exists():
+            raise FileNotFoundError(f"Forcing file {forcing_path} not found.")
 
-                t.append(t_)
-                el.append(el_)
-                wx.append(wx_)
-                wy.append(wy_)
-                hs.append(hs_)
-                Tp.append(Tp_)
+        # Try to parse variables from header
+        var_names = []
+        with open(forcing_path, 'r') as f:
+            for i in range(n_header):
+                line = f.readline()
+                if "VARIABLES" in line:
+                    var_names = [v.strip() for v in line.split('=')[-1].split()]
 
-                wavedir_ = self.cartesian_to_nautical_angle(wavedir_)
-                wavedir_ = self.nautical_to_xbeach_angle(wavedir_, alfa=55.92839019260679)
+        # If var_names not found in header, use defaults
+        if not var_names:
+            var_names = ["t", "el", "wx", "wy", "hs", "Tp", "wavedir"]
 
-                wavedir.append(wavedir_)
+        # Read data
+        data = np.loadtxt(forcing_path, skiprows=n_header)
+        
+        # If number of columns doesn't match var_names, adjust
+        if data.shape[1] > len(var_names):
+            # Probably has vx, vy too
+            extra_vars = [f"var_{i}" for i in range(len(var_names), data.shape[1])]
+            var_names.extend(extra_vars)
+        elif data.shape[1] < len(var_names):
+            var_names = var_names[:data.shape[1]]
 
-        # TODO confirm unit conversions with Don
-        df = pd.DataFrame()
-        df["t"] = t
-        df["el"] = el
-        df["wx"] = wx
-        df["wy"] = wy
-        df["hs"] = hs
-        df["Tp"] = Tp
-        df["wavedir"] = wavedir
+        df = pd.DataFrame(data, columns=var_names)
 
-        df["el"] = df["el"]*0.3048
-        df["hs"] = df["hs"]*0.3048
+        # Apply angle conversions to wavedir
+        if "wavedir" in df.columns:
+            df["wavedir"] = df["wavedir"].apply(self.cartesian_to_nautical_angle)
+            # Hardcoded alfa for now, as in original code
+            alfa = 55.92839019260679
+            df["wavedir"] = df["wavedir"].apply(lambda x: self.nautical_to_xbeach_angle(x, alfa))
 
-        dt = (df["t"].iloc[1] - df["t"].iloc[0])*60*60         # tiime setp in seconds; converting from hours.
-        df["t_sec"] = np.linspace(0, (len(df)-1)*dt, len(df))
-        df["t_hr"] = df["t_sec"]/3600
+        # Unit conversions (ft to m) - TODO: verify if this is always needed
+        if "el" in df.columns:
+            df["el"] *= 0.3048
+        if "hs" in df.columns:
+            df["hs"] *= 0.3048
+
+        # Add time in seconds and hours
+        if "t" in df.columns:
+            # Assuming 't' is in hours based on original code's dt calculation
+            dt_sec = (df["t"].iloc[1] - df["t"].iloc[0]) * 3600 if len(df) > 1 else 0
+            df["t_sec"] = np.arange(len(df)) * dt_sec
+            df["t_hr"] = df["t_sec"] / 3600
+            
         return df
 
-    def read_grid(self):
+    def read_grid(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        reads the x, y, and z grids to three numpy matrices.
+        Reads the x, y, and z grids.
         """
-        # -- reading xgrid
-        model_dir = self.get_first_model_dir()
-        xgrid = os.path.join(model_dir, "x.grd")
-        with open(xgrid,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                xs = [float(i.strip()) for i in line.split()]
-                if cnt == 0:
-                    break
+        model_dir = Path(self.get_first_model_dir())
         
-        # -- reading ygrid
-        ys = []
-        ygrid = os.path.join(model_dir, "y.grd")
-        with open(ygrid,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                y_ = [float(i.strip()) for i in line.split()][0]
-                ys.append(y_)
+        x_fn = model_dir / "x.grd"
+        y_fn = model_dir / "y.grd"
+        z_fn = model_dir / "z.grd"
         
-        # -- reading zgrid
-        zgr = np.zeros((len(ys), len(xs)))
-        zgrid = os.path.join(model_dir, "z.grd")
-        with open(zgrid,'r') as f:
-            for cnt, line in enumerate(f.readlines()):
-                z_ = [float(i.strip()) for i in line.split()]
-                zgr[cnt,:] = z_
+        if not all(p.exists() for p in [x_fn, y_fn, z_fn]):
+            raise FileNotFoundError(f"One or more grid files missing in {model_dir}")
+
+        # x.grd and y.grd can be 1D or 2D. XBeach often uses 1D files for regular grids.
+        # Let's try to load them and handle the meshgrid creation.
         
-        # -- creating xgr, ygr mesh
-        xgr, ygr = np.meshgrid(xs, ys)
+        x_raw = np.loadtxt(x_fn)
+        y_raw = np.loadtxt(y_fn)
+        zgr = np.loadtxt(z_fn)
+        
+        if x_raw.ndim == 1 and y_raw.ndim == 1:
+            xgr, ygr = np.meshgrid(x_raw, y_raw)
+        else:
+            xgr, ygr = x_raw, y_raw
+            
         return xgr, ygr, zgr
 
-    def read_coast(self):
-        gdf = gpd.read_file(self.path_to_coast)
-        return gdf
+    def read_coast(self) -> gpd.GeoDataFrame:
+        """
+        Reads coastline geodataframe.
+        """
+        return gpd.read_file(self.path_to_coast)
 
-    def read_bldgs_geodataframe(self):
+    def read_bldgs_geodataframe(self) -> gpd.GeoDataFrame:
+        """
+        Reads building geodataframe and sets VDA_id as index.
+        """
         gdf = gpd.read_file(self.path_to_bldgs)
-        gdf.set_index("VDA_id", inplace=True)
+        if "VDA_id" in gdf.columns:
+            gdf.set_index("VDA_id", inplace=True)
         return gdf
 
-    def xy_to_grid_index(self, xgr, ygr, xy):
+    def xy_to_grid_index(self, xgr: np.ndarray, ygr: np.ndarray, xy: Tuple[float, float]) -> Tuple[int, int]:
         """
-        Returns the indicies in xgr, ygr that are nearest to the xy points. 
-        Useful for when the grid is not a 1 m resolution. 
-        For example, with 2 m resolution grid, and want xy points at (200, 100)
-        this function would return (100, 50).
-        Inputs: 
-            xgr: xgrid
-            ygr: ygrid
-            xy: tuple of x-y locations
-
-        Returns: 
-            (idx, idy): tuple of index for x and index for y
+        Returns the indices in xgr, ygr that are nearest to the xy points. 
+        Useful for when the grid is not at 1 m resolution. 
         """
-        idx = np.argmin(np.abs(xgr[0,:] - xy[0]))
-        idy = np.argmin(np.abs(ygr[:,0] - xy[1]))        
-        return (idx,idy)
+        idx = np.argmin(np.abs(xgr[0, :] - xy[0]))
+        idy = np.argmin(np.abs(ygr[:, 0] - xy[1]))        
+        return (int(idx), int(idy))
 
-    def tstartstop_to_tindex(self, tstart, tstop, time):
+    def tstartstop_to_tindex(self, tstart: float, tstop: float, time: np.ndarray) -> Tuple[int, int]:
         """ 
-        returns the indicies nearest to the provided start and stop times
+        Returns the indices nearest to the provided start and stop times (in hours).
         """
-        tstart_idx = np.argmin(np.abs(time-tstart*3600))
-        tstop_idx  = np.argmin(np.abs(time-tstop*3600))
-        return tstart_idx, tstop_idx
+        tstart_idx = np.argmin(np.abs(time - tstart * 3600))
+        tstop_idx  = np.argmin(np.abs(time - tstop * 3600))
+        return (int(tstart_idx), int(tstop_idx))
     
-    def time_to_tindex(self, time_wanted, time):
-        t_idx = np.argmin(np.abs(time-time_wanted))
-        return t_idx.item()
+    def time_to_tindex(self, time_wanted: float, time: np.ndarray) -> int:
+        """
+        Returns the index nearest to the provided time (in seconds).
+        """
+        t_idx = np.argmin(np.abs(time - time_wanted))
+        return int(t_idx)
 
-    def save_fig(self, fig, fn=None, **kwargs):
+    def save_fig(self, fig: plt.Figure, fn: Optional[str] = None, **kwargs: Any) -> None:
         """
-        Saves figures
-        Inputs:
-            fig: matplotlib figure. 
-            fn: filename; if None, no figure is created
-            **kwargs: keyword args to pass to matplotlib savefig function. 
+        Saves figures to the results directory.
         """
-        if fn != None:
-            fn = os.path.join(self.path_to_save_plot, fn)
-            plt.savefig(fn,
+        if fn is not None:
+            save_path = Path(self.path_to_save_plot) / fn
+            fig.savefig(save_path,
                         pad_inches=0.1,
                         bbox_inches='tight',
-                        **kwargs,
-                        # transparent=True, 
-                        # dpi=self.dpi,
-                        )
-            plt.close()
+                        **kwargs)
+            plt.close(fig)
 
-    def get_H(self, z, detrend=True):
+    def get_H(self, z: np.ndarray, detrend: bool = True) -> np.ndarray:
         """
         Returns an array of wave heights from a time series of water elevations.
         Wave height defined as peak to trough; must cross through zero.
-        inputs:
-            z: 1d array of water elevations
-            detrend: boolean to detrend the water elevation data
-        returns: 
-            wave_heights: 1-d array of wave heights
         """
         if detrend:
-            z = z - np.mean(z)  # de-trend signal with mean
+            z = z - np.mean(z)
         
-        # The sign of the (detrended) elevation at each point
         signs = np.sign(z)
-        # Find where the sign changes.
         zero_crossing_indices = np.where(np.diff(signs) != 0)[0]
-
         up_crossings = zero_crossing_indices[np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]]
-        # Ensure we have pairs of up-crossings to define full waves
+        
+        if len(up_crossings) < 2:
+            return np.array([])
+
         start_indices = up_crossings[:-1]
         end_indices = up_crossings[1:]
 
-        # Use a list comprehension to get max and min values for each segment
         crests = [np.max(z[start:end]) for start, end in zip(start_indices, end_indices)]
         troughs = [np.min(z[start:end]) for start, end in zip(start_indices, end_indices)]
 
-        # Convert to NumPy arrays for vectorized subtraction
-        wave_heights = np.array(crests) - np.array(troughs)
-        return wave_heights
+        return np.array(crests) - np.array(troughs)
 
-    def get_T(self, z, t, detrend=True):
+    def get_T(self, z: np.ndarray, t: np.ndarray, detrend: bool = True) -> np.ndarray:
         """
         Returns an array of periods from a time series of water elevations.
-        One wave is defined as up-crossing to up-crossing.
-        Period defined as time between up-crossings
-        inputs:
-            z: 1d array of water elevations
-            t: 1d array representing time
-            detrend: boolean to detrend the water elevation data
-        returns: 
-            T: 1-d array of wave periods
+        Period defined as time between up-crossings.
         """
         if detrend:
-            z = z - np.mean(z)  # de-trend signal with mean
+            z = z - np.mean(z)
         
-        # The sign of the (detrended) elevation at each point
         signs = np.sign(z)
-        # Find where the sign changes.
         zero_crossing_indices = np.where(np.diff(signs) != 0)[0]
-
         up_crossings = zero_crossing_indices[np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]]
-        t_ = t[up_crossings] # get time of upcrossings
-        T = np.diff(t_) # now get difference from each upcrossing time
-        return T
+        
+        if len(up_crossings) < 2:
+            return np.array([])
+            
+        t_ = t[up_crossings]
+        return np.diff(t_)
 
-    def assign_max_to_bldgs(self, data, bldgs):
+    def assign_max_to_bldgs(self, data: np.ndarray, bldgs: np.ma.MaskedArray) -> np.ndarray:
         """
-        assigns maximum value to buildings;
-        considers one cell to left, right, above, and below each building (b/c actual buildings don't have data)
-        takes max of above and assigns this to the building
-        inputs:
-            data: 2d array representing max across domain
-            bldgs: building array
-        returns:
-            max_bldg: 2d array with maximum at each building
+        Assigns maximum value to buildings;
+        considers one cell to left, right, above, and below each building.
         """
-        max_bldg = np.empty(np.shape(data))
-        max_bldg[:] = np.nan
+        max_bldg = np.full(data.shape, np.nan)
         mask = np.ma.getmask(bldgs)
         labeled_mask, num_features = ndi.label(~mask)
-        for i in range(num_features+1):
-            if i == 0:
-                continue
-            m_ = labeled_mask==i
-            m_ = ~m_
-            m_ = np.pad(m_, pad_width=1, mode="constant", constant_values=True)
+        
+        for i in range(1, num_features + 1):
+            m = labeled_mask == i
+            m_padded = np.pad(~m, pad_width=1, mode="constant", constant_values=True)
 
-            shifted_up = m_[2:, 1:-1]
-            shifted_down = m_[:-2, 1:-1]
-            shifted_left = m_[1:-1, 2:]
-            shifted_right = m_[1:-1, :-2]
-            original_mask_trimmed = m_[1:-1, 1:-1]
+            shifted_up = m_padded[2:, 1:-1]
+            shifted_down = m_padded[:-2, 1:-1]
+            shifted_left = m_padded[1:-1, 2:]
+            shifted_right = m_padded[1:-1, :-2]
+            original_mask_trimmed = m_padded[1:-1, 1:-1]
 
-            offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
-            offset_mask = ~offset_mask
-
-            max_bldg[labeled_mask==i] = np.nanmax(data[offset_mask])
+            offset_mask = ~(original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right)
+            max_bldg[m] = np.nanmax(data[offset_mask])
 
         return max_bldg
         
-    def compute_Hs(self, H):
+    def compute_Hs(self, H: np.ndarray) -> float:
         """
-        computes significant wave height from array of wave heights
+        Computes significant wave height (mean of highest 1/3) from array of wave heights.
         """
         if len(H) == 0:
-            return 0
+            return 0.0
         H_one_third = np.quantile(H, q=2/3)
-        H = H[H>H_one_third]
-        if len(H) == 0:
-            return 0
+        H_top = H[H >= H_one_third]
+        if len(H_top) == 0:
+            return 0.0
 
-        Hs = np.mean(H)
+        return float(np.mean(H_top))
 
-        return Hs.item()
-
-    def cartesian_to_nautical_angle(self, deg):
-        """ converting from cartesian to nautical angles for xbeach input
-        Cartesian: waves traveling TO east are zero and counterclockwise is positive.
-        Nautical: waves traveling FROM North are zero and clockwise is positive. 
+    def cartesian_to_nautical_angle(self, deg: float) -> float:
         """
-        if (deg>=0) & (deg <= 270):
-           return (270-deg)
-        elif (deg>270) & (deg<360):
-           return (270-deg)+360
+        Converting from cartesian to nautical angles.
+        Cartesian: 0 is East, positive CCW.
+        Nautical: 0 is North, positive CW.
+        """
+        if 0 <= deg <= 270:
+            return 270.0 - deg
+        elif 270 < deg < 360:
+            return (270.0 - deg) + 360.0
         else:
-            raise ValueError("{} must be between 0 and 360." .format(deg))
+            raise ValueError(f"{deg} must be between 0 and 360.")
 
-    def nautical_to_xbeach_angle(self, deg, alfa):
+    def nautical_to_xbeach_angle(self, deg: float, alfa: float) -> float:
         """
-        converting from nautical to xbeach angle.
-        Nautical: waves traveling FROM North are zero and clockwise is positive. 
-        XBeach: waves traveling towards shore are ___.
+        Converting from nautical to xbeach angle using shoreline orientation alfa.
         """
         deg = deg + alfa 
-        if deg > 360:
+        if deg >= 360:
             deg -= 360
         elif deg < 0:
             deg += 360
         return deg
 
-    def make_directory(self, path_out):
+    def make_directory(self, path_out: Union[str, Path]) -> str:
         """
-        make directory if it doesn't exist
+        Make directory if it doesn't exist.
         """
-        if not os.path.exists(path_out):
-            os.makedirs(path_out, exist_ok=True)
-        return path_out
+        p = Path(path_out)
+        p.mkdir(parents=True, exist_ok=True)
+        return str(p)
 
-    def var2label(self, var):
+    def var2label(self, var: str) -> Tuple[str, str, Any]:
+        """
+        Returns label, units, and color for a given variable.
+        """
         v2l = { "el":"Water Elevation",
                 "hs": "Sig. Wave Height",
                 "Tp": "Peak Period",
@@ -698,19 +654,20 @@ class HelperFuncs():
                 "current": "Current Velocity (m/s)",
                 "uu": "current x",
                 "vv": "current y",
-                
-
         }
         
-        c = {"el": 0, "hs": 1, "Tp": 2, "wavedir": 3, "zs": 4, "zs0": 5, "zs1": 6, "current": 7, "uu": 8, "vv": 9}
-        colors = sns.color_palette("crest", n_colors=len(c.keys()))
-        color = colors[c[var]]
+        keys = list(v2l.keys())
+        if var not in keys:
+            return var, var, "black"
+            
+        c_idx = keys.index(var)
+        colors = sns.color_palette("crest", n_colors=len(keys))
+        return v2l[var], v2y[var], colors[c_idx]
 
-        return v2l[var], v2y[var], color
-    
-
-
-    def xbeach_duration_to_start_stop(self, duration):
+    def xbeach_duration_to_start_stop(self, duration: float) -> Tuple[float, float]:
+        """
+        Maps simulation duration to recommended start/stop analysis times.
+        """
         duration_to_start_stop = {
                     0.5: {"start": 66.25, "stop":  66.75},
                     1:   {"start": 66,    "stop":  67},
@@ -723,131 +680,120 @@ class HelperFuncs():
                     10:  {"start": 61,    "stop":  71},
                     12:  {"start": 60,    "stop":  72},
                     16:  {"start": 58,    "stop":  74}
-                                }
+        }
+        if duration not in duration_to_start_stop:
+            return 0.0, 0.0 # Or some default
+            
         t_start = duration_to_start_stop[duration]["start"]
         t_stop = duration_to_start_stop[duration]["stop"]
         return t_start, t_stop
 
-    def remove_frame(self, ax):
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
+    def remove_frame(self, ax: plt.Axes) -> None:
+        """
+        Removes spines and ticks from an axis.
+        """
+        for spine in ax.spines.values():
+            spine.set_visible(False)
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
-    def check_domain_size_wave_stat(self, run1_max, run2_max):
+    def check_domain_size_wave_stat(self, run1_max: np.ndarray, run2_max: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Checks that the domain size of the two runs being compared is identical.
-        If they are not the same, then resize one to match the other. 
-        This is used when comparing two runs at different resolutions. 
+        Checks that the domain size of two runs is identical. Resizes if necessary.
         """
-        run1_shape = np.shape(run1_max)
-        run2_shape = np.shape(run2_max)
-
-        if run1_shape != run2_shape:
-            r1_to_r2 = np.divide(run1_shape,run2_shape)
-            r2_to_r1 = np.divide(run2_shape,run1_shape)
-            scale = np.maximum(r1_to_r2, r2_to_r1)
-
-            # if scale[0]!= scale[1]:
-            #     raise ValueError("need domains to be same proportion.")
-
-            if (scale == r1_to_r2).all():
-                temp = np.repeat(run2_max, scale[0], axis=0)
-                run2_max = np.repeat(temp, scale[0], axis=1)
-            elif (scale == r2_to_r1).all():
-                temp = np.repeat(run1_max, scale[0], axis=0)
-                run1_max = np.repeat(temp, scale[0], axis=1)
+        if run1_max.shape != run2_max.shape:
+            # Simple resizing logic from original code
+            r1_to_r2 = np.array(run1_max.shape) // np.array(run2_max.shape)
+            r2_to_r1 = np.array(run2_max.shape) // np.array(run1_max.shape)
+            
+            if np.all(r1_to_r2 > 0):
+                run2_max = np.repeat(np.repeat(run2_max, r1_to_r2[0], axis=0), r1_to_r2[1], axis=1)
+            elif np.all(r2_to_r1 > 0):
+                run1_max = np.repeat(np.repeat(run1_max, r2_to_r1[0], axis=0), r2_to_r1[1], axis=1)
 
         return run1_max, run2_max
 
-    def set_hotstart_runs(self):
-        hotstart_runs = [i for i in os.listdir(self.path_to_model) 
-                         if os.path.isdir(os.path.join(self.path_to_model, i)) 
-                         and i.startswith("hotstart_")]
+    def set_hotstart_runs(self) -> List[str]:
+        """
+        Finds all hotstart directories in the model path.
+        """
+        model_path = Path(self.path_to_model)
+        if not model_path.exists():
+            return []
+        hotstart_runs = [d.name for d in model_path.iterdir() 
+                         if d.is_dir() and d.name.startswith("hotstart_")]
         return sorted(hotstart_runs)
 
-    def rmse(self, predictions, targets):
-        return np.sqrt(((predictions - targets) ** 2).mean())
-    def mae(self, predictions, targets):
-        return np.mean(np.abs(predictions - targets))
+    def rmse(self, predictions: np.ndarray, targets: np.ndarray) -> float:
+        """
+        Calculates Root Mean Square Error.
+        """
+        return float(np.sqrt(((predictions - targets) ** 2).mean()))
 
-    def get_elevated_bldgs(self, bldgs_df):
-        if bldgs_df.index.name != "VDA_id":
-            bldgs_df.set_index("VDA_id", inplace=True)
+    def mae(self, predictions: np.ndarray, targets: np.ndarray) -> float:
+        """
+        Calculates Mean Absolute Error.
+        """
+        return float(np.mean(np.abs(predictions - targets)))
 
-        elevated = (bldgs_df["FFE_elev_status"] == "elevated") & (bldgs_df["FFE_foundation"]=="Piles/Columns")
-        elevated = pd.DataFrame(elevated, columns=["elevated"])        
-        bldgs_df = pd.merge(bldgs_df, elevated, left_index=True, right_index=True)
+    def get_elevated_bldgs(self, bldgs_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        Separates elevated from non-elevated buildings.
+        """
+        if bldgs_df.index.name != "VDA_id" and "VDA_id" in bldgs_df.columns:
+            bldgs_df = bldgs_df.set_index("VDA_id")
 
-        elevated_bldgs = bldgs_df.loc[bldgs_df["elevated"]==True]
-        not_elevated = bldgs_df.loc[bldgs_df["elevated"]==False]
+        elevated_mask = (bldgs_df["FFE_elev_status"] == "elevated") & (bldgs_df["FFE_foundation"] == "Piles/Columns")
+        elevated_bldgs = bldgs_df[elevated_mask].copy()
+        not_elevated = bldgs_df[~elevated_mask].copy()
+        
+        elevated_bldgs["elevated"] = True
+        not_elevated["elevated"] = False
+        
         return elevated_bldgs, not_elevated
 
-    def compute_velocity_mag(self, ue, ve, return_max=True):        
+    def compute_velocity_mag(self, ue: np.ndarray, ve: np.ndarray, return_max: bool = True) -> Union[float, np.ndarray]:        
+        """
+        Computes velocity magnitude from x and y components.
+        """
         mag = np.sqrt(np.square(ue) + np.square(ve))
         if np.all(np.isnan(mag)):
             return np.nan
         elif return_max:
-            return np.nanmax(mag).item()
+            return float(np.nanmax(mag))
         else:
             return mag
 
-    def compute_velocity_dir(self, ue, ve):
+    def compute_velocity_dir(self, ue: np.ndarray, ve: np.ndarray) -> float:
+        """
+        Computes velocity direction at the time of maximum magnitude.
+        """
         mag = np.sqrt(np.square(ue) + np.square(ve))
         if np.all(np.isnan(mag)):
             return np.nan
-        max_idx = np.nanargmax(np.sqrt(np.square(ue) + np.square(ve))).item()
-        ue, ve = ue[max_idx], ve[max_idx]
-        return self.compute_angle(ue, ve)
+        max_idx = np.nanargmax(mag)
+        return float(self.compute_angle(ue[max_idx], ve[max_idx]))
 
-    def compute_angle(self, x_vec, y_vec):
+    def compute_angle(self, x_vec: Union[float, np.ndarray], y_vec: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
         """
-        Calculates the angle of a 2D vector from the x-axis in a counter-clockwise direction
-        and returns it in the range [0, 360) degrees.
+        Calculates the angle [0, 360) of a 2D vector.
         """
         angles_rad = np.arctan2(y_vec, x_vec)
         angles_deg = np.degrees(angles_rad)
-        # Convert negative angles to the [0, 360) range
-        if angles_deg < 0:
-            angles_deg += 360
-        # angles_deg[angles_deg < 0] += 360
-        return angles_deg
+        return np.where(angles_deg < 0, angles_deg + 360, angles_deg).item() if np.isscalar(angles_deg) else np.where(angles_deg < 0, angles_deg + 360, angles_deg)
 
-    def calculate_running_avg(self, time_sec, values, window_sec, new_step_sec=None):
+    def calculate_running_avg(self, time_sec: np.ndarray, values: np.ndarray, window_sec: float, new_step_sec: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Calculates a running average of time series data and optionally 
-        resamples the output to a new time increment.
-        
-        Parameters:
-        time_sec: array-like of time steps in seconds
-        values: array-like of your data values
-        window_sec: the size of the running average window in seconds
-        new_step_sec: (optional) the new time increment for the output in seconds
+        Calculates a running average and optionally resamples.
         """
-        
-        # 1. Convert to a Pandas Series with a Timedelta index
-        # This makes time-based math incredibly easy and robust
         time_index = pd.to_timedelta(time_sec, unit='s')
         ts = pd.Series(values, index=time_index)
-
-        # 2. Calculate the rolling average
-        # min_periods=1 ensures you get data at the very beginning of the array 
-        # instead of NaNs while the window "fills up"
         rolling_avg = ts.rolling(window=f'{window_sec}s', min_periods=1).mean()
 
-        # 3. Resample to a new time increment if requested
         if new_step_sec is not None:
-            # .nearest() grabs the closest rolling average value to the new time step
-            # You could also use .mean() here if you want to average the averages!
             rolling_avg = rolling_avg.resample(f'{new_step_sec}s').nearest()
 
-        # 4. Convert back to standard numpy arrays
-        new_times = rolling_avg.index.total_seconds().to_numpy()
-        new_values = rolling_avg.to_numpy()
-
-        return new_times, new_values
+        return rolling_avg.index.total_seconds().to_numpy(), rolling_avg.to_numpy()
 
 if __name__ == '__main__':
     hf = HelperFuncs()

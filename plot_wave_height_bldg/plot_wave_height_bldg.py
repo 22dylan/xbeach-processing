@@ -80,7 +80,7 @@ class PlotWaveHeightBldg(HelperFuncs):
         bldgs = pd.merge(bldgs["geometry"], stats,  left_index=True, right_index=True)
 
 
-        fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
+        fn = os.path.join(self.path_to_save_plot, "removed_bldgs_all.csv")
         if (os.path.exists(fn)==False):
             sws = SaveWaveStats()
             sws.save_forces_at_bldg_to_csv()

@@ -141,13 +141,13 @@ if __name__ == "__main__":
     #                              fulldomain=False,
     #                              savefig=True
                                  # )
-    # pot.video_transect(var="zs1", 
-    #                   y_trans=400,
-    #                   t_start=1,
-    #                   t_stop=1.01,
-    #                   h_plus_zs=False,
-    #                   dpi=100,
-    #                   )
+#     pot.video_transect(var="zs1", 
+#                       y_trans=400,
+#                       t_start=1,
+#                       t_stop=1.01,
+#                       h_plus_zs=False,
+#                       dpi=100,
+#                       )
 
     
     # # -- plot wave height domain
@@ -203,20 +203,20 @@ if __name__ == "__main__":
 
     # -- PlotBldgDmg
     # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="micro", 
-    #         bldgs="elevated",       # "non-elevated", "elevated", "all"
+    # pbd.plot(domain_size="estero", 
+    #         bldgs="all",       # "non-elevated", "elevated", "all"
     #         remove_DSs=["DS6"], 
-    #         fname="bldg_dmg_binary_elevated"
+    #         fname="bldg_dmg_binary_all"
     #         )
     
     # # # -- PlotViolinDmg
-    # cdws = CompareDSwStats()
+    cdws = CompareDSwStats()
     # cdws.plot_confusion(damaged_DSs=["DS6"], 
     #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": True},
     #                     # fname="confusion-count-elevated-update-no1974",
     #                     )
-    # cdws.explore_confusion(damaged_DSs=["DS6"])
+    cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # -- PlotRemoveBldgs
     # prb = PlotRemovedBldgs()
@@ -269,9 +269,9 @@ if __name__ == "__main__":
 
 
 
-    # ##########################################################################
-    # -- routines for processing runs to check number of removed buildings ---
-    # # -- save stats at bldgs
+    # # ##########################################################################
+    # # -- routines for processing runs to check number of removed buildings ---
+    # # # -- save stats at bldgs
     # sws = SaveWaveStats()
     # sws.save_max_stats()                # save max stats across hotstart runs; saved to .dat file.
     # sws.assign_to_bldgs_hotstart(max_stats_saved=True)      # save wave stats at buildings in csv form. used for hotstart runs

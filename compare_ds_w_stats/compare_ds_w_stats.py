@@ -133,20 +133,18 @@ class CompareDSwStats(HelperFuncs):
         plt.show()
         
     def explore_confusion(self, damaged_DSs=["DS5", "DS6"]):
-
-        fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
+        fn = os.path.join(self.path_to_save_plot, "removed_bldgs_all.csv")
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach = df_xbeach.loc[df_xbeach["remove"]!=-9999]    # remove buildings outside domain
         df_xbeach.set_index("VDA_id", inplace=True)         # set index
         df_xbeach = df_xbeach.loc[df_xbeach["elevated"]==False] # get non-elevated buildings
-
+        
         df_dmg = pd.read_csv(self.path_to_dmg)              # read observations from VDA
-
         df_dmg.set_index("VDA_id", inplace=True)            # set index
         df_dmg["removed_vda"] = 0
         df_dmg.loc[df_dmg["VDA_DS_overall"].isin(damaged_DSs), "removed_vda"] = 1
-        # df_xbeach = pd.merge(df_xbeach, df_dmg, left_index=)
-
+        df_dmg = pd.merge(df_dmg, df_xbeach, left_index=True, right_index=True, how="right")
+        df_dmg = df_dmg[~df_dmg.index.duplicated(keep='first')]
         
         df_dmg['TA_ActYearBuilt_pre1974'] = False
         df_dmg.loc[df_dmg["TA_ActYearBuilt"]<=1974, "TA_ActYearBuilt_pre1974"] = True
@@ -154,8 +152,13 @@ class CompareDSwStats(HelperFuncs):
         df_dmg = df_dmg.loc[df_dmg["TA_ShapeSTArea_Sqft"]<4000]
         df_dmg = df_dmg.loc[df_dmg["TA_BldgUseTyp"] != "mobile home"]
 
-        # ---
+        fn = os.path.join(self.path_to_save_plot, "stats_at_bldgs.csv")
+        stats_at_bldgs = pd.read_csv(fn)
+        stats_at_bldgs.set_index("VDA_id", inplace=True)
+        stats_at_bldgs = stats_at_bldgs[~stats_at_bldgs.index.duplicated(keep='first')]
+        df_dmg = pd.merge(df_dmg, stats_at_bldgs, left_index=True, right_index=True, how="left")
 
+        # ---
         """ each column with observations for:
             [ALL]: all buildings vs. standing / not standing
             [MICRO]: false predictions in xbeach vs. observations.
@@ -169,11 +172,14 @@ class CompareDSwStats(HelperFuncs):
         # col = "FEC_Building_Use"      # [ALL] -                            | [MICRO] - 
         # col = "FFE_bldg_diagram"      # [ALL] "8" results in destroyed     | [MICRO] 1a (slab on grade) result in destroyed buildings
         # col = "TA_ShapeSTArea_Sqft"
-        col = "horizontal_impulse"
-        df_dmg = pd.merge(df_xbeach, df_dmg[["removed_vda", "TA_ShapeSTArea_Sqft", "TA_ActYearBuilt"]], left_index=True, right_index=True)
-        df_dmg = df_dmg.dropna(subset=[col])
+        col = "max_stat_cumulative_horizontal_impulse"
+
+        # df_dmg = pd.merge(df_xbeach, df_dmg[["removed_vda", "TA_ShapeSTArea_Sqft", "TA_ActYearBuilt"]], left_index=True, right_index=True)
+
+        # df_dmg = df_dmg.dropna(subset=[col])
 
         # -- four subplots; one for each corner of confusion matrix
+
         df_true_standing = df_dmg.loc[(df_dmg["remove"]==0) & (df_dmg["removed_vda"]==0)].index.to_list()
         df_true_destroyd = df_dmg.loc[(df_dmg["remove"]==1) & (df_dmg["removed_vda"]==1)].index.to_list()
         df_false_standing = df_dmg.loc[(df_dmg["remove"]==0) & (df_dmg["removed_vda"]==1)].index.to_list()
@@ -184,9 +190,6 @@ class CompareDSwStats(HelperFuncs):
         df_false_standing = df_dmg.loc[df_false_standing]
         df_false_destroyd = df_dmg.loc[df_false_destroyd]
 
-        print(len(df_false_destroyd.loc[df_false_destroyd[col]<15]))
-        print(len(df_true_destroyd.loc[df_true_destroyd[col]<15]))
-        
         fig2, ax = plt.subplots(2,2, figsize=(8,6))
         df_true_standing[col].hist(ax=ax[0,0], grid=False, bins=20)
         df_false_destroyd[col].hist(ax=ax[0,1], grid=False, bins=20)
@@ -211,10 +214,10 @@ class CompareDSwStats(HelperFuncs):
         """
         plots confusion matrix
         """
-        fn = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
+        fn = os.path.join(self.path_to_save_plot, "removed_bldgs_all.csv")
         if (os.path.exists(fn)==False) or (elevated_kwds["compute_removed_elevated"]==True):
             sws = SaveWaveStats()
-            sws.save_forces_at_bldg_to_csv()
+            sws.save_removed_bldgs()
 
         df_xbeach = pd.read_csv(fn)                         # read csv
         df_xbeach.set_index("VDA_id", inplace=True)         # set index

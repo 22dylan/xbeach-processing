@@ -25,38 +25,33 @@ class SaveWaveStats(HelperFuncs):
         self.rho = 1025     # density of salt (kg/m^3)
         self.g = 9.81       # gravity (m/s^2)
 
-    def save_forces_at_bldg_to_csv(self, fname="forces_at_bldgs.csv"):
+    def save_removed_bldgs(self, fname="removed_bldgs_all.csv"):
         self.save_removed_non_elevated_bldgs()
         self.save_removed_elevated_bldgs()
         self.merge_remove_bldgs(fname)
 
-    def save_removed_bldgs(self):
-        bldgs = self.read_removed_bldgs()
-        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
-        np.savetxt(fn_out, bldgs)
-
     def save_removed_non_elevated_bldgs(self):
-        self.save_removed_bldgs()        # reading buildings that were removed; saving to .dat file.
+        self.copy_removed_bldgs()        # reading buildings that were removed; saving to .dat file.
         self.geolocate("removed_bldgs")  # converting .dat file to .tiff
-        self.copy_cumulative_horizontal_impulse()    # saving horizontal impulse to .dat file
-        self.geolocate("stat_cumulative_horizontal_impulse") # converting .dat file to .tiff
-        self.assign_to_bldgs(stats=["removed_bldgs", "stat_cumulative_horizontal_impulse"],  # assigning
-                        col_names=["removed_bldgs_non_elevated", "horizontal_impulse"],
+        self.assign_to_bldgs(stats=["removed_bldgs"],
+                        col_names=["removed_bldgs_non_elevated"],
                         runs=None,
                         fname="removed_non_elevated_bldgs.csv",
                         )
+        fn_removed_bldgs_dat = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
+        fn_removed_bldgs_tiff = os.path.join(self.path_to_save_plot, "removed_bldgs.tiff")
+        os.remove(fn_removed_bldgs_dat)
+        os.remove(fn_removed_bldgs_tiff)
 
     def save_removed_elevated_bldgs(self):
-        self.copy_cumulative_uplift_impulse()
-        self.geolocate("stat_cumulative_uplift_impulse")
-        self.assign_to_bldgs(stats=["stat_cumulative_uplift_impulse"],
-                col_names=["uplift_impulse"],
-                fname="temp.csv",
-                )
-        df = pd.read_csv(os.path.join(self.path_to_save_plot, "temp.csv"))
+        # df = pd.read_csv(os.path.join(self.path_to_save_plot, "stats_at_bldgs.csv"))
         pufe = ProcessUpliftForcesElevated()
-        pufe.process(df)
-        os.remove(os.path.join(self.path_to_save_plot, "temp.csv"))
+        pufe.process()
+
+    def copy_removed_bldgs(self):
+        bldgs = self.read_removed_bldgs()
+        fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
+        np.savetxt(fn_out, bldgs)
 
     def copy_cumulative_horizontal_impulse(self):
         hsruns = self.set_hotstart_runs()
@@ -400,14 +395,14 @@ class SaveWaveStats(HelperFuncs):
         df_nelev = df_nelev.loc[df_nelev["elevated"]==False]
         df_nelev.set_index("VDA_id", inplace=True)
         df_nelev["remove"] = df_nelev["removed_bldgs_non_elevated"].astype(bool)
-        df_nelev = df_nelev[["elevated", "remove", "horizontal_impulse"]]
+        df_nelev = df_nelev[["elevated", "remove"]]
 
         fn_elev  = os.path.join(self.path_to_save_plot, "removed_elevated_bldgs.csv")
         df_elev = pd.read_csv(fn_elev)
         df_elev.set_index("VDA_id", inplace=True)
 
         df_elev["remove"] = df_elev["remove_elevated"]
-        df_elev = df_elev[["elevated", "remove", "uplift_impulse"]]
+        df_elev = df_elev[["elevated", "remove"]]
 
         df_bldgs = pd.concat([df_nelev,df_elev],ignore_index=False)
         

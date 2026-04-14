@@ -28,7 +28,7 @@ class PlotStatsVDCoast(HelperFuncs):
         bldgs['dcoast'] = bldgs.geometry.distance(coast)
 
         # -- read removed bldg stats:
-        stats2 = os.path.join(self.path_to_save_plot, "forces_at_bldgs.csv")
+        stats2 = os.path.join(self.path_to_save_plot, "removed_bldgs_all.csv")
         stats2 = pd.read_csv(stats2)
         stats2.set_index("VDA_id", inplace=True)
 

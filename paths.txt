@@ -1,8 +1,6 @@
 relative_path     = True
-path_to_model     = ../hotstart/hotstart38-estero
-path_to_save_plot = ../processed-results/hotstart38-estero
-
-
+path_to_model     = ../hotstart/hotstart41-estero
+path_to_save_plot = ../processed-results/hotstart41-estero
 
 path_to_bldgs     = ../data/buildings/amini-bldgs-estero-drs.geojson
 
