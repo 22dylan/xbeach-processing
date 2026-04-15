@@ -1,5 +1,5 @@
 import os
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt # type: ignore
 from helpers.helpers import HelperFuncs
 
 from make_animation.make_animation import MakeAnimation
@@ -26,6 +26,8 @@ from extract_stats_point.extract_stats_point import ExtractStatsPoint
 
 from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
+
+from scratch.scratch import Scratch
 
 if __name__ == "__main__":
     # -- save wave stats
