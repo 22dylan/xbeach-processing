@@ -400,7 +400,7 @@ class HelperFuncs():
             for i in range(n_header):
                 line = f.readline()
                 if "VARIABLES" in line:
-                    var_names = [v.strip() for v in line.split('=')[-1].split()]
+                    var_names = [v.strip().split(",")[0] for v in line.split('=')[-1].split()]
 
         # If var_names not found in header, use defaults
         if not var_names:
@@ -787,6 +787,7 @@ class HelperFuncs():
         Calculates a running average and optionally resamples.
         """
         time_index = pd.to_timedelta(time_sec, unit='s')
+
         ts = pd.Series(values, index=time_index)
         rolling_avg = ts.rolling(window=f'{window_sec}s', min_periods=1).mean()
 

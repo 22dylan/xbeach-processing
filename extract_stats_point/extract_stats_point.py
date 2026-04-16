@@ -95,9 +95,15 @@ class ExtractStatsPoint(HelperFuncs):
                 alpha=0.9
                 )
             for xy in xys:
+                if "p" in pt_names[cnt]:
+                    x_offset = 0
+                    y_offset = -40
+                else:
+                    x_offset = 10
+                    y_offset = 10
                 x,y = xy[0], xy[1]
                 ax.scatter(x, y, color='tomato',s=20, zorder=1)
-                ax.annotate("{}" .format(pt_names[cnt]), (x+10, y+10), fontsize=7, bbox=box_style, zorder=2)
+                ax.annotate("{}" .format(pt_names[cnt]), (x+x_offset, y+y_offset), fontsize=7, bbox=box_style, zorder=2)
                 cnt += 1
 
             if savefig:
