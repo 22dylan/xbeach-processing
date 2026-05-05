@@ -30,6 +30,7 @@ if __name__ == "__main__":
     # s = Scratch()
     # s.run()
 
+
     # -- save wave stats
     # sws = SaveWaveStats()
     # # # sws.save_forces_at_bldg_to_csv()
@@ -80,7 +81,7 @@ if __name__ == "__main__":
 
     # # -- plot forcing
     # pf = PlotForcing()
-    # pf.plot(var="el", savepoint=1, figsize=(6,3), duration=7)# fname="hs-8hr")
+    # pf.plot(var="el", savepoint=1, figsize=(6,3), duration=16)# fname="hs-8hr")
 
     # pf.plot(var="hs", savepoint=3, duration=2)
     # pf.plot(var="hs", savepoint=5, duration=2)
@@ -306,25 +307,24 @@ if __name__ == "__main__":
     #         var="current",
 
     #         xys=[
-    #         [350, 200], [490, 270], [630, 340], [770, 410], [910, 480],
+    #         [350, 200], [490, 270], [630, 340], [770, 410],
+    #         [490, 240], [630, 310], [790, 400],
     #         [350, 524], [490, 524], [630, 524], [770, 524], [910, 524],
-    #         [350, 800], [490, 800], [630, 800], [770, 800], [910, 800]],
-    #         # pt_names = [
-    #         #     "t1-p1", "t1-p2", "t1-p3", "t1-p4", "t1-p5",
-    #         #     "t2-p1", "t2-p2", "t2-p3", "t2-p4", "t2-p5",
-    #         #     "t3-p1", "t3-p2", "t3-p3", "t3-p4", "t3-p5",
-    #         # ],
+    #         [500, 500], [614, 500], [770, 510],
+    #         ],
+
     #         pt_names = [
-    #             "a1", "a2", "a3", "a4", "a5",
+    #             "a1", "a2", "a3", "a4", 
+    #             "a2p", "a3p", "a4p",
     #             "b1", "b2", "b3", "b4", "b5",
-    #             "c1", "c2", "c3", "c4", "c5",
+    #             "b2p", "b3p", "b4p",
     #         ],
     #         moving_avg=True,
     #         window_sec=7200,
     #         new_sec_step=7200,
-    #         drawdomain=False,
+    #         drawdomain=True,
     #         domain_size="micro",
-    #         savefig=False
+    #         savefig=True
     #         )
 
     plt.show()
