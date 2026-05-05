@@ -511,6 +511,7 @@ class HelperFuncs():
         """
         Saves figures to the results directory.
         """
+        # 
         if fn is not None:
             save_path = Path(self.path_to_save_plot) / fn
             fig.savefig(save_path,
@@ -560,10 +561,11 @@ class HelperFuncs():
         t_ = t[up_crossings]
         return np.diff(t_)
 
-    def assign_max_to_bldgs(self, data: np.ndarray, bldgs: np.ma.MaskedArray) -> np.ndarray:
+    def assign_max_to_bldgs(self, data: np.ndarray, bldgs: np.ma.MaskedArray, second_max: bool = False) -> np.ndarray:
         """
         Assigns maximum value to buildings;
         considers one cell to left, right, above, and below each building.
+        second_max defines whether to take the maximum cell at the building perimeter or second max. 
         """
         max_bldg = np.full(data.shape, np.nan)
         mask = np.ma.getmask(bldgs)
@@ -580,7 +582,12 @@ class HelperFuncs():
             original_mask_trimmed = m_padded[1:-1, 1:-1]
 
             offset_mask = ~(original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right)
-            max_bldg[m] = np.nanmax(data[offset_mask])
+            
+            # -- new
+            if second_max:
+                max_bldg[m] = np.partition(data[offset_mask], -2)[-2]
+            else:
+                max_bldg[m] = np.nanmax(data[offset_mask])
 
         return max_bldg
         
@@ -794,6 +801,8 @@ class HelperFuncs():
             rolling_avg = rolling_avg.resample(f'{new_step_sec}s').nearest()
 
         return rolling_avg.index.total_seconds().to_numpy(), rolling_avg.to_numpy()
+
+
 
 if __name__ == '__main__':
     hf = HelperFuncs()

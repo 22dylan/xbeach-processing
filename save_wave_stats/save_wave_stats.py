@@ -384,7 +384,10 @@ class SaveWaveStats(HelperFuncs):
 
 
         bldgs = self.read_buildings()
-        data_bldg = self.assign_max_to_bldgs(data, bldgs)
+        second_max = False
+        if ("Hs" in stat) or ("Hmax" in stat):
+            second_max=True
+        data_bldg = self.assign_max_to_bldgs(data, bldgs, second_max=second_max)
         data = np.fmax(data, data_bldg)
         self.create_rotated_raster(data, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
                                    theta=theta, output_filepath=fn_out, verbose=verbose)

@@ -1,11 +1,14 @@
 import os
-import matplotlib.pyplot as plt # type: ignore
-from helpers.helpers import HelperFuncs
 
-from make_animation.make_animation import MakeAnimation
-from hotstart_make_animation.hotstart_make_animation import HotstartMakeAnimation
+import matplotlib.pyplot as plt  # type: ignore
 
+from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from compare_forcing_output.compare_forcing_output import CompareForcingOutput
+from extract_stats_point.extract_stats_point import ExtractStatsPoint
+from helpers.helpers import HelperFuncs
+from hotstart_make_animation.hotstart_make_animation import HotstartMakeAnimation
+from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
+from make_animation.make_animation import MakeAnimation
 from plot_bldg_dmg.plot_bldg_dmg import PlotBldgDmg
 from plot_current_quiver.plot_current_quiver import PlotCurrentQuiver
 from plot_forcing.plot_forcing import PlotForcing
@@ -13,37 +16,32 @@ from plot_grid.plot_grid import PlotGrid
 from plot_high_water_marks.plot_high_water_marks import PlotHighWaterMarks
 from plot_output_point.plot_output_point import PlotOutputPoint
 from plot_output_transect.plot_output_transect import PlotOutputTransect
-from save_wave_stats.save_wave_stats import SaveWaveStats
-from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
-from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
-from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
-from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
-from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
-from plot_wave_heights.plot_wave_heights import PlotWaveHeights
 from plot_stats_v_dcoast.plot_stats_v_dcoast import PlotStatsVDCoast
-
-from extract_stats_point.extract_stats_point import ExtractStatsPoint
-
-from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
-from hotstart_removed_bldgs.hotstart_removed_bldgs import PlotRemovedBldgs
-
+from plot_wave_height_bldg.plot_wave_height_bldg import PlotWaveHeightBldg
+from plot_wave_height_domain.plot_wave_height_domain import PlotWaveHeightDomain
+from plot_wave_height_error.plot_wave_height_error import PlotWaveHeightError
+from plot_wave_height_hist.plot_wave_height_hist import PlotWaveHeightHist
+from plot_wave_height_scatter.plot_wave_height_scatter import PlotWaveHeightScatter
+from plot_wave_heights.plot_wave_heights import PlotWaveHeights
+from save_wave_stats.save_wave_stats import SaveWaveStats
 from scratch.scratch import Scratch
 
 if __name__ == "__main__":
+    # s = Scratch()
+    # s.run()
+
     # -- save wave stats
     # sws = SaveWaveStats()
-    # # # # sws.geolocate("stat_cumulative_horizontal_impulse")
     # # # sws.save_forces_at_bldg_to_csv()
     # sws.save_max_stats()
-    
+
     # # -- save wave stats at buildings in csv form. used for hotstart runs
     # sws.assign_to_bldgs_hotstart(fname="stats_at_bldgs.csv")
-    
 
     # -- animation plots
     # ma = MakeAnimation(
     #             var              = "zs",                        # variable to plot (H=wave height; zs=water level)
-    #             tstart           = 179/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+    #             tstart           = 179/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time
     #             tstop            = 181/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
     #             domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
     #             xbeach_duration  = 0.5,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
@@ -58,12 +56,10 @@ if __name__ == "__main__":
     # ma.make_animation(parallel=True, num_proc=1)
     # ma.plot_frame(t_hr=3600/3600)
 
-
-
     # -- animation for hotsttart runs
     # mah = HotstartMakeAnimation(
     #             var              = "zs",                        # variable to plot (H=wave height; zs=water level)
-    #             tstart           = 14/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time 
+    #             tstart           = 14/60,                           # start time for animation in hours; None starts at begining of simulation; in XBeach time
     #             tstop            = 16/60,                        # end time for animation in hours; None ends at last time step in xboutput.nc; in XBeach time
     #             domain_size      = "micro",                     # either "estero" or "micro" for full estero island runs or very small grid respectively
     #             xbeach_duration  = 8,                         # xbeach simulation duration; used to map water elevation forcing plot to XBeach time step.
@@ -77,7 +73,6 @@ if __name__ == "__main__":
     #             )
     # mah.make_animation_hotstart()
     # mah.plot_frame(t_hr=0.4)
-
 
     # # -- compare forcing to output
     # cfo = CompareForcingOutput(var="zs", xb_locs=[5], domain="micro")
@@ -101,32 +96,31 @@ if __name__ == "__main__":
     # # -- plot output point
     # pop = PlotOutputPoint()
     # pop.plot_timeseries(var="zs",
-    #         xys=[[200,400]], 
+    #         xys=[[200,400]],
     #         x_units="sec",
     #         drawdomain=False,
-    #         fulldomain=False, 
+    #         fulldomain=False,
     #         savefig=True
     #         )
     # pop.plot_timeseries(var="vv",
-    #         xys=[[200,400]], 
+    #         xys=[[200,400]],
     #         drawdomain=False,
-    #         fulldomain=False, 
+    #         fulldomain=False,
     #         savefig=True
     #         )
     # pop.plot_timeseries(var="uu",
-    #         xys=[[200,400]], 
+    #         xys=[[200,400]],
     #         drawdomain=False,
-    #         fulldomain=False, 
+    #         fulldomain=False,
     #         savefig=True
     #         )
     # pop.plot_Hs(var="zs",
-    #         xys=[[200,400]], 
+    #         xys=[[200,400]],
     #         chunk_size_min=15,
     #         drawdomain=False,
-    #         fulldomain=False, 
+    #         fulldomain=False,
     #         savefig=True
     #         )
-
 
     # # -- plot transect
     # pot = PlotOutputTransect()
@@ -138,19 +132,18 @@ if __name__ == "__main__":
     # pot.plot_water_level_transect(var="zs1", y_trans=400,
     #                              ts=[1],
     #                              h_plus_zs=False,
-    #                              drawdomain=True, 
+    #                              drawdomain=True,
     #                              fulldomain=False,
     #                              savefig=True
-                                 # )
-#     pot.video_transect(var="zs1", 
-#                       y_trans=400,
-#                       t_start=1,
-#                       t_stop=1.01,
-#                       h_plus_zs=False,
-#                       dpi=100,
-#                       )
+    # )
+    #     pot.video_transect(var="zs1",
+    #                       y_trans=400,
+    #                       t_start=1,
+    #                       t_stop=1.01,
+    #                       h_plus_zs=False,
+    #                       dpi=100,
+    #                       )
 
-    
     # # -- plot wave height domain
     # pwhd = PlotWaveHeightDomain()
     # pwhd.plot(stat="max_stat_water_elev_out",
@@ -168,14 +161,14 @@ if __name__ == "__main__":
     #         domain_size="estero",
     #         vmax=0.5,
     #         # fname="Hs-diff-windnowind"
-            # )
+    # )
 
     # # -- plot wave height building
     # pwhb = PlotWaveHeightBldg()
-    # pwhb.plot_geopandas(stat="stat_cumulative_horizontal_impulse", 
+    # pwhb.plot_geopandas(stat="stat_cumulative_horizontal_impulse",
     #     which_bldgs="non-elevated",
-    #     vmin=0, 
-    #     vmax=10, 
+    #     vmin=0,
+    #     vmax=10,
     #     domain_size="micro",
     #     cmap="viridis",
     #     fname="wave_impulse.png"
@@ -184,8 +177,8 @@ if __name__ == "__main__":
     #         model_runname_w_bldgs=None,
     #         vmin=0,
     #         vmax=30,
-    #         domain_size="micro", 
-    #         grey_background=True, 
+    #         domain_size="micro",
+    #         grey_background=True,
     #         # fname="impulse-bldg.png"
     #         )
 
@@ -201,23 +194,22 @@ if __name__ == "__main__":
     # pwhw = PlotWaveHeightHist()
     # pwhw.plot(stat="Hs", runs=["run42"], labels=["run40", "run41"]) #, fname="hist")
 
-
     # -- PlotBldgDmg
     # pbd = PlotBldgDmg()
-    # pbd.plot(domain_size="estero", 
+    # pbd.plot(domain_size="estero",
     #         bldgs="all",       # "non-elevated", "elevated", "all"
-    #         remove_DSs=["DS6"], 
+    #         remove_DSs=["DS6"],
     #         fname="bldg_dmg_binary_all"
     #         )
-    
+
     # # # -- PlotViolinDmg
-    cdws = CompareDSwStats()
-    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    # cdws = CompareDSwStats()
+    # cdws.plot_confusion(damaged_DSs=["DS6"],
     #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": True},
     #                     # fname="confusion-count-elevated-update-no1974",
     #                     )
-    cdws.explore_confusion(damaged_DSs=["DS6"])
+    # cdws.explore_confusion(damaged_DSs=["DS6"])
 
     # -- PlotRemoveBldgs
     # prb = PlotRemovedBldgs()
@@ -227,15 +219,14 @@ if __name__ == "__main__":
     #                    fname="removed-bldgs-geopandas-elevated"
     #                    )
     # prb.plot(
-    #          grey_background=False, 
+    #          grey_background=False,
     #          domain_size="micro",
-             # fname="removed-bldgs-w-elevated"
-             # )
+    # fname="removed-bldgs-w-elevated"
+    # )
 
     # -- PlotCurrentQuiver
     # pcq = PlotCurrentQuiver()
     # pcq.plot()
-    
 
     # -- Plot Stats vs. Dist to Coast
     # PSVD = PlotStatsVDCoast()
@@ -243,58 +234,45 @@ if __name__ == "__main__":
     #     stats_plot=
     #         [
     #         "stat_uplift_impulse",
-    #         "stat_cumulative_uplift_impulse", 
-    #         "stat_horizontal_impulse", 
-    #         "stat_cumulative_horizontal_impulse", 
-    #         "stat_max_zs", 
-    #         "stat_water_elev_out", 
-    #         "stat_Hs", 
+    #         "stat_cumulative_uplift_impulse",
+    #         "stat_horizontal_impulse",
+    #         "stat_cumulative_horizontal_impulse",
+    #         "stat_max_zs",
+    #         "stat_water_elev_out",
+    #         "stat_Hs",
     #         "stat_Hmax"
-    #         ], 
+    #         ],
     #     which_bldgs="non-elevated",
     #     # fname="stats-at-elev-bldgs.png"
     #     )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # # ##########################################################################
-    # # -- routines for processing runs to check number of removed buildings ---
-    # # # -- save stats at bldgs
-    # sws = SaveWaveStats()
-    # sws.save_max_stats()                # save max stats across hotstart runs; saved to .dat file.
-    # sws.assign_to_bldgs_hotstart(max_stats_saved=True)      # save wave stats at buildings in csv form. used for hotstart runs
-    
-    # # -- confusion matrices
+    # -- routines for processing runs to check number of removed buildings ---
+    # # -- save stats at bldgs
+    sws = SaveWaveStats()
+    sws.save_max_stats()  # save max stats across hotstart runs; saved to .dat file.
+    sws.assign_to_bldgs_hotstart(
+        max_stats_saved=True
+    )  # save wave stats at buildings in csv form. used for hotstart runs
+    # sws.save_removed_bldgs()
+
+    # -- confusion matrices
     # cdws = CompareDSwStats()
-    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    # cdws.plot_confusion(damaged_DSs=["DS6"],
     #                     bldgs="all",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": True},
     #                     fname="confusion-all",
     #                     )
-    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    # cdws.plot_confusion(damaged_DSs=["DS6"],
     #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": False},
     #                     fname="confusion-elevated",
     #                     )
-    # cdws.plot_confusion(damaged_DSs=["DS6"], 
+    # cdws.plot_confusion(damaged_DSs=["DS6"],
     #                     bldgs="non-elevated",       # "non-elevated", "elevated", "all"
     #                     elevated_kwds={"compute_removed_elevated": False},
     #                     fname="confusion-non-elevated",
     #                     )
-
 
     # # -- spatial results
     # prb = PlotRemovedBldgs()
@@ -313,8 +291,6 @@ if __name__ == "__main__":
     #                    elevated_kwds={"compute_removed_elevated": False},
     #                    fname="removed-bldgs-geopandas-non-elevated"
     #                    )
-
-
 
     # ##########################################################################
     # routines for work with Erick
@@ -351,24 +327,4 @@ if __name__ == "__main__":
     #         savefig=False
     #         )
 
-
-
-
     plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

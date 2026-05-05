@@ -288,24 +288,38 @@ class MakeAnimation(HelperFuncs):
             self.plot_timestep_micro(t_hr=t_hr_plot, fname=fn, t_start=t_start_xbeach, t_stop=t_stop_xbeach)
 
     def matplotlib_writer(self, tstart_idx, tstop_idx, temp_dir, figsize):
-        video_name = '{}-{}.mp4'.format(self.model_runname, self.var)
+        """
+        Assemble saved frame images into an MP4 video using matplotlib's FFMpegWriter.
+        Parameters
+        ----------
+        tstart_idx : int
+            Index of the first timestep to include.
+        tstop_idx : int
+            Index (exclusive) of the last timestep to include.
+        temp_dir : str
+            Directory containing the temporary PNG frames.
+        figsize : tuple
+            Size of the figure used for rendering each frame.
+        """
+        video_name = f'{self.model_runname}-{self.var}.mp4'
         video_name = os.path.join(self.path_to_save_plot, video_name)
         fig, ax = plt.subplots(figsize=figsize)
         writer = animation.FFMpegWriter(fps=self.fps)
         with writer.saving(fig, video_name, dpi=self.dpi):
-          for step in range(tstart_idx, tstop_idx):
-                if step%100==0:
-                    print("making video at step: {}" .format(step))
-                fn = os.path.join(temp_dir, "f{}.png".format(step))
+        # Loop over the range of timestep indices
+            for step in range(tstart_idx, tstop_idx):
+                if step % 100 == 0:
+                    print(f"making video at step: {step}")
+                fn = os.path.join(temp_dir, f"f{step}.png")
                 if os.path.isfile(fn):
                     image = plt.imread(fn)
                     ax.clear()
                     ax.imshow(image)
-                    ax.axis('off')  # Optional: Hide axes for a cleaner look
+                    ax.axis('off')               # Hide axes for a cleaner video
                     plt.tight_layout()
                     writer.grab_frame()
-        plt.close()
-        # Clean up the temporary directory
+
+        plt.close(fig)
         if os.path.isdir(temp_dir):
             shutil.rmtree(temp_dir)
 

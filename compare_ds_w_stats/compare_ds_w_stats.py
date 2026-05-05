@@ -151,6 +151,7 @@ class CompareDSwStats(HelperFuncs):
         df_dmg = df_dmg.loc[df_dmg["TA_ActYearBuilt_pre1974"]==True]
         df_dmg = df_dmg.loc[df_dmg["TA_ShapeSTArea_Sqft"]<4000]
         df_dmg = df_dmg.loc[df_dmg["TA_BldgUseTyp"] != "mobile home"]
+        # df_dmg = df_dmg.loc[df_dmg["TA_BldgUseTyp"] == "mobile home"]
 
         fn = os.path.join(self.path_to_save_plot, "stats_at_bldgs.csv")
         stats_at_bldgs = pd.read_csv(fn)
