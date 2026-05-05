@@ -252,9 +252,8 @@ if __name__ == "__main__":
     sws = SaveWaveStats()
     # sws.get_time_building_removed()
     # sws.save_max_stats()  # save max stats across hotstart runs; saved to .dat file.
-    sws.assign_to_bldgs_hotstart(
-        max_stats_saved=True
-    )  # save wave stats at buildings in csv form. used for hotstart runs
+    # save wave stats at buildings in csv form. used for hotstart runs
+    sws.assign_to_bldgs_hotstart(max_stats_saved=True)
     # sws.save_removed_bldgs()
 
     # -- confusion matrices
