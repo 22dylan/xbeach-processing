@@ -1,29 +1,35 @@
+import concurrent
+import math
 import os
 import shutil
-import math
-from tqdm import tqdm
-import rasterio
+import threading
+from typing import SupportsIndex
+
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-import concurrent
-import threading
+import rasterio
 import scipy.ndimage as ndi
+from numpy._typing._array_like import (
+    _ArrayLikeComplex_co,
+    _ArrayLikeObject_co,
+    _ArrayLikeTD64_co,
+)
+from tqdm import tqdm
 
 from helpers.helpers import HelperFuncs
-from process_uplift_forces_elevated.process_uplift_forces_elevated import ProcessUpliftForcesElevated
-
-from typing import SupportsIndex
-import numpy as np
-from numpy._typing._array_like import _ArrayLikeComplex_co, _ArrayLikeTD64_co, _ArrayLikeObject_co
+from process_uplift_forces_elevated.process_uplift_forces_elevated import (
+    ProcessUpliftForcesElevated,
+)
 
 
 class SaveWaveStats(HelperFuncs):
     """docstring for plot_wave_heights"""
+
     def __init__(self):
         super().__init__()
-        self.rho = 1025     # density of salt (kg/m^3)
-        self.g = 9.81       # gravity (m/s^2)
+        self.rho = 1025  # density of salt (kg/m^3)
+        self.g = 9.81  # gravity (m/s^2)
 
     def save_removed_bldgs(self, fname="removed_bldgs_all.csv"):
         self.save_removed_non_elevated_bldgs()
@@ -31,15 +37,18 @@ class SaveWaveStats(HelperFuncs):
         self.merge_remove_bldgs(fname)
 
     def save_removed_non_elevated_bldgs(self):
-        self.copy_removed_bldgs()        # reading buildings that were removed; saving to .dat file.
+        self.copy_removed_bldgs()  # reading buildings that were removed; saving to .dat file.
         self.geolocate("removed_bldgs")  # converting .dat file to .tiff
-        self.assign_to_bldgs(stats=["removed_bldgs"],
-                        col_names=["removed_bldgs_non_elevated"],
-                        runs=None,
-                        fname="removed_non_elevated_bldgs.csv",
-                        )
+        self.assign_to_bldgs(
+            stats=["removed_bldgs"],
+            col_names=["removed_bldgs_non_elevated"],
+            runs=None,
+            fname="removed_non_elevated_bldgs.csv",
+        )
         fn_removed_bldgs_dat = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
-        fn_removed_bldgs_tiff = os.path.join(self.path_to_save_plot, "removed_bldgs.tiff")
+        fn_removed_bldgs_tiff = os.path.join(
+            self.path_to_save_plot, "removed_bldgs.tiff"
+        )
         os.remove(fn_removed_bldgs_dat)
         os.remove(fn_removed_bldgs_tiff)
 
@@ -49,45 +58,103 @@ class SaveWaveStats(HelperFuncs):
         pufe.process()
 
     def copy_removed_bldgs(self):
+        """Copy removed buildings mask to a .dat file.
+
+        The mask is obtained via ``read_removed_bldgs`` which returns a boolean array
+        where ``True`` indicates a building that has been removed. The array is saved
+        to ``removed_bldgs.dat`` in the ``path_to_save_plot`` directory.
+        """
         bldgs = self.read_removed_bldgs()
+        if bldgs is None:
+            raise FileNotFoundError(
+                "Removed buildings mask not found in model directory."
+            )
         fn_out = os.path.join(self.path_to_save_plot, "removed_bldgs.dat")
-        np.savetxt(fn_out, bldgs)
+        np.savetxt(fn_out, bldgs.astype(int))
+
+    def get_time_building_removed(self):
+        """Determine the simulation time (in hours) when each building is removed.
+
+        The method iterates over consecutive hot‑start runs, compares the ``z.grd``
+        files and records the time at which a cell that previously contained a
+        building (value ≥ 10) no longer does. Each hot‑start directory represents
+        15 minutes (0.25 hours) of simulation time. The resulting array has the
+        same shape as the ``z.grd`` grid and contains the removal time in hours
+        for cells where a building was removed; cells without a removal retain
+        ``np.nan``. The array is written to ``time_removed_buildings.dat`` in the
+        ``path_to_save_plot`` directory.
+        """
+        hsruns = self.set_hotstart_runs()
+        if len(hsruns) < 2:
+            raise ValueError(
+                "At least two hotstart runs are required to detect removals."
+            )
+
+        # Load the first grid to obtain shape
+        first_z_path = os.path.join(self.path_to_model, hsruns[0], "z.grd")
+        z_prev = np.loadtxt(first_z_path)
+        removal_time = np.full(z_prev.shape, np.nan)
+
+        # Each hotstart step is 15 minutes = 0.25 hours
+        step_hours = 0.25
+        for idx in range(1, len(hsruns)):
+            cur_run = hsruns[idx]
+            prev_run = hsruns[idx - 1]
+            z_prev = np.loadtxt(os.path.join(self.path_to_model, prev_run, "z.grd"))
+            z_cur = np.loadtxt(os.path.join(self.path_to_model, cur_run, "z.grd"))
+            prev_buildings = z_prev >= 10
+            cur_buildings = z_cur >= 10
+            removed = prev_buildings & (~cur_buildings)
+            newly_removed = removed & np.isnan(removal_time)
+            removal_time[newly_removed] = idx * step_hours
+        fn_out = os.path.join(self.path_to_save_plot, "time_removed_buildings.dat")
+        np.savetxt(fn_out, removal_time, fmt="%.3f")
+        return removal_time
 
     def copy_cumulative_horizontal_impulse(self):
         hsruns = self.set_hotstart_runs()
-        fn_src = os.path.join(self.path_to_model, hsruns[-1], "stat_cumulative_horizontal_impulse.dat")
-        fn_dst = os.path.join(self.path_to_save_plot, "stat_cumulative_horizontal_impulse.dat")
+        fn_src = os.path.join(
+            self.path_to_model, hsruns[-1], "stat_cumulative_horizontal_impulse.dat"
+        )
+        fn_dst = os.path.join(
+            self.path_to_save_plot, "stat_cumulative_horizontal_impulse.dat"
+        )
         shutil.copyfile(fn_src, fn_dst)
 
     def copy_cumulative_uplift_impulse(self):
         hsruns = self.set_hotstart_runs()
-        fn_src = os.path.join(self.path_to_model, hsruns[-1], "stat_cumulative_uplift_impulse.dat")
-        fn_dst = os.path.join(self.path_to_save_plot, "stat_cumulative_uplift_impulse.dat")
+        fn_src = os.path.join(
+            self.path_to_model, hsruns[-1], "stat_cumulative_uplift_impulse.dat"
+        )
+        fn_dst = os.path.join(
+            self.path_to_save_plot, "stat_cumulative_uplift_impulse.dat"
+        )
         shutil.copyfile(fn_src, fn_dst)
 
     def get_all_stats(self):
         stats = [
-                "Hs", 
-                "Hs_tot", 
-                "Hs_max", 
-                "Hmax", 
-                "Tm", 
-                "t_Hs_", 
-                "zs_max", 
-                "zs_mean", 
-                "surge_max", 
-                "impulse", 
-                "velocity_magnitude", 
-                "velocity_direction",
-                ]
+            "Hs",
+            "Hs_tot",
+            "Hs_max",
+            "Hmax",
+            "Tm",
+            "t_Hs_",
+            "zs_max",
+            "zs_mean",
+            "surge_max",
+            "impulse",
+            "velocity_magnitude",
+            "velocity_direction",
+        ]
         return stats
+
     def save_max_stats(self):
-        hsruns = self.set_hotstart_runs() 
+        hsruns = self.set_hotstart_runs()
         stats = os.listdir(os.path.join(self.path_to_model, hsruns[0]))
         stats = [i for i in stats if "stat_" in i]
         print("saving stats: ")
         for stat in stats:
-            print("   {}" .format(stat.split(".")[0]))
+            print("   {}".format(stat.split(".")[0]))
             for hsrun_i, hsrun in enumerate(hsruns):
                 fn = os.path.join(self.path_to_model, hsrun, stat)
                 data_ = np.loadtxt(fn)
@@ -95,23 +162,31 @@ class SaveWaveStats(HelperFuncs):
                     max_vals = np.zeros(np.shape(data_))
                 else:
                     max_vals = np.maximum(max_vals, data_)
-            fn_out = os.path.join(self.path_to_save_plot, "max_{}" .format(stat))
+            fn_out = os.path.join(self.path_to_save_plot, "max_{}".format(stat))
             np.savetxt(fn_out, max_vals)
-        
 
-    def save(self, var, stats, trim_beginning_seconds=0, sample_freq=1, 
-            store_in_mem=False, chunk_size_min=15, avg_window_min=2, max_workers=None):
+    def save(
+        self,
+        var,
+        stats,
+        trim_beginning_seconds=0,
+        sample_freq=1,
+        store_in_mem=False,
+        chunk_size_min=15,
+        avg_window_min=2,
+        max_workers=None,
+    ):
         """
         Function to save wave stats to .npy files, parallelized over spatial points.
-        
-        max_workers: The maximum number of threads to use for parallel processing. 
+
+        max_workers: The maximum number of threads to use for parallel processing.
                      If None, it defaults to the number of processors.
         """
         chunk_size_sec = chunk_size_min * 60
         t = self.read_time_xarray()
         t_idx_start = np.argmin(np.abs(t - trim_beginning_seconds))
         t = t[t_idx_start::sample_freq]  # time array with beginning trimmed off.
-        avg_window_sec = avg_window_min*60
+        avg_window_sec = avg_window_min * 60
 
         # The rest of the setup is the same
         t_chunks_val = np.arange(t[0], t[-1], step=chunk_size_sec)
@@ -133,11 +208,13 @@ class SaveWaveStats(HelperFuncs):
                 self.ve_data = self.read_3d_data_xarray_nonmem("vv")
 
         data_save_dict = self.setup_data_save_dict(stats, t_idxs, dims)
-        
-        # Create a lock for thread-safe access to the shared data_save_dict
-        data_save_dict_lock = threading.Lock() # Import threading at the top
 
-        print(f"Starting parallel processing with {max_workers if max_workers else 'default'} workers...")
+        # Create a lock for thread-safe access to the shared data_save_dict
+        data_save_dict_lock = threading.Lock()  # Import threading at the top
+
+        print(
+            f"Starting parallel processing with {max_workers if max_workers else 'default'} workers..."
+        )
 
         # Parallel Execution over spatial dimensions
         futures = []
@@ -146,23 +223,50 @@ class SaveWaveStats(HelperFuncs):
                 for x2_ in range(dims[1]):
                     # Submit the processing of a single spatial point as a task
                     future = executor.submit(
-                        self._process_spatial_point, 
-                        y2_, x2_, t, t_idxs, t_idx_start, sample_freq, avg_window_sec,
-                        data_all, store_in_mem, stats, chunk_size_sec, 
-                        data_save_dict, data_save_dict_lock
+                        self._process_spatial_point,
+                        y2_,
+                        x2_,
+                        t,
+                        t_idxs,
+                        t_idx_start,
+                        sample_freq,
+                        avg_window_sec,
+                        data_all,
+                        store_in_mem,
+                        stats,
+                        chunk_size_sec,
+                        data_save_dict,
+                        data_save_dict_lock,
                     )
                     futures.append(future)
             # all tasks have been submitted, now using tqdm to monitor the progress
-            for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Processing spatial points"):
-                future.result() 
+            for future in tqdm(
+                concurrent.futures.as_completed(futures),
+                total=len(futures),
+                desc="Processing spatial points",
+            ):
+                future.result()
 
-        print(f"Finished processing {dims[0]*dims[1]} spatial points.")
+        print(f"Finished processing {dims[0] * dims[1]} spatial points.")
         print("writing to {}:".format(self.path_to_save_plot))
         self.write_data_save_dict(data_save_dict, self.path_to_save_plot)
 
-    def _process_spatial_point(self, y2_, x2_, t, t_idxs, t_idx_start, sample_freq, avg_window_sec,
-                            data_all, store_in_mem, stats, chunk_size_sec, data_save_dict, 
-                            data_save_dict_lock):
+    def _process_spatial_point(
+        self,
+        y2_,
+        x2_,
+        t,
+        t_idxs,
+        t_idx_start,
+        sample_freq,
+        avg_window_sec,
+        data_all,
+        store_in_mem,
+        stats,
+        chunk_size_sec,
+        data_save_dict,
+        data_save_dict_lock,
+    ):
         """
         Helper function to process a single (y, x) spatial point.
         This function will be executed in parallel.
@@ -183,14 +287,14 @@ class SaveWaveStats(HelperFuncs):
         H = self.get_H(z)
         H_chunks = [self.get_H(z_) for z_ in z_chunks]
         T_chunks = [self.get_T(z_chunks[i], t_chunks[i]) for i in range(len(z_chunks))]
-        dt = t[1] - t[0]    # time step
-        
+        dt = t[1] - t[0]  # time step
+
         # Dictionary to hold the results for this single spatial point
         point_results = {}
-        
+
         # compute statistics
         for stat in stats:
-            data_ = None # Reset for each stat
+            data_ = None  # Reset for each stat
 
             if stat == "Hs":
                 data_ = [self.compute_Hs(i) for i in H_chunks]
@@ -200,14 +304,16 @@ class SaveWaveStats(HelperFuncs):
                 data_ = np.nanmax([self.compute_Hs(i) for i in H_chunks]).item()
             elif stat == "Hmax":
                 try:
-                    data_ = np.nanmax(H).item() # Use .item() for consistency with scalar results
+                    data_ = np.nanmax(
+                        H
+                    ).item()  # Use .item() for consistency with scalar results
                 except ValueError:
                     data_ = 0
             elif stat == "Tm":
                 data_ = []
                 for t_chunk in T_chunks:
                     try:
-                        data_.append(np.mean(t_chunk).item()) # Use .item()
+                        data_.append(np.mean(t_chunk).item())  # Use .item()
                     except:
                         data_.append(0)
             elif "t_Hs_" in stat:
@@ -236,7 +342,7 @@ class SaveWaveStats(HelperFuncs):
 
             if data_ is not None:
                 point_results[stat] = data_
-                
+
         # 5. Lock and store results into the shared dictionary
         # In a parallel environment, writing to a shared resource (data_save_dict)
         # must be protected to prevent race conditions.
@@ -250,23 +356,24 @@ class SaveWaveStats(HelperFuncs):
                     # Scalar data (e.g., Hs_tot, Hmax, zs_max)
                     data_save_dict[stat][y2_, x2_] = data_
 
-        return y2_, x2_ # Return for tracking/tqdm update
-
-
+        return y2_, x2_  # Return for tracking/tqdm update
 
     def compute_impulse(self, z, t, dt, avg_window_sec):
-        h, z_trimmed, time_trimmed = self.running_mean(z,t,avg_window_sec)
+        h, z_trimmed, time_trimmed = self.running_mean(z, t, avg_window_sec)
         eta = z_trimmed - h
 
         # calculate wave force
-        fw = ((self.rho*self.g)/2)* np.abs((2*h*eta) + (np.square(eta)))  # units are N/m
-        I = self.nantrapz(fw, dx=dt, axis=0)     # units are (N/m)-s
+        fw = ((self.rho * self.g) / 2) * np.abs(
+            (2 * h * eta) + (np.square(eta))
+        )  # units are N/m
+        I = self.nantrapz(fw, dx=dt, axis=0)  # units are (N/m)-s
         # f = f*res                           # units are now N-s
-        I = I/3600                          # units are now (N-hr)/m
-        I = I/1000                          # units are now (kN-hr)/m
+        I = I / 3600  # units are now (N-hr)/m
+        I = I / 1000  # units are now (kN-hr)/m
         return I
 
-    def nantrapz(self,
+    def nantrapz(
+        self,
         y: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co,
         x: _ArrayLikeComplex_co | _ArrayLikeTD64_co | _ArrayLikeObject_co | None = None,
         dx: float = 1.0,
@@ -312,7 +419,7 @@ class SaveWaveStats(HelperFuncs):
 
     def write_data_save_dict(self, data, output_dir=".", current_parts=None):
         """
-        Recursively loops through a dictionary and saves all numpy arrays 
+        Recursively loops through a dictionary and saves all numpy arrays
         to .npy files, using os.path.join for platform-agnostic path construction.
 
         Args:
@@ -322,7 +429,7 @@ class SaveWaveStats(HelperFuncs):
         """
         if current_parts is None:
             current_parts = []
-            
+
         # Ensure the output directory exists
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
@@ -335,17 +442,21 @@ class SaveWaveStats(HelperFuncs):
                 filename = base_name + ".npy"
                 full_path = os.path.join(output_dir, filename)
                 np.save(full_path, value)
-                print("  Saved {}" .format(base_name))            
+                print("  Saved {}".format(base_name))
             elif isinstance(value, dict):
-                self.write_data_save_dict(value, output_dir, new_parts)                
-            
+                self.write_data_save_dict(value, output_dir, new_parts)
+
             else:
-                print(f"Skipping non-array/non-dict item: {base_name} (Type: {type(value)})")
+                print(
+                    f"Skipping non-array/non-dict item: {base_name} (Type: {type(value)})"
+                )
 
     def running_mean(self, z, t, N):
-        cumsum = np.cumsum(np.insert(z,0,0)) # insert row of zeros at top
-        h = (cumsum[N:] - cumsum[:-N]) / float(N)      # running mean with window size N; i.e. water depth, h
-        
+        cumsum = np.cumsum(np.insert(z, 0, 0))  # insert row of zeros at top
+        h = (cumsum[N:] - cumsum[:-N]) / float(
+            N
+        )  # running mean with window size N; i.e. water depth, h
+
         # trimming up elevation and time data to be same length as running mean
         trim_start = (N - 1) // 2
         trim_end = trim_start + len(h)
@@ -356,7 +467,7 @@ class SaveWaveStats(HelperFuncs):
     def geolocate(self, stat="Hs", verbose=True):
         model_dir = self.get_first_model_dir()
         fn_params = os.path.join(model_dir, "params.txt")
-        with open(fn_params,'r') as f:
+        with open(fn_params, "r") as f:
             for cnt, line in enumerate(f.readlines()):
                 if "xo" in line:
                     l_ = [i.strip() for i in line.split()]
@@ -375,40 +486,50 @@ class SaveWaveStats(HelperFuncs):
                 if "dy" in line:
                     l_ = [i.strip() for i in line.split()]
                     dy = float(l_[-1])
-        
-        fn_out = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat))
+
+        fn_out = os.path.join(self.path_to_save_plot, "{}.tiff".format(stat))
         try:
             data = self.read_npy(stat)
         except:
             data = self.read_dat(stat)
 
-
         bldgs = self.read_buildings()
         second_max = False
         if ("Hs" in stat) or ("Hmax" in stat):
-            second_max=True
+            second_max = True
         data_bldg = self.assign_max_to_bldgs(data, bldgs, second_max=second_max)
         data = np.fmax(data, data_bldg)
-        self.create_rotated_raster(data, crs="epsg:32617", xo=xo, yo=yo, dx=dx, dy=dy,
-                                   theta=theta, output_filepath=fn_out, verbose=verbose)
+        self.create_rotated_raster(
+            data,
+            crs="epsg:32617",
+            xo=xo,
+            yo=yo,
+            dx=dx,
+            dy=dy,
+            theta=theta,
+            output_filepath=fn_out,
+            verbose=verbose,
+        )
 
     def merge_remove_bldgs(self, fname):
-        fn_nelev = os.path.join(self.path_to_save_plot, "removed_non_elevated_bldgs.csv")
+        fn_nelev = os.path.join(
+            self.path_to_save_plot, "removed_non_elevated_bldgs.csv"
+        )
         df_nelev = pd.read_csv(fn_nelev)
-        df_nelev = df_nelev.loc[df_nelev["elevated"]==False]
+        df_nelev = df_nelev.loc[df_nelev["elevated"] == False]
         df_nelev.set_index("VDA_id", inplace=True)
         df_nelev["remove"] = df_nelev["removed_bldgs_non_elevated"].astype(bool)
         df_nelev = df_nelev[["elevated", "remove"]]
 
-        fn_elev  = os.path.join(self.path_to_save_plot, "removed_elevated_bldgs.csv")
+        fn_elev = os.path.join(self.path_to_save_plot, "removed_elevated_bldgs.csv")
         df_elev = pd.read_csv(fn_elev)
         df_elev.set_index("VDA_id", inplace=True)
 
         df_elev["remove"] = df_elev["remove_elevated"]
         df_elev = df_elev[["elevated", "remove"]]
 
-        df_bldgs = pd.concat([df_nelev,df_elev],ignore_index=False)
-        
+        df_bldgs = pd.concat([df_nelev, df_elev], ignore_index=False)
+
         fn = os.path.join(self.path_to_save_plot, fname)
         df_bldgs.to_csv(fn, index=True)
         os.remove(fn_elev)
@@ -417,7 +538,9 @@ class SaveWaveStats(HelperFuncs):
     def assign_to_bldgs_hotstart(self, max_stats_saved=False, fname=None):
         bldgs = self.read_bldgs_geodataframe()
         bldgs["centroid"] = bldgs["geometry"].centroid
-        bldgs["coords"] = [(x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)]
+        bldgs["coords"] = [
+            (x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)
+        ]
         hsruns = self.set_hotstart_runs()
 
         if max_stats_saved == True:
@@ -427,49 +550,61 @@ class SaveWaveStats(HelperFuncs):
             bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
             for stat in stats:
                 stat_ = stat.split(".dat")[0]
-                print("Processing results for: {}" .format(stat))
-                fn_tiff = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat_))    # tiff tile
+                print("Processing results for: {}".format(stat))
+                fn_tiff = os.path.join(
+                    self.path_to_save_plot, "{}.tiff".format(stat_)
+                )  # tiff tile
                 self.geolocate(stat_, verbose=False)
 
                 with rasterio.open(fn_tiff, "r") as r:
-                    bldgs_out[stat_] = [x[0] for x in r.sample(bldgs["coords"].to_list())]
+                    bldgs_out[stat_] = [
+                        x[0] for x in r.sample(bldgs["coords"].to_list())
+                    ]
                 if "max_stat_cumulative_current_impulse" in stat:
                     continue
                 os.remove(fn_tiff)
                 # bldgs_out[stat_] = df_stat.max(axis=1)
 
-
         elif max_stats_saved == False:
             stats = os.listdir(os.path.join(self.get_first_model_dir()))
             stats = [i for i in stats if "stat_" in i]
+            # Append any additional .dat files (e.g., time_removed_buildings.dat) that were created in the save plot directory
+            extra_dat = "time_removed_buildings.dat"
+            extra_path = os.path.join(self.path_to_save_plot, extra_dat)
+            if os.path.exists(extra_path):
+                stats.append(extra_dat)
             stats_ = [i.split(".dat")[0] for i in stats]
             bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
             for stat in stats:
                 df_stat = pd.DataFrame(columns=hsruns, index=bldgs.index)
                 stat_ = stat.split(".dat")[0]
-                print("Processing results for: {}" .format(stat))
+                print("Processing results for: {}".format(stat))
                 for hs in hsruns:
-                    print("  {}" .format(hs))
+                    print("  {}".format(hs))
 
-                    fn_tiff = os.path.join(self.path_to_save_plot, "{}.tiff" .format(stat_))    # tiff tile
-                    fn_src = os.path.join(self.path_to_model, hs, stat)      # dat file source
-                    fn_dst = os.path.join(self.path_to_save_plot, stat)      # dat file dst
+                    fn_tiff = os.path.join(
+                        self.path_to_save_plot, "{}.tiff".format(stat_)
+                    )  # tiff tile
+                    fn_src = os.path.join(
+                        self.path_to_model, hs, stat
+                    )  # dat file source
+                    fn_dst = os.path.join(self.path_to_save_plot, stat)  # dat file dst
                     shutil.copyfile(fn_src, fn_dst)
                     self.geolocate(stat_, verbose=False)
 
-
                     with rasterio.open(fn_tiff, "r") as r:
-                        df_stat[hs] = [x[0] for x in r.sample(bldgs["coords"].to_list())]
+                        df_stat[hs] = [
+                            x[0] for x in r.sample(bldgs["coords"].to_list())
+                        ]
 
                     os.remove(fn_dst)
                     os.remove(fn_tiff)
                 bldgs_out[stat_] = df_stat.max(axis=1)
-            
+
         if fname == None:
             fname = "stats_at_bldgs.csv"
         fn_out = os.path.join(self.path_to_save_plot, fname)
         bldgs_out.to_csv(fn_out, index=True)
-
 
     def assign_to_bldgs(self, stats, runs=None, col_names=None, fname=None):
         bldgs = gpd.read_file(self.path_to_bldgs)
@@ -482,7 +617,7 @@ class SaveWaveStats(HelperFuncs):
 
         bldgs["centroid"] = bldgs["geometry"].centroid
         coord_list = [(x, y) for x, y in zip(bldgs["centroid"].x, bldgs["centroid"].y)]
-        if col_names==None:
+        if col_names == None:
             col_names = []
             need_to_create_col_names = True
         else:
@@ -492,12 +627,14 @@ class SaveWaveStats(HelperFuncs):
         for stat in stats:
             for run in runs:
                 if need_to_create_col_names == True:
-                    col_name = "{}_{}" .format(stat, run)    
+                    col_name = "{}_{}".format(stat, run)
                     col_names.append(col_name)
                 else:
                     col_name = col_names[cnt]
 
-                rstr = os.path.join(self.path_to_save_plot, "..", run, "{}.tiff" .format(stat))
+                rstr = os.path.join(
+                    self.path_to_save_plot, "..", run, "{}.tiff".format(stat)
+                )
                 with rasterio.open(rstr, "r") as r:
                     bldgs[col_name] = [x[0] for x in r.sample(coord_list)]
 
@@ -510,9 +647,11 @@ class SaveWaveStats(HelperFuncs):
         bldgs_ffe.set_index("VDA_id", inplace=True)
         # elevated_bldgs, _ = self.get_elevated_bldgs(bldgs_ffe)
         # elevated_bldgs = elevated_bldgs["elevated"]
-        elevated_bldgs = (bldgs_ffe["FFE_elev_status"] == "elevated") & (bldgs_ffe["FFE_foundation"]=="Piles/Columns")
+        elevated_bldgs = (bldgs_ffe["FFE_elev_status"] == "elevated") & (
+            bldgs_ffe["FFE_foundation"] == "Piles/Columns"
+        )
         elevated_bldgs = pd.DataFrame(elevated_bldgs, columns=["elevated"])
-        
+
         bldgs = pd.merge(bldgs, elevated_bldgs, left_index=True, right_index=True)
 
         keep_cols = ["lon", "lat", "elevated"] + col_names
@@ -522,7 +661,9 @@ class SaveWaveStats(HelperFuncs):
         fn_out = os.path.join(self.path_to_save_plot, fname)
         bldgs.to_csv(fn_out, index=True)
 
-    def create_rotated_raster(self, H, crs, xo, yo, dx, dy, theta, output_filepath, verbose=True):
+    def create_rotated_raster(
+        self, H, crs, xo, yo, dx, dy, theta, output_filepath, verbose=True
+    ):
         """
         Creates a GeoTIFF raster from a NumPy array with rotation.
 
@@ -536,7 +677,6 @@ class SaveWaveStats(HelperFuncs):
         """
         rows, cols = H.shape
 
-
         theta_rad = np.deg2rad(theta)
         # -- old
         a = np.cos(theta_rad)
@@ -549,11 +689,15 @@ class SaveWaveStats(HelperFuncs):
 
         # -- new
         a = dx * np.cos(theta_rad)  # x-scale * cos(theta)
-        b = -dx * np.sin(theta_rad) # y-shear * -sin(theta) (Note: dx is usually used here for non-square pixels)
-        c = xo                      # x-translation (xo)
+        b = -dx * np.sin(
+            theta_rad
+        )  # y-shear * -sin(theta) (Note: dx is usually used here for non-square pixels)
+        c = xo  # x-translation (xo)
         d = dx * np.sin(theta_rad)  # x-shear * sin(theta)
-        e = dy * np.cos(theta_rad) # y-scale * cos(theta) (Note: -dy is used for the standard top-left origin)
-        f = yo                      # y-translation (yo)
+        e = dy * np.cos(
+            theta_rad
+        )  # y-scale * cos(theta) (Note: -dy is used for the standard top-left origin)
+        f = yo  # y-translation (yo)
         # -- new
 
         # Create the transform
@@ -563,22 +707,22 @@ class SaveWaveStats(HelperFuncs):
 
         # 3. Define the raster metadata
         profile = {
-            'driver': 'GTiff',
-            'dtype': H.dtype,
-            'nodata': -9999, # Example NoData value, adjust as needed
-            'height': rows,
-            'width': cols,
-            'count': 1, # Number of bands
-            'crs': crs,
-            'transform': transform,
+            "driver": "GTiff",
+            "dtype": H.dtype,
+            "nodata": -9999,  # Example NoData value, adjust as needed
+            "height": rows,
+            "width": cols,
+            "count": 1,  # Number of bands
+            "crs": crs,
+            "transform": transform,
             # Compression and tiling options can be added here
-            'tiled': True,
-            'compress': 'lzw',
+            "tiled": True,
+            "compress": "lzw",
         }
 
         # 4. Write the array to a GeoTIFF file
         try:
-            with rasterio.open(output_filepath, 'w', **profile) as dst:
+            with rasterio.open(output_filepath, "w", **profile) as dst:
                 # Write the data. We write to band 1 (index 1)
                 dst.write(H, 1)
             if verbose:
@@ -587,10 +731,8 @@ class SaveWaveStats(HelperFuncs):
         except Exception as e:
             print(f"An error occurred during raster writing: {e}")
 
-
-
     def get_offset_mask(self, labeled_mask, i):
-        m_ = ~(labeled_mask==i)
+        m_ = ~(labeled_mask == i)
         m_ = np.pad(m_, pad_width=1, mode="constant", constant_values=True)
         shifted_up = m_[2:, 1:-1]
         shifted_down = m_[:-2, 1:-1]
@@ -598,7 +740,13 @@ class SaveWaveStats(HelperFuncs):
         shifted_right = m_[1:-1, :-2]
         original_mask_trimmed = m_[1:-1, 1:-1]
 
-        offset_mask = original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right
+        offset_mask = (
+            original_mask_trimmed
+            & shifted_up
+            & shifted_down
+            & shifted_left
+            & shifted_right
+        )
         return ~offset_mask
 
     def save_to_csv(self, stats, fname="temp.csv"):
@@ -613,23 +761,22 @@ class SaveWaveStats(HelperFuncs):
         # -- setting up x and y as x-y points (0, 1, 2, 3)
         x = np.arange(0, nx)
         y = np.arange(0, ny)
-        
+
         # -- setting up grid of indicies; flattening to put in grid_df
         idx, idy = np.meshgrid(x, y)
         idx, idy = idx.flatten().astype(int), idy.flatten().astype(int)
 
         # -- setting up pt_x and pt_y; this is with XBeach resolution
-        pt_x = x*dx
-        pt_y = y*dy
+        pt_x = x * dx
+        pt_y = y * dy
 
         # -- setting up grid of pt_x and pt_y; flattening to put in grid_df
         pt_x, pt_y = np.meshgrid(pt_x, pt_y)
         pt_x, pt_y = pt_x.flatten(), pt_y.flatten()
 
         # -- setting x and y coordinates in real-world points; uses origin above which is in model crs
-        pt_x_wrld = xo + pt_x*np.cos(theta_r) - pt_y*np.sin(theta_r)
-        pt_y_wrld = yo + pt_x*np.sin(theta_r) + pt_y*np.cos(theta_r)
-
+        pt_x_wrld = xo + pt_x * np.cos(theta_r) - pt_y * np.sin(theta_r)
+        pt_y_wrld = yo + pt_x * np.sin(theta_r) + pt_y * np.cos(theta_r)
 
         df["X"] = pt_x
         df["Y"] = pt_y
@@ -654,7 +801,7 @@ class SaveWaveStats(HelperFuncs):
                     data = self.read_npy(stat)
                 except:
                     data = self.read_dat(stat)
-            
+
             data_bldg = self.assign_max_to_bldgs(data, bldgs)
             data = np.fmax(data, data_bldg)
             df[stat] = data[df["idy"], df["idx"]]

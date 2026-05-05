@@ -30,7 +30,6 @@ if __name__ == "__main__":
     # s = Scratch()
     # s.run()
 
-
     # -- save wave stats
     # sws = SaveWaveStats()
     # # # sws.save_forces_at_bldg_to_csv()
@@ -251,7 +250,8 @@ if __name__ == "__main__":
     # -- routines for processing runs to check number of removed buildings ---
     # # -- save stats at bldgs
     sws = SaveWaveStats()
-    sws.save_max_stats()  # save max stats across hotstart runs; saved to .dat file.
+    # sws.get_time_building_removed()
+    # sws.save_max_stats()  # save max stats across hotstart runs; saved to .dat file.
     sws.assign_to_bldgs_hotstart(
         max_stats_saved=True
     )  # save wave stats at buildings in csv form. used for hotstart runs
@@ -314,7 +314,7 @@ if __name__ == "__main__":
     #         ],
 
     #         pt_names = [
-    #             "a1", "a2", "a3", "a4", 
+    #             "a1", "a2", "a3", "a4",
     #             "a2p", "a3p", "a4p",
     #             "b1", "b2", "b3", "b4", "b5",
     #             "b2p", "b3p", "b4p",
