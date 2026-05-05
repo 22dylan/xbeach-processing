@@ -547,6 +547,10 @@ class SaveWaveStats(HelperFuncs):
             stats = os.listdir(os.path.join(self.path_to_save_plot))
             stats = [i for i in stats if "max_stat_" in i]
             stats_ = [i.split(".dat")[0] for i in stats]
+            extra_dat = "time_removed_buildings.dat"
+            extra_path = os.path.join(self.path_to_save_plot, extra_dat)
+            if os.path.exists(extra_path):
+                stats.append(extra_dat)
             bldgs_out = pd.DataFrame(columns=stats_, index=bldgs.index)
             for stat in stats:
                 stat_ = stat.split(".dat")[0]
