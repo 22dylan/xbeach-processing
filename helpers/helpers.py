@@ -2,21 +2,23 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import geopandas as gpd
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import geopandas as gpd
-import xarray as xr
-import seaborn as sns
-import matplotlib.pyplot as plt
-import scipy.ndimage as ndi
 import rasterio
-from rasterio.warp import calculate_default_transform, reproject, Resampling
+import scipy.ndimage as ndi
+import seaborn as sns
+import xarray as xr
+from rasterio.warp import Resampling, calculate_default_transform, reproject
 
-class HelperFuncs():
+
+class HelperFuncs:
     """
     Helper functions for plotting and processing XBeach model output.
     Uses `paths.txt` to set model and data paths.
     """
+
     def __init__(self):
         self.file_path = Path(__file__).resolve()
         self.project_dir = self.file_path.parent.parent
