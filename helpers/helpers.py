@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Optional, Tuple, List, Dict, Union, Any
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -22,8 +22,8 @@ class HelperFuncs():
         self.project_dir = self.file_path.parent.parent
         self.read_paths()
         self.xboutput_filename = self.get_output_filename()
-        
-        if hasattr(self, 'path_to_save_plot'):
+
+        if hasattr(self, "path_to_save_plot"):
             self.make_directory(self.path_to_save_plot)
 
     def read_paths(self):
@@ -39,21 +39,21 @@ class HelperFuncs():
 
         config = {}
         relative_path = False
-        
-        with open(paths_fn, 'r') as f:
+
+        with open(paths_fn, "r") as f:
             for line in f:
                 line = line.strip()
-                if not line or line.startswith('#') or '=' not in line:
+                if not line or line.startswith("#") or "=" not in line:
                     continue
-                
-                key, value = line.split('=', 1)
+
+                key, value = line.split("=", 1)
                 key = key.strip()
                 value = value.strip()
-                
+
                 if key == "relative_path":
                     relative_path = value.lower() == "true"
                     continue
-                
+
                 config[key] = value
 
         for key, value in config.items():
@@ -61,15 +61,15 @@ class HelperFuncs():
                 pth = self.project_dir / value
             else:
                 # Handle absolute paths or paths starting from root
-                if value.startswith('/'):
+                if value.startswith("/"):
                     pth = Path(value)
                 else:
-                    pth = Path('/') / value
-            
+                    pth = Path("/") / value
+
             setattr(self, key, str(pth))
             print(f"  successfully set {key}")
 
-        if hasattr(self, 'path_to_model'):
+        if hasattr(self, "path_to_model"):
             self.model_runname = Path(self.path_to_model).name
             self.check_hotstart()
             print(f"paths set for {self.model_runname}")
@@ -78,7 +78,7 @@ class HelperFuncs():
 
     def check_hotstart(self) -> None:
         """
-        Checks if the model run is a hotstart run by looking for params.txt 
+        Checks if the model run is a hotstart run by looking for params.txt
         in the model directory.
         """
         params_fn = Path(self.path_to_model) / "params.txt"
@@ -93,7 +93,7 @@ class HelperFuncs():
         Returns the path to the first model directory (useful for hotstart runs).
         """
         if self.hotstart_run:
-            if not hasattr(self, 'hotstart_runs') or not self.hotstart_runs:
+            if not hasattr(self, "hotstart_runs") or not self.hotstart_runs:
                 return self.path_to_model
             return str(Path(self.path_to_model) / self.hotstart_runs[0])
         else:
@@ -106,7 +106,7 @@ class HelperFuncs():
         model_dir = Path(self.get_first_model_dir())
         if not model_dir.exists():
             return None
-        
+
         nc_files = list(model_dir.glob("*.nc"))
         if nc_files:
             return nc_files[0].name
@@ -118,7 +118,7 @@ class HelperFuncs():
         """
         if chunks is None:
             chunks = {"globaltime": 100}
-            
+
         if self.hotstart_run:
             return self.get_hotstart_ds(chunks=chunks)
         else:
@@ -129,7 +129,7 @@ class HelperFuncs():
 
     def get_figsize(self, domain_size: str) -> Tuple[int, int]:
         """
-        Returns figure size based on the domain being considered. 
+        Returns figure size based on the domain being considered.
         """
         if domain_size == "micro":
             return (7, 5)
@@ -142,22 +142,22 @@ class HelperFuncs():
         """
         if chunks is None:
             chunks = {"globaltime": 100}
-            
+
         datasets = []
         cumulative_time = 0.0
-        
+
         for run in self.hotstart_runs:
             fn = Path(self.path_to_model) / run / self.xboutput_filename
             if not fn.exists():
                 print(f"Warning: {fn} not found, skipping.")
                 continue
-                
+
             ds = xr.open_dataset(fn, chunks=chunks)
-            
+
             # Update globaltime: add the cumulative_time from previous runs
             ds["globaltime"] = ds["globaltime"] + cumulative_time
             datasets.append(ds)
-            
+
             # Update cumulative_time using the last time step plus dt
             if len(ds["globaltime"]) > 1:
                 dt = ds["globaltime"][1].values - ds["globaltime"][0].values
@@ -165,12 +165,14 @@ class HelperFuncs():
                 # Fall back to params if only one time step
                 params_fn = Path(self.path_to_model) / run / "params.txt"
                 dt = float(self.read_from_params(fn_params=str(params_fn), var="tintg"))
-            
+
             cumulative_time = float(ds["globaltime"][-1].values) + dt
-            
+
         if not datasets:
-            raise FileNotFoundError(f"No hotstart datasets found in {self.path_to_model}")
-            
+            raise FileNotFoundError(
+                f"No hotstart datasets found in {self.path_to_model}"
+            )
+
         return xr.concat(datasets, dim="globaltime", data_vars="all")
 
     def read_max_xarray(self, var: str) -> np.ndarray:
@@ -178,7 +180,7 @@ class HelperFuncs():
         Reads the maximum value from the xarray dataset.
         Inputs:
             var: variable to read, e.g., zs1
-        Returns: 
+        Returns:
             data: 2D numpy array.
         """
         ds = self.get_dataset()
@@ -199,9 +201,9 @@ class HelperFuncs():
         """
         model_dir = Path(self.get_first_model_dir())
         params_fn = model_dir / "params.txt"
-        
+
         dx, dy = 0.0, 0.0
-        with open(params_fn, 'r') as f:
+        with open(params_fn, "r") as f:
             for line in f:
                 if "dx" in line and "vardx" not in line:
                     dx = float(line.split()[-1])
@@ -215,12 +217,13 @@ class HelperFuncs():
         """
         model_dir = Path(self.get_first_model_dir())
         params_fn = model_dir / "params.txt"
-        
+
         xo, yo, theta = 0.0, 0.0, 0.0
-        with open(params_fn, 'r') as f:
+        with open(params_fn, "r") as f:
             for line in f:
                 parts = line.split()
-                if not parts: continue
+                if not parts:
+                    continue
                 if "xo" in line:
                     xo = float(parts[-1])
                 if "yo" in line:
@@ -228,19 +231,21 @@ class HelperFuncs():
                 if "theta" in line:
                     theta = float(parts[-1])
         return xo, yo, theta
-    
-    def read_from_params(self, fn_params: Optional[str] = None, var: Optional[str] = None) -> Any:
+
+    def read_from_params(
+        self, fn_params: Optional[str] = None, var: Optional[str] = None
+    ) -> Any:
         """
         Reads a specific variable from params.txt.
         """
         if fn_params is None:
             fn_params = str(Path(self.path_to_model) / "params.txt")
-        
+
         if var is None:
             return None
 
         val = None
-        with open(fn_params, 'r') as f:
+        with open(fn_params, "r") as f:
             for line in f:
                 if var in line:
                     parts = line.split()
@@ -272,7 +277,9 @@ class HelperFuncs():
         ds = self.get_dataset(chunks={"globaltime": -1, "nx": -1, "ny": 400})
         return ds[var]
 
-    def read_2d_data_xarray_timestep(self, var: str, t: int, hsrun: Optional[str] = None) -> np.ndarray:        
+    def read_2d_data_xarray_timestep(
+        self, var: str, t: int, hsrun: Optional[str] = None
+    ) -> np.ndarray:
         """
         Reads xarray data for entire domain at specified time step.
         """
@@ -280,14 +287,14 @@ class HelperFuncs():
             model_dir = Path(self.get_first_model_dir())
         else:
             model_dir = Path(self.path_to_model) / hsrun
-            
+
         fn = model_dir / self.xboutput_filename
         ds = xr.open_dataset(fn, chunks={"globaltime": 100})
         return ds[var].isel(globaltime=t).values
 
     def read_pt_data_xarray(self, var: str, idx: int, idy: int) -> np.ndarray:
         """
-        Reads xarray data at a specific point. 
+        Reads xarray data at a specific point.
         """
         ds = self.get_dataset()
         return ds[var][:, idy, idx].values
@@ -323,14 +330,12 @@ class HelperFuncs():
         """
         with rasterio.open(path_to_dem) as src:
             transform, width, height = calculate_default_transform(
-                src.crs, epsg, src.width, src.height, *src.bounds)
+                src.crs, epsg, src.width, src.height, *src.bounds
+            )
             kwargs = src.meta.copy()
-            kwargs.update({
-                "crs": epsg,
-                "transform": transform,
-                "width": width,
-                "height": height
-            })
+            kwargs.update(
+                {"crs": epsg, "transform": transform, "width": width, "height": height}
+            )
 
             with rasterio.open("temp.tiff", "w", **kwargs) as dst:
                 for i in range(1, src.count + 1):
@@ -341,7 +346,8 @@ class HelperFuncs():
                         src_crs=src.crs,
                         dst_transform=transform,
                         dst_crs=epsg,
-                        resampling=Resampling.nearest)
+                        resampling=Resampling.nearest,
+                    )
 
     def read_removed_bldgs(self) -> Optional[np.ndarray]:
         """
@@ -351,9 +357,9 @@ class HelperFuncs():
         possible_files = [
             "removed_bldgs.npy",
             "stat_removed_bldgs.dat",
-            "removed_bldgs.dat"
+            "removed_bldgs.dat",
         ]
-        
+
         for fn in possible_files:
             file_path = model_dir / fn
             if file_path.exists():
@@ -364,7 +370,9 @@ class HelperFuncs():
                 return data.astype(bool)
         return None
 
-    def read_buildings(self, run_w_bldgs: Optional[str] = None, hsrun: Optional[str] = None) -> np.ma.MaskedArray:
+    def read_buildings(
+        self, run_w_bldgs: Optional[str] = None, hsrun: Optional[str] = None
+    ) -> np.ma.MaskedArray:
         """
         Reads building grid (z.grd) and returns a masked array where buildings are present.
         """
@@ -372,20 +380,20 @@ class HelperFuncs():
             model_dir = Path(self.get_first_model_dir())
         else:
             model_dir = Path(self.path_to_model) / hsrun
-            
+
         if run_w_bldgs is None:
             fn_zgrid = model_dir / "z.grd"
         else:
             fn_zgrid = Path(self.path_to_model) / run_w_bldgs / "z.grd"
-            
+
         if not fn_zgrid.exists():
             raise FileNotFoundError(f"Building grid file {fn_zgrid} not found.")
 
         zgr = np.loadtxt(fn_zgrid)
         # Buildings are usually represented by values >= 10 in z.grd
-        mask = (zgr < 10)
+        mask = zgr < 10
         return np.ma.array(zgr, mask=mask)
-        
+
     def frcing_to_dataframe(self, n_header: int = 3) -> pd.DataFrame:
         """
         Reads XBeach forcing file and returns a pandas DataFrame.
@@ -396,11 +404,13 @@ class HelperFuncs():
 
         # Try to parse variables from header
         var_names = []
-        with open(forcing_path, 'r') as f:
+        with open(forcing_path, "r") as f:
             for i in range(n_header):
                 line = f.readline()
                 if "VARIABLES" in line:
-                    var_names = [v.strip().split(",")[0] for v in line.split('=')[-1].split()]
+                    var_names = [
+                        v.strip().split(",")[0] for v in line.split("=")[-1].split()
+                    ]
 
         # If var_names not found in header, use defaults
         if not var_names:
@@ -408,14 +418,14 @@ class HelperFuncs():
 
         # Read data
         data = np.loadtxt(forcing_path, skiprows=n_header)
-        
+
         # If number of columns doesn't match var_names, adjust
         if data.shape[1] > len(var_names):
             # Probably has vx, vy too
             extra_vars = [f"var_{i}" for i in range(len(var_names), data.shape[1])]
             var_names.extend(extra_vars)
         elif data.shape[1] < len(var_names):
-            var_names = var_names[:data.shape[1]]
+            var_names = var_names[: data.shape[1]]
 
         df = pd.DataFrame(data, columns=var_names)
 
@@ -424,7 +434,9 @@ class HelperFuncs():
             df["wavedir"] = df["wavedir"].apply(self.cartesian_to_nautical_angle)
             # Hardcoded alfa for now, as in original code
             alfa = 55.92839019260679
-            df["wavedir"] = df["wavedir"].apply(lambda x: self.nautical_to_xbeach_angle(x, alfa))
+            df["wavedir"] = df["wavedir"].apply(
+                lambda x: self.nautical_to_xbeach_angle(x, alfa)
+            )
 
         # Unit conversions (ft to m) - TODO: verify if this is always needed
         if "el" in df.columns:
@@ -438,7 +450,7 @@ class HelperFuncs():
             dt_sec = (df["t"].iloc[1] - df["t"].iloc[0]) * 3600 if len(df) > 1 else 0
             df["t_sec"] = np.arange(len(df)) * dt_sec
             df["t_hr"] = df["t_sec"] / 3600
-            
+
         return df
 
     def read_grid(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -446,26 +458,26 @@ class HelperFuncs():
         Reads the x, y, and z grids.
         """
         model_dir = Path(self.get_first_model_dir())
-        
+
         x_fn = model_dir / "x.grd"
         y_fn = model_dir / "y.grd"
         z_fn = model_dir / "z.grd"
-        
+
         if not all(p.exists() for p in [x_fn, y_fn, z_fn]):
             raise FileNotFoundError(f"One or more grid files missing in {model_dir}")
 
         # x.grd and y.grd can be 1D or 2D. XBeach often uses 1D files for regular grids.
         # Let's try to load them and handle the meshgrid creation.
-        
+
         x_raw = np.loadtxt(x_fn)
         y_raw = np.loadtxt(y_fn)
         zgr = np.loadtxt(z_fn)
-        
+
         if x_raw.ndim == 1 and y_raw.ndim == 1:
             xgr, ygr = np.meshgrid(x_raw, y_raw)
         else:
             xgr, ygr = x_raw, y_raw
-            
+
         return xgr, ygr, zgr
 
     def read_coast(self) -> gpd.GeoDataFrame:
@@ -483,23 +495,27 @@ class HelperFuncs():
             gdf.set_index("VDA_id", inplace=True)
         return gdf
 
-    def xy_to_grid_index(self, xgr: np.ndarray, ygr: np.ndarray, xy: Tuple[float, float]) -> Tuple[int, int]:
+    def xy_to_grid_index(
+        self, xgr: np.ndarray, ygr: np.ndarray, xy: Tuple[float, float]
+    ) -> Tuple[int, int]:
         """
-        Returns the indices in xgr, ygr that are nearest to the xy points. 
-        Useful for when the grid is not at 1 m resolution. 
+        Returns the indices in xgr, ygr that are nearest to the xy points.
+        Useful for when the grid is not at 1 m resolution.
         """
         idx = np.argmin(np.abs(xgr[0, :] - xy[0]))
-        idy = np.argmin(np.abs(ygr[:, 0] - xy[1]))        
+        idy = np.argmin(np.abs(ygr[:, 0] - xy[1]))
         return (int(idx), int(idy))
 
-    def tstartstop_to_tindex(self, tstart: float, tstop: float, time: np.ndarray) -> Tuple[int, int]:
-        """ 
+    def tstartstop_to_tindex(
+        self, tstart: float, tstop: float, time: np.ndarray
+    ) -> Tuple[int, int]:
+        """
         Returns the indices nearest to the provided start and stop times (in hours).
         """
         tstart_idx = np.argmin(np.abs(time - tstart * 3600))
-        tstop_idx  = np.argmin(np.abs(time - tstop * 3600))
+        tstop_idx = np.argmin(np.abs(time - tstop * 3600))
         return (int(tstart_idx), int(tstop_idx))
-    
+
     def time_to_tindex(self, time_wanted: float, time: np.ndarray) -> int:
         """
         Returns the index nearest to the provided time (in seconds).
@@ -507,17 +523,16 @@ class HelperFuncs():
         t_idx = np.argmin(np.abs(time - time_wanted))
         return int(t_idx)
 
-    def save_fig(self, fig: plt.Figure, fn: Optional[str] = None, **kwargs: Any) -> None:
+    def save_fig(
+        self, fig: plt.Figure, fn: Optional[str] = None, **kwargs: Any
+    ) -> None:
         """
         Saves figures to the results directory.
         """
-        # 
+        #
         if fn is not None:
             save_path = Path(self.path_to_save_plot) / fn
-            fig.savefig(save_path,
-                        pad_inches=0.1,
-                        bbox_inches='tight',
-                        **kwargs)
+            fig.savefig(save_path, pad_inches=0.1, bbox_inches="tight", **kwargs)
             plt.close(fig)
 
     def get_H(self, z: np.ndarray, detrend: bool = True) -> np.ndarray:
@@ -527,19 +542,25 @@ class HelperFuncs():
         """
         if detrend:
             z = z - np.mean(z)
-        
+
         signs = np.sign(z)
         zero_crossing_indices = np.where(np.diff(signs) != 0)[0]
-        up_crossings = zero_crossing_indices[np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]]
-        
+        up_crossings = zero_crossing_indices[
+            np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]
+        ]
+
         if len(up_crossings) < 2:
             return np.array([])
 
         start_indices = up_crossings[:-1]
         end_indices = up_crossings[1:]
 
-        crests = [np.max(z[start:end]) for start, end in zip(start_indices, end_indices)]
-        troughs = [np.min(z[start:end]) for start, end in zip(start_indices, end_indices)]
+        crests = [
+            np.max(z[start:end]) for start, end in zip(start_indices, end_indices)
+        ]
+        troughs = [
+            np.min(z[start:end]) for start, end in zip(start_indices, end_indices)
+        ]
 
         return np.array(crests) - np.array(troughs)
 
@@ -550,27 +571,31 @@ class HelperFuncs():
         """
         if detrend:
             z = z - np.mean(z)
-        
+
         signs = np.sign(z)
         zero_crossing_indices = np.where(np.diff(signs) != 0)[0]
-        up_crossings = zero_crossing_indices[np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]]
-        
+        up_crossings = zero_crossing_indices[
+            np.where(signs[zero_crossing_indices] < signs[zero_crossing_indices + 1])[0]
+        ]
+
         if len(up_crossings) < 2:
             return np.array([])
-            
+
         t_ = t[up_crossings]
         return np.diff(t_)
 
-    def assign_max_to_bldgs(self, data: np.ndarray, bldgs: np.ma.MaskedArray, second_max: bool = False) -> np.ndarray:
+    def assign_max_to_bldgs(
+        self, data: np.ndarray, bldgs: np.ma.MaskedArray, second_max: bool = False
+    ) -> np.ndarray:
         """
         Assigns maximum value to buildings;
         considers one cell to left, right, above, and below each building.
-        second_max defines whether to take the maximum cell at the building perimeter or second max. 
+        second_max defines whether to take the maximum cell at the building perimeter or second max.
         """
         max_bldg = np.full(data.shape, np.nan)
         mask = np.ma.getmask(bldgs)
         labeled_mask, num_features = ndi.label(~mask)
-        
+
         for i in range(1, num_features + 1):
             m = labeled_mask == i
             m_padded = np.pad(~m, pad_width=1, mode="constant", constant_values=True)
@@ -581,8 +606,14 @@ class HelperFuncs():
             shifted_right = m_padded[1:-1, :-2]
             original_mask_trimmed = m_padded[1:-1, 1:-1]
 
-            offset_mask = ~(original_mask_trimmed & shifted_up & shifted_down & shifted_left & shifted_right)
-            
+            offset_mask = ~(
+                original_mask_trimmed
+                & shifted_up
+                & shifted_down
+                & shifted_left
+                & shifted_right
+            )
+
             # -- new
             if second_max:
                 max_bldg[m] = np.partition(data[offset_mask], -2)[-2]
@@ -590,14 +621,14 @@ class HelperFuncs():
                 max_bldg[m] = np.nanmax(data[offset_mask])
 
         return max_bldg
-        
+
     def compute_Hs(self, H: np.ndarray) -> float:
         """
         Computes significant wave height (mean of highest 1/3) from array of wave heights.
         """
         if len(H) == 0:
             return 0.0
-        H_one_third = np.quantile(H, q=2/3)
+        H_one_third = np.quantile(H, q=2 / 3)
         H_top = H[H >= H_one_third]
         if len(H_top) == 0:
             return 0.0
@@ -621,7 +652,7 @@ class HelperFuncs():
         """
         Converting from nautical to xbeach angle using shoreline orientation alfa.
         """
-        deg = deg + alfa 
+        deg = deg + alfa
         if deg >= 360:
             deg -= 360
         elif deg < 0:
@@ -640,33 +671,35 @@ class HelperFuncs():
         """
         Returns label, units, and color for a given variable.
         """
-        v2l = { "el":"Water Elevation",
-                "hs": "Sig. Wave Height",
-                "Tp": "Peak Period",
-                "wavedir": "Wave Direction",
-                "zs": "Water Elevation",
-                "zs0": "Surge Level",
-                "zs1": "Water Elevation Above Surge",
-                "current": "Current Velocity",
-                "uu": "current x",
-                "vv": "current y",
+        v2l = {
+            "el": "Water Elevation",
+            "hs": "Sig. Wave Height",
+            "Tp": "Peak Period",
+            "wavedir": "Wave Direction",
+            "zs": "Water Elevation",
+            "zs0": "Surge Level",
+            "zs1": "Water Elevation Above Surge",
+            "current": "Current Velocity",
+            "uu": "current x",
+            "vv": "current y",
         }
-        v2y = { "el": "Water Elevation (m)",
-                "hs": "Sig. Wave Height (m)",
-                "Tp": "Peak Period (s)",
-                "wavedir": "Wave Direction",
-                "zs": "Water Elevation (m)",
-                "zs0": "Surge Level (m)",
-                "zs1": "Water Elevation Above Surge (m)",
-                "current": "Current Velocity (m/s)",
-                "uu": "current x",
-                "vv": "current y",
+        v2y = {
+            "el": "Water Elevation (m)",
+            "hs": "Sig. Wave Height (m)",
+            "Tp": "Peak Period (s)",
+            "wavedir": "Wave Direction",
+            "zs": "Water Elevation (m)",
+            "zs0": "Surge Level (m)",
+            "zs1": "Water Elevation Above Surge (m)",
+            "current": "Current Velocity (m/s)",
+            "uu": "current x",
+            "vv": "current y",
         }
-        
+
         keys = list(v2l.keys())
         if var not in keys:
             return var, var, "black"
-            
+
         c_idx = keys.index(var)
         colors = sns.color_palette("crest", n_colors=len(keys))
         return v2l[var], v2y[var], colors[c_idx]
@@ -676,21 +709,21 @@ class HelperFuncs():
         Maps simulation duration to recommended start/stop analysis times.
         """
         duration_to_start_stop = {
-                    0.5: {"start": 66.25, "stop":  66.75},
-                    1:   {"start": 66,    "stop":  67},
-                    2:   {"start": 65.25, "stop":  67.25},
-                    3:   {"start": 65,    "stop":  68},
-                    4:   {"start": 64,    "stop":  68},
-                    6:   {"start": 63,    "stop":  69},
-                    7:   {"start": 63,    "stop":  70},
-                    8:   {"start": 62,    "stop":  70},
-                    10:  {"start": 61,    "stop":  71},
-                    12:  {"start": 60,    "stop":  72},
-                    16:  {"start": 58,    "stop":  74}
+            0.5: {"start": 66.25, "stop": 66.75},
+            1: {"start": 66, "stop": 67},
+            2: {"start": 65.25, "stop": 67.25},
+            3: {"start": 65, "stop": 68},
+            4: {"start": 64, "stop": 68},
+            6: {"start": 63, "stop": 69},
+            7: {"start": 63, "stop": 70},
+            8: {"start": 62, "stop": 70},
+            10: {"start": 61, "stop": 71},
+            12: {"start": 60, "stop": 72},
+            16: {"start": 58, "stop": 74},
         }
         if duration not in duration_to_start_stop:
-            return 0.0, 0.0 # Or some default
-            
+            return 0.0, 0.0  # Or some default
+
         t_start = duration_to_start_stop[duration]["start"]
         t_stop = duration_to_start_stop[duration]["stop"]
         return t_start, t_stop
@@ -704,7 +737,9 @@ class HelperFuncs():
         ax.get_xaxis().set_ticks([])
         ax.get_yaxis().set_ticks([])
 
-    def check_domain_size_wave_stat(self, run1_max: np.ndarray, run2_max: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def check_domain_size_wave_stat(
+        self, run1_max: np.ndarray, run2_max: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Checks that the domain size of two runs is identical. Resizes if necessary.
         """
@@ -712,11 +747,15 @@ class HelperFuncs():
             # Simple resizing logic from original code
             r1_to_r2 = np.array(run1_max.shape) // np.array(run2_max.shape)
             r2_to_r1 = np.array(run2_max.shape) // np.array(run1_max.shape)
-            
+
             if np.all(r1_to_r2 > 0):
-                run2_max = np.repeat(np.repeat(run2_max, r1_to_r2[0], axis=0), r1_to_r2[1], axis=1)
+                run2_max = np.repeat(
+                    np.repeat(run2_max, r1_to_r2[0], axis=0), r1_to_r2[1], axis=1
+                )
             elif np.all(r2_to_r1 > 0):
-                run1_max = np.repeat(np.repeat(run1_max, r2_to_r1[0], axis=0), r2_to_r1[1], axis=1)
+                run1_max = np.repeat(
+                    np.repeat(run1_max, r2_to_r1[0], axis=0), r2_to_r1[1], axis=1
+                )
 
         return run1_max, run2_max
 
@@ -727,8 +766,11 @@ class HelperFuncs():
         model_path = Path(self.path_to_model)
         if not model_path.exists():
             return []
-        hotstart_runs = [d.name for d in model_path.iterdir() 
-                         if d.is_dir() and d.name.startswith("hotstart_")]
+        hotstart_runs = [
+            d.name
+            for d in model_path.iterdir()
+            if d.is_dir() and d.name.startswith("hotstart_")
+        ]
         return sorted(hotstart_runs)
 
     def rmse(self, predictions: np.ndarray, targets: np.ndarray) -> float:
@@ -743,23 +785,29 @@ class HelperFuncs():
         """
         return float(np.mean(np.abs(predictions - targets)))
 
-    def get_elevated_bldgs(self, bldgs_df: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def get_elevated_bldgs(
+        self, bldgs_df: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Separates elevated from non-elevated buildings.
         """
         if bldgs_df.index.name != "VDA_id" and "VDA_id" in bldgs_df.columns:
             bldgs_df = bldgs_df.set_index("VDA_id")
 
-        elevated_mask = (bldgs_df["FFE_elev_status"] == "elevated") & (bldgs_df["FFE_foundation"] == "Piles/Columns")
+        elevated_mask = (bldgs_df["FFE_elev_status"] == "elevated") & (
+            bldgs_df["FFE_foundation"] == "Piles/Columns"
+        )
         elevated_bldgs = bldgs_df[elevated_mask].copy()
         not_elevated = bldgs_df[~elevated_mask].copy()
-        
+
         elevated_bldgs["elevated"] = True
         not_elevated["elevated"] = False
-        
+
         return elevated_bldgs, not_elevated
 
-    def compute_velocity_mag(self, ue: np.ndarray, ve: np.ndarray, return_max: bool = True) -> Union[float, np.ndarray]:        
+    def compute_velocity_mag(
+        self, ue: np.ndarray, ve: np.ndarray, return_max: bool = True
+    ) -> Union[float, np.ndarray]:
         """
         Computes velocity magnitude from x and y components.
         """
@@ -781,47 +829,40 @@ class HelperFuncs():
         max_idx = np.nanargmax(mag)
         return float(self.compute_angle(ue[max_idx], ve[max_idx]))
 
-    def compute_angle(self, x_vec: Union[float, np.ndarray], y_vec: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def compute_angle(
+        self, x_vec: Union[float, np.ndarray], y_vec: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         """
         Calculates the angle [0, 360) of a 2D vector.
         """
         angles_rad = np.arctan2(y_vec, x_vec)
         angles_deg = np.degrees(angles_rad)
-        return np.where(angles_deg < 0, angles_deg + 360, angles_deg).item() if np.isscalar(angles_deg) else np.where(angles_deg < 0, angles_deg + 360, angles_deg)
+        return (
+            np.where(angles_deg < 0, angles_deg + 360, angles_deg).item()
+            if np.isscalar(angles_deg)
+            else np.where(angles_deg < 0, angles_deg + 360, angles_deg)
+        )
 
-    def calculate_running_avg(self, time_sec: np.ndarray, values: np.ndarray, window_sec: float, new_step_sec: Optional[float] = None) -> Tuple[np.ndarray, np.ndarray]:
+    def calculate_running_avg(
+        self,
+        time_sec: np.ndarray,
+        values: np.ndarray,
+        window_sec: float,
+        new_step_sec: Optional[float] = None,
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculates a running average and optionally resamples.
         """
-        time_index = pd.to_timedelta(time_sec, unit='s')
+        time_index = pd.to_timedelta(time_sec, unit="s")
 
         ts = pd.Series(values, index=time_index)
-        rolling_avg = ts.rolling(window=f'{window_sec}s', min_periods=1).mean()
+        rolling_avg = ts.rolling(window=f"{window_sec}s", min_periods=1).mean()
 
         if new_step_sec is not None:
-            rolling_avg = rolling_avg.resample(f'{new_step_sec}s').nearest()
+            rolling_avg = rolling_avg.resample(f"{new_step_sec}s").nearest()
 
         return rolling_avg.index.total_seconds().to_numpy(), rolling_avg.to_numpy()
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     hf = HelperFuncs()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
