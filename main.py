@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt  # type: ignore
 
 from compare_ds_w_stats.compare_ds_w_stats import CompareDSwStats
 from compare_forcing_output.compare_forcing_output import CompareForcingOutput
+from confusion_matrix.confusion_matrix import ConfusionMatrixPlotter
 from extract_stats_point.extract_stats_point import ExtractStatsPoint
 from helpers.helpers import HelperFuncs
 from hotstart_make_animation.hotstart_make_animation import HotstartMakeAnimation
@@ -249,30 +250,33 @@ if __name__ == "__main__":
     # # ##########################################################################
     # -- routines for processing runs to check number of removed buildings ---
     # # -- save stats at bldgs
-    sws = SaveWaveStats()
+    # sws = SaveWaveStats()
     # sws.get_time_building_removed()
     # sws.save_max_stats()  # save max stats across hotstart runs; saved to .dat file.
     # save wave stats at buildings in csv form. used for hotstart runs
-    sws.assign_to_bldgs_hotstart(max_stats_saved=True)
+    # sws.assign_to_bldgs_hotstart(max_stats_saved=True)
     # sws.save_removed_bldgs()
 
-    # -- confusion matrices
-    # cdws = CompareDSwStats()
-    # cdws.plot_confusion(damaged_DSs=["DS6"],
-    #                     bldgs="all",       # "non-elevated", "elevated", "all"
-    #                     elevated_kwds={"compute_removed_elevated": True},
-    #                     fname="confusion-all",
-    #                     )
-    # cdws.plot_confusion(damaged_DSs=["DS6"],
-    #                     bldgs="elevated",       # "non-elevated", "elevated", "all"
-    #                     elevated_kwds={"compute_removed_elevated": False},
-    #                     fname="confusion-elevated",
-    #                     )
-    # cdws.plot_confusion(damaged_DSs=["DS6"],
-    #                     bldgs="non-elevated",       # "non-elevated", "elevated", "all"
-    #                     elevated_kwds={"compute_removed_elevated": False},
-    #                     fname="confusion-non-elevated",
-    #                     )
+    # -- confusion matrices using class-based routine
+    cm_plotter = ConfusionMatrixPlotter()
+    cm_plotter.plot_confusion(
+        damaged_DSs=["DS6"],
+        bldgs="all",
+        elevated_kwds={"compute_removed_elevated": False},
+        # fname="confusion-all",
+    )
+    # cm_plotter.plot_confusion(
+    #     damaged_DSs=["DS6"],
+    #     bldgs="elevated",
+    #     elevated_kwds={"compute_removed_elevated": False},
+    #     fname="confusion-elevated",
+    # )
+    # cm_plotter.plot_confusion(
+    #     damaged_DSs=["DS6"],
+    #     bldgs="non-elevated",
+    #     elevated_kwds={"compute_removed_elevated": False},
+    #     fname="confusion-non-elevated",
+    # )
 
     # # -- spatial results
     # prb = PlotRemovedBldgs()
