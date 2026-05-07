@@ -1,4 +1,4 @@
-# Updated README for `xbeach-processing`
+# README for `xbeach-processing`
 
 ## Purpose of this Directory
 
